@@ -1,0 +1,64 @@
+{
+  "name": "volc-agent-launchpad",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A middleware-free Agent platform starter kit running Codex CLI locally or on Volcengine ECS.",
+  "type": "module",
+  "bin": {
+    "commitgate": "apps/server/dist/transition-worker/cli.js"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -n server,web -c cyan,magenta \"npm run dev -w @launchpad/server\" \"npm run dev -w @launchpad/web\"",
+    "build": "npm run build -w @launchpad/web && npm run build -w @launchpad/server",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p scripts/tsconfig.json --noEmit",
+    "test": "npm run test -w @launchpad/server",
+    "test:evaluator-cleanup": "node --import tsx --test scripts/evaluator-temp-cleanup.test.ts",
+    "check": "node scripts/run-check.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "demo:preflight": "node scripts/demo-preflight.mjs",
+    "demo:seed": "node scripts/demo-seed.mjs",
+    "demo:record-replay": "node scripts/record-demo-replay.mjs",
+    "demo": "./scripts/run-demo.sh",
+    "demo:status": "./scripts/demo-stack.sh status",
+    "demo:logs": "./scripts/demo-stack.sh logs",
+    "demo:down": "./scripts/demo-stack.sh down",
+    "demo:reset": "./scripts/demo-stack.sh reset",
+    "demo:verify-video": "node scripts/verify-demo-video.mjs",
+    "eval:deterministic": "node scripts/eval-deterministic.mjs",
+    "eval:protocol": "node scripts/eval-suite.mjs protocol",
+    "eval:adversarial": "node scripts/eval-suite.mjs adversarial",
+    "eval:container": "node --import tsx scripts/eval-container.ts",
+    "eval:recovery": "node scripts/eval-suite.mjs recovery",
+    "eval:filesystem:linux": "node scripts/eval-filesystem-linux.mjs",
+    "eval:p1-product": "node scripts/eval-p1-product.mjs",
+    "audit:authority": "node scripts/audit-authority.mjs",
+    "audit:topology": "node scripts/audit-topology.mjs",
+    "audit:documentation": "node scripts/review-documentation.mjs",
+    "eval:provider": "node scripts/eval-provider.mjs",
+    "eval:browser:clean-clone": "node scripts/eval-browser-clean-clone.mjs",
+    "audit:independent": "node scripts/audit-independent.mjs",
+    "audit:clean-clone": "node scripts/audit-independent.mjs",
+    "audit:release": "node scripts/audit-release.mjs",
+    "receipt:verify": "node --import tsx scripts/verify-receipt-proof.ts",
+    "model-relay:start": "node apps/server/dist/model-relay-main.js",
+    "runtime-broker:start": "node apps/server/dist/runtime-broker/main.js",
+    "transition-worker:start": "node apps/server/dist/transition-worker/main.js",
+    "transition-worker:cli": "node apps/server/dist/transition-worker/cli.js",
+    "eval:real": "node scripts/eval-real-launcher.mjs",
+    "demo:smoke": "node scripts/demo-smoke.mjs",
+    "score": "node scripts/score.mjs",
+    "poc": "./scripts/start-local-poc.sh",
+    "start": "npm run start -w @launchpad/server"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3"
+  }
+}

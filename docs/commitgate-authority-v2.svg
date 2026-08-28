@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">CommitGate Sealed State View architecture</title>
+  <desc id="desc">An authoritative workspace view leads to an isolated Agent candidate, a gate-owned immutable sealed proposal, trusted evidence, a one-shot promotion permit, and a new authoritative view. Negative paths reject, abort, or conflict without changing head.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8fafc"/><stop offset="1" stop-color="#eef2f7"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#26364d" flood-opacity=".10"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#718096"/></marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#3ba272"/></marker>
+    <style>
+      .title{font:700 28px Inter,system-ui,sans-serif;fill:#172033}.subtitle{font:400 14px Inter,system-ui,sans-serif;fill:#64748b}.h{font:700 15px Inter,system-ui,sans-serif}.p{font:400 12px Inter,system-ui,sans-serif;fill:#5f6f84}.tiny{font:600 10px Inter,system-ui,sans-serif;fill:#65748a}.edge{fill:none;stroke:#718096;stroke-width:2;marker-end:url(#arrow)}.dash{stroke-dasharray:7 6}.card{}
+    </style>
+  </defs>
+  <rect width="1600" height="900" rx="24" fill="url(#bg)"/>
+  <text class="title" x="55" y="58">CommitGate — Sealed State View</text>
+  <text class="subtitle" x="55" y="83">One immutable proposal + bound evidence + one-shot permit → one authoritative transition</text>
+  <rect x="1115" y="28" width="430" height="65" rx="12" fill="#fff" stroke="#cbd5e1"/>
+  <text class="h" x="1135" y="53" fill="#243047">Authority V2 scope</text>
+  <text class="p" x="1135" y="74">Local Docker/Linux · serial transition · filesystem effects · kill/restart</text>
+
+  <g class="card"><rect x="55" y="160" width="205" height="112" rx="14" fill="#eaf8f1" stroke="#3ba272" stroke-width="2"/><text class="h" x="75" y="190" fill="#173f30">Authoritative HEAD</text><text class="p" x="75" y="215">View V0 · generation g0</text><text class="p" x="75" y="237">head / live hash / session</text></g>
+  <g class="card"><rect x="315" y="160" width="215" height="112" rx="14" fill="#fff7e6" stroke="#e1a84b" stroke-width="2"/><text class="h" x="335" y="190" fill="#513a13">Runtime Broker → Agent</text><text class="p" x="335" y="215">opaque candidate ref + scratch</text><text class="p" x="335" y="237">no Authority/Control mount</text></g>
+  <g class="card"><rect x="585" y="160" width="225" height="112" rx="14" fill="#f2edff" stroke="#7d5cc6" stroke-width="2"/><text class="h" x="605" y="190" fill="#35245b">SealedProposal P1</text><text class="p" x="605" y="215">gate-owned immutable artifact</text><text class="p" x="605" y="237">candidate path destroyed</text></g>
+  <g class="card"><rect x="865" y="160" width="235" height="112" rx="14" fill="#eaf9fd" stroke="#42a8c6" stroke-width="2"/><text class="h" x="885" y="190" fill="#163e4b">Trusted verifier</text><text class="p" x="885" y="215">read-only P1 + check bundle</text><text class="p" x="885" y="237">Context C1 + Evidence E1</text></g>
+  <g class="card"><rect x="1155" y="160" width="225" height="112" rx="14" fill="#fff7e2" stroke="#d39b36" stroke-width="2"/><text class="h" x="1175" y="190" fill="#4d3610">PromotionPermit K1</text><text class="p" x="1175" y="215">one-shot · expires · replay-safe</text><text class="p" x="1175" y="237">bound to V0 / P1 / C1 / E1</text></g>
+  <g class="card"><rect x="1435" y="160" width="110" height="112" rx="14" fill="#eaf8f1" stroke="#3ba272" stroke-width="2"/><text class="h" x="1452" y="190" fill="#173f30">Next HEAD</text><text class="p" x="1452" y="215">View V1</text><text class="p" x="1452" y="237">g1 · consumed</text></g>
+
+  <path class="edge" d="M260 216H315"/><path class="edge" d="M530 216H585"/><path class="edge" d="M810 216H865"/><path class="edge" d="M1100 216H1155"/><path d="M1380 216H1435" fill="none" stroke="#3ba272" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <text class="tiny" x="535" y="145">teardown + transfer</text><text class="tiny" x="820" y="145">from P1 only</text><text class="tiny" x="1110" y="145">complete PASS</text><text class="tiny" x="1390" y="145">CAS + consume</text>
+
+  <g class="card"><ellipse cx="422" cy="390" rx="92" ry="44" fill="#f8f4ff" stroke="#7d5cc6" stroke-width="2"/><text class="h" text-anchor="middle" x="422" y="385" fill="#35245b">Model Relay → Provider</text><text class="p" text-anchor="middle" x="422" y="405">Ark official · key only in Relay</text></g>
+  <path class="edge dash" d="M422 272V346"/><text class="tiny" x="430" y="316">model traffic</text>
+
+  <g class="card"><rect x="705" y="346" width="255" height="88" rx="13" fill="#fff0f3" stroke="#d7667b" stroke-width="2"/><text class="h" x="725" y="375" fill="#5b2430">Rejected / QUARANTINED</text><text class="p" x="725" y="398">trusted negative verdict</text><text class="p" x="725" y="417">artifact destroyed · metadata only</text></g>
+  <g class="card"><rect x="1000" y="346" width="245" height="88" rx="13" fill="#f2f5f8" stroke="#8290a5" stroke-width="2"/><text class="h" x="1020" y="375" fill="#334155">ABORTED</text><text class="p" x="1020" y="398">timeout / error / missing evidence</text><text class="p" x="1020" y="417">HEAD unchanged</text></g>
+  <g class="card"><rect x="1285" y="346" width="260" height="88" rx="13" fill="#fff7e2" stroke="#d39b36" stroke-width="2"/><text class="h" x="1305" y="375" fill="#4d3610">CONFLICTED</text><text class="p" x="1305" y="398">View/generation stale or ABA</text><text class="p" x="1305" y="417">old permit cannot replay</text></g>
+  <path class="edge dash" d="M960 272V310H833V346"/><path class="edge dash" d="M982 272V320H1122V346"/><path class="edge dash" d="M1267 272V310H1415V346"/>
+
+  <g class="card"><rect x="55" y="510" width="1490" height="72" rx="14" fill="#eef4ff" stroke="#4f6fae" stroke-width="2"/><text class="h" x="80" y="540" fill="#263b64">Transition Worker — dedicated UID / sole Authority + Control RW owner</text><text class="p" x="80" y="562">prepare · seal · evidence · permit · promote · rollback · recovery · append-only projection</text></g>
+
+  <g class="card"><rect x="55" y="635" width="705" height="92" rx="14" fill="#f8f4ff" stroke="#7d5cc6" stroke-width="2"/><text class="h" x="80" y="666" fill="#35245b">View-bound continuation</text><text class="p" x="80" y="691">INPUT · PROVISIONAL · AUTHORITATIVE · REJECTED · SUPERSEDED</text><text class="p" x="80" y="712">callback fence = runLeaseId + baseViewId + sessionEpoch</text></g>
+  <g class="card"><rect x="840" y="635" width="705" height="92" rx="14" fill="#f0faf5" stroke="#3ba272" stroke-width="2"/><text class="h" x="865" y="666" fill="#173f30">Sanitized receipt + immutable version event</text><text class="p" x="865" y="691">proposal / context / evidence / permit / provider identity</text><text class="p" x="865" y="712">terminal decision · rejected payload not retained</text></g>
+
+  <rect x="55" y="790" width="1490" height="58" rx="12" fill="#fff" stroke="#d7dee8"/>
+  <text class="p" x="80" y="815"><tspan font-weight="700" fill="#344054">Not claimed: </tspan>power-loss/fsync durability · distributed ACID · arbitrary external-effect rollback</text>
+  <text class="p" x="80" y="836">complete Runtime egress mediation · hostile host/root isolation · semantic correctness / attestation</text>
+</svg>

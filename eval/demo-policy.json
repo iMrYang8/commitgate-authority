@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "protectedPaths": ["protected.txt", "release-notes.txt"],
+  "platformManagedPaths": ["AGENTS.md"],
+  "ignoredEphemeralNames": [".git", ".codex", "node_modules", "dist", "coverage"],
+  "maxChangedFiles": 100,
+  "maxChangedBytes": 1048576,
+  "maxSingleFileBytes": 262144,
+  "verifierTimeoutMs": 30000,
+  "verifierMaxOutputBytes": 65536,
+  "canaryPatterns": ["COMMITGATE_CANARY_DO_NOT_COPY"],
+  "requiredChecks": [
+    {
+      "id": "workspace-contract",
+      "runner": "node",
+      "entrypoint": "workspace-contract.mjs",
+      "args": [],
+      "timeoutMs": 15000,
+      "scratchBytes": 67108864
+    }
+  ]
+}

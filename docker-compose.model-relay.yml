@@ -1,0 +1,43 @@
+# Optional P0 relay topology. Agent containers join only commitgate-agent-relay
+# (an internal network); this relay alone also joins provider-egress.
+services:
+  model-relay:
+    build:
+      context: .
+      dockerfile: Dockerfile.model-relay
+      args:
+        NODE_IMAGE: ${CONTAINER_RUNTIME_BASE_IMAGE:-node:22-bookworm-slim}
+    image: commitgate-model-relay:local
+    env_file:
+      - ${LAUNCHPAD_ENV_FILE:-.env}
+    environment:
+      NODE_ENV: production
+      # This process is the relay, not the CommitGate API/Runtime process.
+      COMMITGATE_ENABLED: "false"
+      # loadConfig's API auth preflight is irrelevant to this private service;
+      # model-relay-main binds its internal listener explicitly below.
+      HOST: 127.0.0.1
+      MODEL_ACCESS_MODE: relay
+      MODEL_RELAY_URL: http://model-relay:3100/v1
+      MODEL_RELAY_PORT: 3100
+    networks:
+      agent-relay:
+        aliases: [model-relay]
+      provider-egress: {}
+    ports:
+      - "127.0.0.1:${MODEL_RELAY_ADMIN_PORT:-3100}:3100"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid,nodev
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    pids_limit: 64
+    mem_limit: 256m
+    cpus: 0.5
+    restart: unless-stopped
+
+networks:
+  agent-relay:
+    name: commitgate-agent-relay
+    internal: true
+  provider-egress: {}

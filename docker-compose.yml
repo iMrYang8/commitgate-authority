@@ -1,0 +1,286 @@
+name: ${COMMITGATE_COMPOSE_PROJECT:-commitgate}
+
+# Authority V2 competition topology. Only transition-worker receives the
+# authoritative/control volumes read-write; only runtime-broker receives the
+# Docker socket; only model-relay receives the Provider key.
+services:
+  volume-init:
+    image: busybox:1.36
+    user: "0:0"
+    command:
+      - sh
+      - -ec
+      - |
+        chown -R 10001:20000 /authority /control /exchange
+        chown -R 10003:20000 /sessions /trusted /sockets
+        chown -R 1000:1000 /api-data
+        chmod 0770 /authority /control /exchange /sessions /trusted /sockets /api-data
+    volumes:
+      - authority:/authority
+      - control:/control
+      - exchange:/exchange
+      - sessions:/sessions
+      - trusted-checks:/trusted
+      - sockets:/sockets
+      - api-data:/api-data
+    network_mode: none
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER, DAC_OVERRIDE]
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+
+  runtime-image:
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime
+      args:
+        NODE_IMAGE: ${CONTAINER_RUNTIME_BASE_IMAGE:-node:22-bookworm-slim}
+    image: volc-agent-runtime:local
+    command: ["true"]
+    network_mode: none
+    restart: "no"
+
+  transition-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.transition-worker
+      args:
+        NODE_IMAGE: ${CONTAINER_RUNTIME_BASE_IMAGE:-node:22-bookworm-slim}
+    image: commitgate-transition-worker:local
+    user: "10001:20000"
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
+    environment:
+      COMMITGATE_TRANSITION_WORKER: enabled
+      TRANSITION_WORKER_WORKSPACE_ROOT: /var/lib/commitgate/workspaces
+      TRANSITION_WORKER_CONTROL_ROOT: /var/lib/commitgate/control
+      TRANSITION_WORKER_INBOX_ROOT: /var/lib/commitgate/exchange
+      TRANSITION_WORKER_SOCKET: /run/commitgate/transition-worker.sock
+      TRANSITION_WORKER_LEGACY_WORKSPACE_ROOT: /legacy/workspaces
+    volumes:
+      - authority:/var/lib/commitgate/workspaces
+      - control:/var/lib/commitgate/control
+      - exchange:/var/lib/commitgate/exchange
+      - sockets:/run/commitgate
+      - ./.demo-state/workspaces:/legacy/workspaces:ro
+    read_only: true
+    tmpfs:
+      - /tmp:rw,size=32m,noexec,nosuid,nodev
+    network_mode: none
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    pids_limit: 64
+    mem_limit: 512m
+    cpus: 0.5
+    restart: unless-stopped
+
+  runtime-broker:
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime-broker
+      args:
+        NODE_IMAGE: ${CONTAINER_RUNTIME_BASE_IMAGE:-node:22-bookworm-slim}
+    image: commitgate-runtime-broker:local
+    user: "10003:20000"
+    group_add:
+      - "${DOCKER_SOCKET_GID:-0}"
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
+      runtime-image:
+        condition: service_completed_successfully
+      model-relay:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PROCESS_ROLE: runtime-broker
+      RUNTIME_PROVIDER: container
+      # volume-subpath is part of the isolation contract and requires API 1.45.
+      DOCKER_API_VERSION: "1.45"
+      RUNTIME_BROKER_SOCKET: /run/commitgate/runtime-broker.sock
+      TRANSITION_AUTHORITY: worker
+      COMMITGATE_ENABLED: "false"
+      COMMITGATE_EXCHANGE_ROOT: /var/lib/commitgate/exchange
+      COMMITGATE_EXCHANGE_VOLUME: ${COMMITGATE_STACK_ID:-commitgate}-exchange
+      CODEX_HOME: /var/lib/commitgate/sessions
+      COMMITGATE_SESSION_VOLUME_ROOT: /var/lib/commitgate/sessions
+      COMMITGATE_SESSION_VOLUME: ${COMMITGATE_STACK_ID:-commitgate}-sessions
+      COMMITGATE_TRUSTED_CHECKS_DIR: /app/eval/trusted-checks
+      COMMITGATE_TRUSTED_CHECKS_VOLUME_ROOT: /var/lib/commitgate/trusted-checks
+      COMMITGATE_TRUSTED_CHECKS_VOLUME: ${COMMITGATE_STACK_ID:-commitgate}-trusted-checks
+      CONTAINER_RUNTIME_IMAGE: volc-agent-runtime:local
+      CONTAINER_USER: "10001:20000"
+      CONTAINER_AGENT_NETWORK: ${COMMITGATE_STACK_ID:-commitgate}-agent-relay
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-ark}
+      MODEL_BASE_URL: ${MODEL_BASE_URL:-https://ark.cn-beijing.volces.com/api/v3}
+      MODEL_ID: ${MODEL_ID:?Set MODEL_ID in .env.local}
+      MODEL_WIRE_API: responses
+      MODEL_ACCESS_MODE: relay
+      MODEL_RELAY_URL: http://model-relay:3100/v1
+      MODEL_RELAY_ADMIN_URL: http://model-relay:3100/v1
+      MODEL_RELAY_TOKEN_FILE: /run/secrets/relay_token
+    secrets:
+      - relay_token
+    volumes:
+      - exchange:/var/lib/commitgate/exchange
+      - sessions:/var/lib/commitgate/sessions
+      - trusted-checks:/var/lib/commitgate/trusted-checks
+      - sockets:/run/commitgate
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - agent-relay
+    read_only: true
+    tmpfs:
+      - /tmp:rw,size=64m,noexec,nosuid,nodev
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    pids_limit: 128
+    mem_limit: 768m
+    cpus: 1
+    restart: unless-stopped
+
+  model-relay:
+    build:
+      context: .
+      dockerfile: Dockerfile.model-relay
+      args:
+        NODE_IMAGE: ${CONTAINER_RUNTIME_BASE_IMAGE:-node:22-bookworm-slim}
+    image: commitgate-model-relay:local
+    environment:
+      NODE_ENV: production
+      PROCESS_ROLE: relay
+      COMMITGATE_ENABLED: "false"
+      RUNTIME_PROVIDER: local-process
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-ark}
+      MODEL_BASE_URL: ${MODEL_BASE_URL:-https://ark.cn-beijing.volces.com/api/v3}
+      MODEL_ID: ${MODEL_ID:?Set MODEL_ID in .env.local}
+      MODEL_WIRE_API: responses
+      MODEL_ACCESS_MODE: relay
+      MODEL_RELAY_URL: http://model-relay:3100/v1
+      MODEL_RELAY_PORT: 3100
+      MODEL_API_KEY_FILE: /run/secrets/model_api_key
+      MODEL_RELAY_TOKEN_FILE: /run/secrets/relay_token
+    secrets:
+      - model_api_key
+      - relay_token
+    networks:
+      agent-relay:
+        aliases: [model-relay]
+      default: {}
+    read_only: true
+    tmpfs:
+      - /tmp:rw,size=16m,noexec,nosuid,nodev
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    pids_limit: 64
+    mem_limit: 256m
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3100/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_IMAGE: ${CONTAINER_RUNTIME_BASE_IMAGE:-node:22-bookworm-slim}
+    image: volc-agent-launchpad:authority-v2
+    user: "1000:1000"
+    group_add: ["20000"]
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
+      transition-worker:
+        condition: service_healthy
+      runtime-broker:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PROCESS_ROLE: api
+      HOST: 0.0.0.0
+      PORT: 3000
+      APP_AUTH_TOKEN_FILE: /run/secrets/app_auth_token
+      APP_DATA_DIR: /app/data
+      AGENT_WORKSPACE_ROOT: /authority
+      COMMITGATE_CONTROL_ROOT: /control
+      CODEX_HOME: /tmp/codex-home
+      COMMITGATE_ENABLED: "true"
+      TRANSITION_AUTHORITY: worker
+      TRANSITION_WORKER_SOCKET: /run/commitgate/transition-worker.sock
+      RUNTIME_PROVIDER: broker
+      RUNTIME_BROKER_SOCKET: /run/commitgate/runtime-broker.sock
+      CONTAINER_RUNTIME_IMAGE: volc-agent-runtime:local
+      CONTAINER_AGENT_NETWORK: ${COMMITGATE_STACK_ID:-commitgate}-agent-relay
+      COMMITGATE_EXCHANGE_ROOT: /unmounted/exchange
+      COMMITGATE_EXCHANGE_VOLUME: ${COMMITGATE_STACK_ID:-commitgate}-exchange
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-ark}
+      MODEL_BASE_URL: ${MODEL_BASE_URL:-https://ark.cn-beijing.volces.com/api/v3}
+      MODEL_ID: ${MODEL_ID:?Set MODEL_ID in .env.local}
+      MODEL_WIRE_API: responses
+      MODEL_ACCESS_MODE: relay
+      MODEL_RELAY_URL: http://model-relay:3100/v1
+      MODEL_RELAY_ADMIN_URL: http://model-relay:3100/v1
+      MODEL_RELAY_TOKEN_FILE: /run/secrets/relay_token
+      COMMITGATE_SOURCE_REVISION: ${COMMITGATE_SOURCE_REVISION:-unverified}
+    secrets:
+      - app_auth_token
+      - relay_token
+    ports:
+      - "127.0.0.1:${PUBLIC_PORT:-3000}:3000"
+    volumes:
+      - authority:/authority:ro
+      - control:/control:ro
+      - sockets:/run/commitgate:ro
+      - api-data:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp:rw,size=64m,noexec,nosuid,nodev
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: 1
+    restart: unless-stopped
+
+networks:
+  agent-relay:
+    name: ${COMMITGATE_STACK_ID:-commitgate}-agent-relay
+    internal: true
+    ipam:
+      config:
+        - subnet: ${COMMITGATE_AGENT_SUBNET:-192.168.224.0/20}
+  default:
+    name: ${COMMITGATE_DEFAULT_NETWORK:-commitgate_default}
+    ipam:
+      config:
+        - subnet: ${COMMITGATE_DEFAULT_SUBNET:-192.168.240.0/20}
+
+volumes:
+  authority:
+    name: ${COMMITGATE_STACK_ID:-commitgate}-authority
+  control:
+    name: ${COMMITGATE_STACK_ID:-commitgate}-control
+  exchange:
+    name: ${COMMITGATE_STACK_ID:-commitgate}-exchange
+  sessions:
+    name: ${COMMITGATE_STACK_ID:-commitgate}-sessions
+  trusted-checks:
+    name: ${COMMITGATE_STACK_ID:-commitgate}-trusted-checks
+  sockets:
+    name: ${COMMITGATE_STACK_ID:-commitgate}-sockets
+  api-data:
+    name: ${COMMITGATE_STACK_ID:-commitgate}-api-data
+
+secrets:
+  model_api_key:
+    file: ./.demo-state/secrets/model_api_key
+  relay_token:
+    file: ./.demo-state/secrets/relay_token
+  app_auth_token:
+    file: ./.demo-state/secrets/app_auth_token

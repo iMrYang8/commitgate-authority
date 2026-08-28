@@ -1,0 +1,54 @@
+ARG NODE_IMAGE=node:22-bookworm-slim
+FROM ${NODE_IMAGE} AS build
+WORKDIR /app
+
+COPY package.json package-lock.json tsconfig.base.json ./
+COPY apps/server/package.json apps/server/package.json
+COPY apps/web/package.json apps/web/package.json
+RUN npm ci
+COPY apps/server apps/server
+RUN npm run build -w @launchpad/server
+RUN npm prune --omit=dev
+
+FROM ${NODE_IMAGE} AS runtime
+ARG DOCKER_CLI_VERSION=5:29.2.1-1~debian.12~bookworm
+ENV NODE_ENV=production
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg \
+       -o /etc/apt/keyrings/docker.asc \
+    && chmod a+r /etc/apt/keyrings/docker.asc \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bookworm stable" \
+       > /etc/apt/sources.list.d/docker.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends "docker-ce-cli=${DOCKER_CLI_VERSION}" \
+    && docker --version \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 20000 commitgate-rpc \
+    && useradd --uid 10003 --gid 20000 --no-create-home --shell /usr/sbin/nologin broker \
+    && mkdir -p /var/lib/commitgate/exchange /var/lib/commitgate/sessions \
+       /var/lib/commitgate/trusted-checks /run/commitgate \
+    && chown -R 10003:20000 /var/lib/commitgate /run/commitgate
+
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/server/package.json ./apps/server/package.json
+COPY --from=build /app/apps/server/dist ./apps/server/dist
+COPY eval/trusted-checks ./eval/trusted-checks
+
+USER 10003:20000
+ENV PROCESS_ROLE=runtime-broker
+ENV RUNTIME_PROVIDER=container
+ENV RUNTIME_BROKER_SOCKET=/run/commitgate/runtime-broker.sock
+ENV CODEX_HOME=/var/lib/commitgate/sessions
+ENV COMMITGATE_SESSION_VOLUME_ROOT=/var/lib/commitgate/sessions
+ENV COMMITGATE_EXCHANGE_ROOT=/var/lib/commitgate/exchange
+ENV COMMITGATE_TRUSTED_CHECKS_VOLUME_ROOT=/var/lib/commitgate/trusted-checks
+ENV COMMITGATE_TRUSTED_CHECKS_DIR=/app/eval/trusted-checks
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=5 \
+  CMD ["node", "-e", "const n=require('node:net'),s=n.connect('/run/commitgate/runtime-broker.sock');s.on('connect',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1))"]
+
+CMD ["node", "apps/server/dist/runtime-broker/main.js"]
