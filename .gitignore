@@ -19,3 +19,9 @@ eval/demo-fixture/
 deploy/volcengine/.terraform/
 deploy/volcengine/*.tfstate*
 deploy/volcengine/terraform.tfvars
+
+# Generated evaluation reports; keep only deterministic policy/check inputs.
+eval/*
+!eval/demo-policy.json
+!eval/trusted-checks/
+!eval/trusted-checks/**

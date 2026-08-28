@@ -208,7 +208,7 @@ new input rather than a magically rolled-back external belief.
 
 ## Provider and evidence boundary
 
-- Ark/ModelArk is the official competition path unless the organizer accepts a
+- Ark/ModelArk is the primary configured provider path unless a deployment selects a
   substitute.
 - OpenRouter is a compatible development/alternate path.
 - OpenRouter evidence must never be reported as `realModelArk`.
@@ -244,7 +244,7 @@ bound to the current revision/source-tree hash and required image identities.
 
 The earlier Ark clean-clone report verified 10/10 product scenarios for its P0
 identity. The old repository `100/100` remains a historical internal
-evidence-checklist result, not an organizer-issued score. Neither is reused for
+evidence-checklist result, not an independently issued assessment. Neither is reused for
 Authority V2. Current Ark/browser, Linux, recovery, release and narrated Demo
 evidence remain `unverified` until regenerated against one clean identity.
 

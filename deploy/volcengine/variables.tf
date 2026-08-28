@@ -45,7 +45,7 @@ variable "allowed_ssh_cidr" {
 }
 
 variable "repository_url" {
-  description = "Public Git URL of this Starter Kit repository."
+  description = "Public Git URL of this repository."
   type        = string
   validation {
     condition     = startswith(var.repository_url, "https://")

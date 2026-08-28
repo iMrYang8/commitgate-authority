@@ -207,7 +207,7 @@ applyRepair
 ```
 
 The static authority audit remains a defense-in-depth callsite fence; it is not
-a semantic whole-program proof. The competition topology adds a runtime proof:
+a semantic whole-program proof. The production topology adds a runtime proof:
 `audit:topology` executes writes inside the API container and requires
 `EROFS/EACCES` for Authority and Control, verifies that only the Worker has RW
 mounts, and verifies that only the Broker has the Docker socket. These claims
@@ -273,13 +273,13 @@ active run.
 ## Provider identity
 
 Provider transport is configured through a generic Responses-compatible
-adapter. Ark is the official competition path; OpenRouter is an alternate
+adapter. Ark is the primary configured provider path; OpenRouter is an alternate
 development path. Receipts record provider, gateway, requested model, and
 resolved model when the transport can prove it; otherwise `resolvedModel`
 remains `null`. `MODEL_WIRE_API` is configuration, and retry lineage is held by
 the product run record rather than being invented in a receipt. Automatic
 fallback orchestration is not implemented: `retryOfRunId` is currently a
-reserved field initialized to `null`. The deployed competition process uses
+reserved field initialized to `null`. The deployed production process uses
 one configured Provider; a manual Provider change needs a restart, explicit
 Agent configuration/session reset, and a new run.
 
@@ -363,4 +363,4 @@ screenshot/report artifacts. Historical **2026-08-27** machine evidence applies
 only to its earlier source revision and images, not Authority V2. Every source
 change requires a new clean-revision record; missing current evidence is
 reported as `unverified`. The repository evidence checklist is an index, not an
-organizer score or substitute for independent judging.
+external security review or independent verification.

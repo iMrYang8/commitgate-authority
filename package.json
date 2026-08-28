@@ -2,7 +2,7 @@
   "name": "volc-agent-launchpad",
   "version": "1.0.0",
   "private": true,
-  "description": "A middleware-free Agent platform starter kit running Codex CLI locally or on Volcengine ECS.",
+  "description": "Evidence-bound state promotion middleware for coding agents.",
   "type": "module",
   "bin": {
     "commitgate": "apps/server/dist/transition-worker/cli.js"
@@ -39,7 +39,6 @@
     "eval:p1-product": "node scripts/eval-p1-product.mjs",
     "audit:authority": "node scripts/audit-authority.mjs",
     "audit:topology": "node scripts/audit-topology.mjs",
-    "audit:documentation": "node scripts/review-documentation.mjs",
     "eval:provider": "node scripts/eval-provider.mjs",
     "eval:browser:clean-clone": "node scripts/eval-browser-clean-clone.mjs",
     "audit:independent": "node scripts/audit-independent.mjs",
@@ -52,7 +51,6 @@
     "transition-worker:cli": "node apps/server/dist/transition-worker/cli.js",
     "eval:real": "node scripts/eval-real-launcher.mjs",
     "demo:smoke": "node scripts/demo-smoke.mjs",
-    "score": "node scripts/score.mjs",
     "poc": "./scripts/start-local-poc.sh",
     "start": "npm run start -w @launchpad/server"
   },
