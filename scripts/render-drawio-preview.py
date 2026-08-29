@@ -91,6 +91,7 @@ def render(source: Path, target: Path) -> None:
             f'<g id="page-{page_index + 1}" transform="translate(0 {offset_y})">',
             f'<rect x="0" y="0" width="{page_width}" height="{page_height}" rx="18" fill="#F8FAFC" stroke="#CBD5E1"/>',
         ]
+        edge_label_parts: list[str] = []
 
         for edge in edges:
             source_id, target_id = edge.get("source"), edge.get("target")
@@ -98,21 +99,85 @@ def render(source: Path, target: Path) -> None:
                 continue
             sx, sy, sw, sh = absolute(source_id)
             tx, ty, tw, th = absolute(target_id)
-            start_x, start_y = sx + sw, sy + sh / 2
-            end_x, end_y = tx, ty + th / 2
-            if end_x < start_x:
+            style = style_map(edge.get("style", ""))
+            if "exitX" in style and "exitY" in style:
+                start_x = sx + sw * float(style["exitX"])
+                start_y = sy + sh * float(style["exitY"])
+            else:
+                start_x, start_y = sx + sw, sy + sh / 2
+            if "entryX" in style and "entryY" in style:
+                end_x = tx + tw * float(style["entryX"])
+                end_y = ty + th * float(style["entryY"])
+            else:
+                end_x, end_y = tx, ty + th / 2
+            geometry_node = edge.find("mxGeometry")
+            point_array = geometry_node.find("Array[@as='points']") if geometry_node is not None else None
+            waypoints = [] if point_array is None else [
+                (float(point.get("x", "0")), float(point.get("y", "0")))
+                for point in point_array.findall("mxPoint")
+            ]
+            if not waypoints and end_x < start_x:
                 start_x, start_y = sx + sw / 2, sy + sh
                 end_x, end_y = tx + tw / 2, ty
-            middle_x = (start_x + end_x) / 2
-            style = style_map(edge.get("style", ""))
+            points = [(start_x, start_y), *waypoints, (end_x, end_y)]
+            if len(points) == 2:
+                middle_x = (start_x + end_x) / 2
+                points = [(start_x, start_y), (middle_x, start_y), (middle_x, end_y), (end_x, end_y)]
             stroke = style.get("strokeColor", "#64748B")
             dash = ' stroke-dasharray="7 6"' if style.get("dashed") == "1" else ""
             width = style.get("strokeWidth", "2")
-            parts.append(
-                f'<path d="M {start_x:.1f} {start_y:.1f} L {middle_x:.1f} {start_y:.1f} '
-                f'L {middle_x:.1f} {end_y:.1f} L {end_x:.1f} {end_y:.1f}" '
-                f'fill="none" stroke="{esc(stroke)}" stroke-width="{esc(width)}"{dash} marker-end="url(#arrow)"/>'
+            commands = " ".join(
+                ("M" if index == 0 else "L") + f" {px:.1f} {py:.1f}"
+                for index, (px, py) in enumerate(points)
             )
+            parts.append(
+                f'<path d="{commands}" '
+                f'fill="none" stroke="{esc(stroke)}" stroke-width="{esc(width)}"{dash}/>'
+            )
+            arrow_start = next(
+                (point for point in reversed(points[:-1]) if point != points[-1]),
+                points[0],
+            )
+            dx, dy = points[-1][0] - arrow_start[0], points[-1][1] - arrow_start[1]
+            distance = max(1.0, (dx * dx + dy * dy) ** 0.5)
+            ux, uy = dx / distance, dy / distance
+            px, py = -uy, ux
+            arrow = [
+                points[-1],
+                (points[-1][0] - ux * 11 + px * 5, points[-1][1] - uy * 11 + py * 5),
+                (points[-1][0] - ux * 11 - px * 5, points[-1][1] - uy * 11 - py * 5),
+            ]
+            arrow_points = " ".join(f"{x:.1f},{y:.1f}" for x, y in arrow)
+            parts.append(f'<polygon points="{arrow_points}" fill="{esc(stroke)}"/>')
+            edge_value = text_lines(edge.get("value", ""))
+            if edge_value:
+                lengths = [
+                    ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
+                    for (ax, ay), (bx, by) in zip(points, points[1:])
+                ]
+                half = sum(lengths) / 2
+                walked = 0.0
+                label_x, label_y = points[0]
+                for segment, ((ax, ay), (bx, by)) in zip(lengths, zip(points, points[1:])):
+                    if walked + segment >= half and segment > 0:
+                        ratio = (half - walked) / segment
+                        label_x = ax + (bx - ax) * ratio
+                        label_y = ay + (by - ay) * ratio
+                        break
+                    walked += segment
+                label = edge_value[0]
+                label_size = float(style.get("fontSize", "11"))
+                label_width = max(48.0, len(label) * label_size * 0.58 + 14)
+                edge_label_parts.append(
+                    f'<rect x="{label_x - label_width / 2:.1f}" y="{label_y - label_size:.1f}" '
+                    f'width="{label_width:.1f}" height="{label_size + 7:.1f}" rx="5" '
+                    f'fill="#F8FAFC" stroke="none"/>'
+                )
+                edge_label_parts.append(
+                    f'<text x="{label_x:.1f}" y="{label_y + 3:.1f}" text-anchor="middle" '
+                    f'font-family="Arial" font-size="{label_size:.1f}" fill="{esc(style.get("fontColor", stroke))}" '
+                    f'font-weight="600">{esc(label)}</text>'
+                )
 
         for cell in vertices:
             cell_id = cell.get("id", "")
@@ -151,6 +216,8 @@ def render(source: Path, target: Path) -> None:
                     f'font-weight="{weight}">{esc(line)}</text>'
                 )
                 cursor_y += size * 1.35
+
+        parts.extend(edge_label_parts)
 
         parts.append("</g>")
         rendered_pages.append("\n".join(parts))
