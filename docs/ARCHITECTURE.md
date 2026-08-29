@@ -9,8 +9,15 @@ next authoritative state.
 > immutable `SealedProposal`, one `EvaluationContextHash`, and one current base
 > `ViewId`.
 
-- Editable one-page diagram: [`commitgate-architecture.drawio`](commitgate-architecture.drawio)
-- Reviewable SVG: [`commitgate-architecture.svg`](commitgate-architecture.svg)
+- Editable two-page diagram: [`commitgate-authority-v2.drawio`](commitgate-authority-v2.drawio)
+- Reviewable SVG with embedded source: [`commitgate-authority-v2.svg`](commitgate-authority-v2.svg)
+
+The SVG is deterministically rendered from the editable source with:
+
+```bash
+python3 ../scripts/render-drawio-preview.py \
+  commitgate-authority-v2.drawio commitgate-authority-v2.svg
+```
 
 ## End-to-end state flow
 

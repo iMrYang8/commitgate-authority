@@ -85,6 +85,8 @@ npm run eval:p1-product
 npm run eval:filesystem:linux
 npm run demo:smoke
 npm run check:secrets
+npm run check:public-copy
+npm run check:diagram
 ```
 
 ## Scope

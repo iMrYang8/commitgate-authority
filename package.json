@@ -21,6 +21,8 @@
     "test:evaluator-cleanup": "node --import tsx --test scripts/evaluator-temp-cleanup.test.ts",
     "check": "node scripts/run-check.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
+    "check:public-copy": "node scripts/check-public-copy.mjs",
+    "check:diagram": "python3 scripts/check-drawio.py",
     "demo:preflight": "node scripts/demo-preflight.mjs",
     "demo:seed": "node scripts/demo-seed.mjs",
     "demo:record-replay": "node scripts/record-demo-replay.mjs",
