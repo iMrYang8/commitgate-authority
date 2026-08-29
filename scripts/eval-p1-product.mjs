@@ -68,8 +68,22 @@ add(
     ? "Live Docker exec probes returned EROFS for API writes to both Authority and Control."
     : "Run npm run demo and npm run audit:topology to collect live EROFS evidence.",
 );
+add(
+  "broker-worker-rpc-tcb-separated",
+  topology?.status === "verified" && [
+    "rpc-socket-volumes-separated",
+    "broker-cannot-connect-transition-worker-socket",
+    "api-connects-transition-worker-socket",
+    "api-connects-runtime-broker-socket",
+  ].every((id) => topology.checks?.some((item) => item.id === id && item.status === "verified"))
+    ? "verified"
+    : "unverified",
+  topology?.status === "verified"
+    ? "Worker and Broker use distinct socket volumes/groups; live Broker-to-Worker access is denied while API connects to both."
+    : "Run npm run demo and npm run audit:topology to collect live RPC TCB-separation evidence.",
+);
 
-const test = spawnSync("npm", ["run", "test", "-w", "@launchpad/server", "--", "src/runtime-broker/rpc.test.ts", "src/transition-worker/worker.test.ts"], {
+const test = spawnSync("npm", ["run", "test", "-w", "@launchpad/server", "--", "src/runtime-broker/rpc.test.ts", "src/transition-worker/worker.test.ts", "src/transition-worker/worker-policy.test.ts", "src/topology-compose.test.ts"], {
   cwd: root,
   env: process.env,
   encoding: "utf8",

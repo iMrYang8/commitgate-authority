@@ -15,11 +15,16 @@ FROM ${NODE_IMAGE} AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 
-RUN groupadd --gid 20000 commitgate-rpc \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends attr acl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 20000 commitgate-workspace \
+    && groupadd --gid 20001 commitgate-transition-rpc \
     && useradd --uid 10001 --gid 20000 --no-create-home --shell /usr/sbin/nologin commitgate \
     && mkdir -p /var/lib/commitgate/workspaces /var/lib/commitgate/control \
        /var/lib/commitgate/inbox /run/commitgate \
-    && chown -R 10001:20000 /var/lib/commitgate /run/commitgate
+    && chown -R 10001:20000 /var/lib/commitgate \
+    && chown -R 10001:20001 /run/commitgate
 
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/server/package.json ./apps/server/package.json
@@ -30,7 +35,7 @@ ENV COMMITGATE_TRANSITION_WORKER=enabled
 ENV TRANSITION_WORKER_WORKSPACE_ROOT=/var/lib/commitgate/workspaces
 ENV TRANSITION_WORKER_CONTROL_ROOT=/var/lib/commitgate/control
 ENV TRANSITION_WORKER_INBOX_ROOT=/var/lib/commitgate/inbox
-ENV TRANSITION_WORKER_SOCKET=/run/commitgate/transition-worker.sock
+ENV TRANSITION_WORKER_SOCKET=/run/commitgate/transition/transition-worker.sock
 
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 \
   CMD ["node", "apps/server/dist/transition-worker/cli.js", "health"]

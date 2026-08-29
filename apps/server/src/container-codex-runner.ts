@@ -69,8 +69,16 @@ export interface RuntimeTeardownAttestation {
   containerId?: string;
 }
 
+export interface RuntimeTeardownBinding {
+  runId: string;
+  agentId: string;
+  runLeaseId: string;
+  sessionEpoch: number;
+}
+
 interface StoredTeardownAttestation extends RuntimeTeardownAttestation {
   containerName: string;
+  binding: RuntimeTeardownBinding;
 }
 
 export function containerName(agentId: string, instanceId = "default"): string {
@@ -124,11 +132,17 @@ export function buildContainerRunArgs(
     name,
     ...(options.cidFile ? ["--cidfile", options.cidFile] : []),
     "--label",
-    "io.commitgate.launchpad=agent-runtime",
+    "io.commitgate.runtime=agent-runtime",
     "--label",
     "io.commitgate.agent-id=" + request.agentId,
     "--label",
     "io.commitgate.instance-id=" + config.runtimeInstanceId,
+    "--label",
+    "io.commitgate.run-id=" + request.runId,
+    "--label",
+    "io.commitgate.run-lease-id=" + (request.runLeaseId ?? request.runId),
+    "--label",
+    "io.commitgate.session-epoch=" + String(request.sessionEpoch ?? 0),
     ...(engineName === "podman" ? ["--userns", "keep-id"] : []),
     "--network",
     config.containerAgentNetwork,
@@ -322,7 +336,10 @@ export class ContainerCodexRunner implements AgentRunner {
     return true;
   }
 
-  async attestCommitGateTeardown(runId: string): Promise<RuntimeTeardownAttestation> {
+  async attestCommitGateTeardown(
+    runId: string,
+    expectedBinding?: RuntimeTeardownBinding,
+  ): Promise<RuntimeTeardownAttestation> {
     const stored = this.completedTeardowns.get(runId);
     if (!stored) {
       return {
@@ -330,6 +347,15 @@ export class ContainerCodexRunner implements AgentRunner {
         containerRemoved: false,
         mountsReleased: false,
       };
+    }
+    if (
+      expectedBinding &&
+      (stored.binding.runId !== expectedBinding.runId ||
+        stored.binding.agentId !== expectedBinding.agentId ||
+        stored.binding.runLeaseId !== expectedBinding.runLeaseId ||
+        stored.binding.sessionEpoch !== expectedBinding.sessionEpoch)
+    ) {
+      throw new Error("BROKER_RUNTIME_TEARDOWN_BINDING_MISMATCH");
     }
     const removed = await this.isContainerRemoved(
       stored.containerId ?? stored.containerName,
@@ -349,6 +375,10 @@ export class ContainerCodexRunner implements AgentRunner {
         : {}),
       ...(stored.containerId ? { containerId: stored.containerId } : {}),
     };
+  }
+
+  hasCommitGateTeardown(runId: string): boolean {
+    return this.completedTeardowns.has(runId);
   }
 
   private removeContainer(active: ActiveContainer): Promise<void> {
@@ -570,6 +600,12 @@ export class ContainerCodexRunner implements AgentRunner {
         : { revoked: true, resolvedModel: null };
       this.completedTeardowns.set(request.runId, {
         containerName: active.containerName,
+        binding: {
+          runId: request.runId,
+          agentId: request.agentId,
+          runLeaseId: active.runLeaseId,
+          sessionEpoch: active.sessionEpoch,
+        },
         containerExited,
         containerRemoved: removed,
         mountsReleased: removed,

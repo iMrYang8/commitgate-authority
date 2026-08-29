@@ -1,23 +1,41 @@
+import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { chmod, lstat, realpath, rm } from "node:fs/promises";
 import { createServer, type Server, type Socket } from "node:net";
+import { promisify } from "node:util";
 import type { AppConfig } from "../config.js";
 import { ContainerCodexRunner } from "../container-codex-runner.js";
 import { DockerVerifierRunner } from "../commitgate/verifier-runner.js";
 import { RunCancelledError } from "../errors.js";
 import type { RunnerCancellation, RunnerRequest } from "../types.js";
+import { sha256Canonical } from "../commitgate/protocol.js";
+import { computeCheckSpecHash } from "../commitgate/trusted-check-bundle.js";
+import { buildWorkerManifest } from "../transition-worker/filesystem.js";
+import { signBrokerAttestation } from "./attestation.js";
+import {
+  BrokerLifecycleLedger,
+  type BrokerRunBinding,
+} from "./lifecycle-ledger.js";
 import {
   brokerRpcRequestSchema,
+  brokerReconcileRequestSchema,
   brokerVerifierRequestSchema,
+  brokerTeardownRequestSchema,
+  type BrokerReconcileRequest,
   type BrokerRunWireRequest,
   type BrokerVerifierRequest,
   type BrokerVerifierResult,
+  type BrokerRecordedCheck,
+  type BrokerTeardownRequest,
   type BrokerRpcResponse,
   type RuntimeBrokerDispatch,
   type RuntimeBrokerHealth,
+  type RuntimeReconciliationAttestation,
 } from "./contracts.js";
 
 const MAX_RPC_BYTES = 4 * 1024 * 1024;
+const execFileAsync = promisify(execFile);
 
 function isContained(root: string, candidate: string): boolean {
   const relative = path.relative(path.resolve(root), path.resolve(candidate));
@@ -38,6 +56,9 @@ export function validateBrokerRunRequest(config: AppConfig, request: BrokerRunWi
   if (config.transitionAuthority === "worker") {
     if (request.workspacePath || !request.workspaceRef) {
       throw new Error("BROKER_OPAQUE_WORKSPACE_REF_REQUIRED");
+    }
+    if (!request.runLeaseId || request.sessionEpoch === undefined) {
+      throw new Error("BROKER_RUNTIME_BINDING_REQUIRED");
     }
     const expectedVolumeId = `candidate-${request.runId}`;
     if (
@@ -96,7 +117,12 @@ export async function validateBrokerWorkspaceIdentity(
 export class RuntimeBroker implements RuntimeBrokerDispatch {
   private readonly runner: ContainerCodexRunner;
   private readonly verifier: DockerVerifierRunner;
+  private readonly lifecycle: BrokerLifecycleLedger;
   private readonly activeRuns = new Set<string>();
+  private readonly activeVerifiers = new Map<
+    string,
+    BrokerRunBinding & { controller: AbortController }
+  >();
 
   constructor(private readonly config: AppConfig) {
     this.runner = new ContainerCodexRunner(config);
@@ -117,16 +143,25 @@ export class RuntimeBroker implements RuntimeBrokerDispatch {
       maxOutputBytes: config.commitGateVerifierMaxOutputBytes,
       sourceRevision: config.commitGateSourceRevision,
     });
+    this.lifecycle = new BrokerLifecycleLedger(
+      path.join(config.commitGateSessionVolumeRoot, ".runtime-broker-ledger"),
+    );
   }
 
   async health(): Promise<RuntimeBrokerHealth> {
     const runtimeAvailable = await this.runner.isAvailable();
-    return { ready: runtimeAvailable, runtimeAvailable, activeRuns: this.activeRuns.size };
+    return {
+      ready: runtimeAvailable,
+      runtimeAvailable,
+      activeRuns: new Set([...this.activeRuns, ...this.activeVerifiers.keys()]).size,
+    };
   }
 
   async runAgent(request: BrokerRunWireRequest) {
     this.assertRequest(request);
     const workspacePath = await validateBrokerWorkspaceIdentity(this.config, request);
+    const binding = this.lifecycleBinding(request);
+    if (binding) await this.lifecycle.beginAgent(binding);
     const resolved: RunnerRequest = { ...request, workspacePath };
     this.activeRuns.add(request.runId);
     try {
@@ -138,6 +173,9 @@ export class RuntimeBroker implements RuntimeBrokerDispatch {
 
   async runVerifier(request: BrokerVerifierRequest): Promise<BrokerVerifierResult> {
     const parsed = brokerVerifierRequestSchema.parse(request) as BrokerVerifierRequest;
+    if (this.activeVerifiers.has(parsed.runId)) {
+      throw new Error("BROKER_VERIFIER_RUN_ALREADY_ACTIVE");
+    }
     const verifyPath = path.join(
       this.config.commitGateExchangeRoot,
       parsed.workspaceRef.relativeSubpath,
@@ -153,32 +191,292 @@ export class RuntimeBroker implements RuntimeBrokerDispatch {
     if (!isContained(exchangeIdentity, verifierIdentity)) {
       throw new Error("BROKER_VERIFIER_WORKSPACE_IDENTITY_MISMATCH");
     }
-    const environment = await this.verifier.describeExecutionEnvironment(parsed.runId);
-    const checks = await this.verifier.run({
+    const binding = this.bindingFromRequired(parsed);
+    const controller = new AbortController();
+    try {
+      const environment = await this.verifier.describeExecutionEnvironment(parsed.runId);
+      const beforeManifest = await buildWorkerManifest(verifierIdentity);
+      if (beforeManifest.hash !== parsed.verifierInputHash) {
+        throw new Error("BROKER_VERIFIER_INPUT_HASH_MISMATCH");
+      }
+      const computedCheckSpecHash = computeCheckSpecHash(parsed.checks);
+      if (computedCheckSpecHash !== parsed.checkSpecHash) {
+        throw new Error("BROKER_VERIFIER_CHECK_SPEC_HASH_MISMATCH");
+      }
+      if (this.config.transitionAuthority === "worker") {
+        await this.lifecycle.beginVerifier(binding);
+      }
+      this.activeVerifiers.set(parsed.runId, { ...binding, controller });
+      const checks = await this.verifier.run({
+        runId: parsed.runId,
+        agentId: parsed.agentId,
+        runLeaseId: parsed.runLeaseId,
+        sessionEpoch: parsed.sessionEpoch,
+        verifyPath: verifierIdentity,
+        workspaceRef: parsed.workspaceRef,
+        trustedChecksPath: this.config.commitGateTrustedChecksDirectory,
+        checks: parsed.checks,
+        timeoutMs: parsed.timeoutMs,
+        maxOutputBytes: parsed.maxOutputBytes,
+        proposalId: parsed.proposalId,
+        checkBundleHash: environment.checkBundleHash,
+        signal: controller.signal,
+      });
+      const afterManifest = await buildWorkerManifest(verifierIdentity);
+      if (afterManifest.hash !== beforeManifest.hash) {
+        throw new Error("BROKER_VERIFIER_INPUT_MUTATED");
+      }
+      const recordedChecks: BrokerRecordedCheck[] = checks.map((check) => ({
+        id: check.id,
+        status: check.status,
+        exitCode: check.exitCode,
+        durationMs: check.durationMs,
+        outputHash: createHash("sha256").update(check.output).digest("hex"),
+        timedOut: check.timedOut,
+      }));
+      const requiredIds = new Set(parsed.checks.map((check) => check.id));
+      const observedIds = new Set(recordedChecks.map((check) => check.id));
+      const coverage =
+        recordedChecks.length === parsed.checks.length &&
+        observedIds.size === requiredIds.size &&
+        [...requiredIds].every((id) => observedIds.has(id))
+          ? "complete" as const
+          : recordedChecks.length > 0
+            ? "partial" as const
+            : "unavailable" as const;
+      const attestation = signBrokerAttestation({
+        schemaVersion: 1 as const,
+        kind: "verifier-result" as const,
+        scope: "VERIFIER" as const,
+        runId: parsed.runId,
+        agentId: parsed.agentId,
+        runLeaseId: parsed.runLeaseId,
+        sessionEpoch: parsed.sessionEpoch,
+        proposalId: parsed.proposalId,
+        verifierInputHash: beforeManifest.hash,
+        checkSpecHash: computedCheckSpecHash,
+        checkResultsHash: sha256Canonical(recordedChecks),
+        coverage,
+        checks: recordedChecks,
+        environment: {
+          checkBundleHash: environment.checkBundleHash,
+          verifierImageDigest: environment.imageDigest,
+          verifierConfigHash: environment.configHash,
+          resourcePolicyHash: environment.resourcePolicyHash ?? "unverified",
+          sourceRevision: environment.sourceRevision ?? "unverified",
+        },
+      }, this.config.brokerAttestationKey);
+      return { checks, environment, attestation };
+    } finally {
+      if (this.activeVerifiers.get(parsed.runId)?.controller === controller) {
+        this.activeVerifiers.delete(parsed.runId);
+      }
+    }
+  }
+
+  async cancel(agentId: string, cancellation: RunnerCancellation): Promise<boolean> {
+    const verifier = this.activeVerifiers.get(cancellation.runId);
+    const verifierCancelled = verifier?.agentId === agentId &&
+      verifier.runLeaseId === cancellation.runLeaseId &&
+      verifier.sessionEpoch === cancellation.sessionEpoch;
+    if (verifierCancelled) verifier.controller.abort(new RunCancelledError());
+    const agentCancelled = await this.runner.cancel(agentId, cancellation);
+    return agentCancelled || verifierCancelled;
+  }
+
+  async teardown(request: BrokerTeardownRequest) {
+    const parsed = brokerTeardownRequestSchema.parse(request);
+    const binding = this.bindingFromRequired(parsed);
+    if (this.config.transitionAuthority === "worker") {
+      await this.lifecycle.assertKnown(binding);
+    }
+    const agentKnown = this.runner.hasCommitGateTeardown(parsed.runId);
+    const [agent, verifier] = await Promise.all([
+      this.runner.attestCommitGateTeardown(parsed.runId, binding),
+      parsed.scope === "ALL"
+        ? this.verifier.attestCommitGateTeardown(parsed.runId, binding)
+        : Promise.resolve(null),
+    ]);
+    // A normal protected run can own an Agent container and later one or more
+    // Verifier containers under the same runId. The public attestation closes
+    // only when every known Broker-owned container and its mounts are gone.
+    const teardown = !verifier
+      ? agent
+      : !agentKnown
+        ? verifier
+        : {
+            ...agent,
+            containerExited: agent.containerExited && verifier.containerExited,
+            containerRemoved: agent.containerRemoved && verifier.containerRemoved,
+            mountsReleased: agent.mountsReleased && verifier.mountsReleased,
+          };
+    if (!teardown.containerExited || !teardown.containerRemoved || !teardown.mountsReleased) {
+      throw new Error("BROKER_RUNTIME_TEARDOWN_INCOMPLETE");
+    }
+    if (this.config.transitionAuthority === "worker") {
+      if (parsed.scope === "AGENT") await this.lifecycle.markAgentClosed(binding);
+      else await this.lifecycle.markAllClosed(binding);
+    }
+    return signBrokerAttestation({
+      schemaVersion: 1 as const,
+      kind: "runtime-teardown" as const,
       runId: parsed.runId,
       agentId: parsed.agentId,
-      verifyPath: verifierIdentity,
-      workspaceRef: parsed.workspaceRef,
-      trustedChecksPath: this.config.commitGateTrustedChecksDirectory,
-      checks: parsed.checks,
-      timeoutMs: parsed.timeoutMs,
-      maxOutputBytes: parsed.maxOutputBytes,
-      proposalId: parsed.proposalId,
-      checkBundleHash: environment.checkBundleHash,
-    });
-    return { checks, environment };
+      runLeaseId: parsed.runLeaseId,
+      sessionEpoch: parsed.sessionEpoch,
+      scope: parsed.scope,
+      containerExited: true as const,
+      containerRemoved: true as const,
+      mountsReleased: true as const,
+      source: "runtime-attestation" as const,
+      ...(teardown.resolvedModel !== undefined
+        ? { resolvedModel: teardown.resolvedModel }
+        : {}),
+    }, this.config.brokerAttestationKey);
   }
 
-  cancel(agentId: string, cancellation: RunnerCancellation) {
-    return this.runner.cancel(agentId, cancellation);
+  /**
+   * Rediscover and quiesce Broker-owned containers after a process restart.
+   * Ownership comes from exact run/lease/session labels, never a caller path.
+   * The Worker has no Docker socket and persists only this negative
+   * container/mount observation before touching exchange artifacts.
+   */
+  async reconcile(
+    request: BrokerReconcileRequest,
+  ): Promise<RuntimeReconciliationAttestation> {
+    const parsed = brokerReconcileRequestSchema.parse(request);
+    const binding = this.bindingFromRequired(parsed);
+    if (this.config.transitionAuthority === "worker") {
+      await this.lifecycle.assertKnown(binding);
+    }
+    await this.cancel(parsed.agentId, {
+      runId: parsed.runId,
+      runLeaseId: parsed.runLeaseId,
+      sessionEpoch: parsed.sessionEpoch,
+    }).catch(() => false);
+
+    const kinds: Array<"agent" | "verifier"> =
+      parsed.scope === "AGENT" ? ["agent"] : ["agent", "verifier"];
+    for (const kind of kinds) {
+      for (const containerId of await this.listBoundContainers(parsed, kind)) {
+        try {
+          await execFileAsync(this.config.containerEngine, ["rm", "--force", containerId], {
+            timeout: 10_000,
+            env: this.runtimeEnvironment(),
+          });
+        } catch {
+          // An --rm container may disappear between list and force-remove.
+          // The bounded negative query below decides whether release is true.
+        }
+      }
+    }
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const remaining = (
+        await Promise.all(kinds.map((kind) => this.listBoundContainers(parsed, kind)))
+      ).flat();
+      if (remaining.length === 0) {
+        if (this.config.transitionAuthority === "worker") {
+          if (parsed.scope === "AGENT") await this.lifecycle.markAgentClosed(binding);
+          else await this.lifecycle.markAllClosed(binding);
+        }
+        return signBrokerAttestation({
+          schemaVersion: 1,
+          kind: "runtime-teardown",
+          ...parsed,
+          containerExited: true,
+          containerRemoved: true,
+          mountsReleased: true,
+          source: "broker-reconciliation",
+        }, this.config.brokerAttestationKey);
+      }
+      await new Promise<void>((resolve) => setTimeout(resolve, 100));
+    }
+    throw new Error("BROKER_RECONCILIATION_INCOMPLETE");
   }
 
-  teardown(runId: string) {
-    return this.runner.attestCommitGateTeardown(runId);
+  private async listBoundContainers(
+    request: BrokerReconcileRequest,
+    kind: "agent" | "verifier",
+  ): Promise<string[]> {
+    const ownershipLabel = kind === "agent"
+      ? "io.commitgate.runtime=agent-runtime"
+      : "io.commitgate.runtime=verifier";
+    let stdout: string;
+    try {
+      const result = await execFileAsync(
+        this.config.containerEngine,
+        [
+          "container",
+          "ls",
+          "--all",
+          "--quiet",
+          "--filter", `label=${ownershipLabel}`,
+          "--filter", `label=io.commitgate.instance-id=${this.config.runtimeInstanceId}`,
+          "--filter", `label=io.commitgate.agent-id=${request.agentId}`,
+          "--filter", `label=io.commitgate.run-id=${request.runId}`,
+          "--filter", `label=io.commitgate.run-lease-id=${request.runLeaseId}`,
+          "--filter", `label=io.commitgate.session-epoch=${request.sessionEpoch}`,
+        ],
+        { timeout: 8_000, env: this.runtimeEnvironment(), encoding: "utf8" },
+      );
+      stdout = String(result.stdout);
+    } catch (error) {
+      throw new Error(
+        `BROKER_RECONCILIATION_QUERY_FAILED:${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    const ids = stdout.split(/\s+/).filter(Boolean);
+    if (!ids.every((value) => /^[a-f0-9]{12,64}$/i.test(value))) {
+      throw new Error("BROKER_RECONCILIATION_RESPONSE_INVALID");
+    }
+    return ids;
+  }
+
+  private runtimeEnvironment(): NodeJS.ProcessEnv {
+    const environment: NodeJS.ProcessEnv = { NO_COLOR: "1" };
+    for (const name of [
+      "PATH",
+      "HOME",
+      "TMPDIR",
+      "LANG",
+      "LC_ALL",
+      "DOCKER_API_VERSION",
+    ] as const) {
+      if (process.env[name] !== undefined) environment[name] = process.env[name];
+    }
+    return environment;
   }
 
   private assertRequest(request: BrokerRunWireRequest): void {
     validateBrokerRunRequest(this.config, request);
+  }
+
+  private lifecycleBinding(request: BrokerRunWireRequest): BrokerRunBinding | null {
+    if (this.config.transitionAuthority !== "worker") return null;
+    if (!request.runLeaseId || request.sessionEpoch === undefined) {
+      throw new Error("BROKER_RUNTIME_BINDING_REQUIRED");
+    }
+    return {
+      runId: request.runId,
+      agentId: request.agentId,
+      runLeaseId: request.runLeaseId,
+      sessionEpoch: request.sessionEpoch,
+    };
+  }
+
+  private bindingFromRequired(request: {
+    runId: string;
+    agentId: string;
+    runLeaseId: string;
+    sessionEpoch: number;
+  }): BrokerRunBinding {
+    return {
+      runId: request.runId,
+      agentId: request.agentId,
+      runLeaseId: request.runLeaseId,
+      sessionEpoch: request.sessionEpoch,
+    };
   }
 }
 
@@ -227,7 +525,9 @@ function handleConnection(broker: RuntimeBrokerDispatch, socket: Socket): void {
               ? await broker.runVerifier(request.request as BrokerVerifierRequest)
             : request.method === "cancel"
               ? await broker.cancel(request.agentId, request.cancellation)
-              : await broker.teardown(request.runId);
+              : request.method === "reconcile"
+                ? await broker.reconcile(request.request)
+                : await broker.teardown(request.request);
         response = { id: request.id, ok: true, result };
       } catch (error) {
         response = {

@@ -7,6 +7,7 @@ export async function loadRuntimeSecretFiles(
   for (const [fileVariable, valueVariable] of [
     ["APP_AUTH_TOKEN_FILE", "APP_AUTH_TOKEN"],
     ["MODEL_RELAY_TOKEN_FILE", "MODEL_RELAY_TOKEN"],
+    ["BROKER_ATTESTATION_KEY_FILE", "BROKER_ATTESTATION_KEY"],
   ] as const) {
     const file = environment[fileVariable]?.trim();
     if (!file) continue;

@@ -28,6 +28,10 @@ const baseUrl = (
     : process.env.ARK_BASE_URL ?? "https://ark.cn-beijing.volces.com/api/v3")
 ).replace(/\/+$/, "");
 const source = await evidenceProvenance(root);
+const sourceRevision = source.sourceRevision;
+if (!sourceRevision || !/^[a-f0-9]{40}$/.test(sourceRevision)) {
+  throw new Error("Real Provider evaluation requires a clean 40-hex source revision");
+}
 const identity = executionIdentity(root, {
   providerId: provider,
   environment: {
@@ -65,9 +69,7 @@ if (!key || key.startsWith("replace-") || !model || model.includes("replace-")) 
           credentialsRecorded: false,
         },
         reason: "Provider credentials/model are not configured",
-        officialProviderE2E: "unverified",
-        alternateProviderVerified: false,
-        competitionVerified: false,
+        providerE2EVerified: "unverified",
       },
       null,
       2,
@@ -249,11 +251,20 @@ try {
     cwd: root,
     env: {
       ...apiEnvironment,
-      NODE_ENV: "production",
+      // This evaluator isolates Provider/Responses compatibility from the
+      // separate default-product Worker/Broker browser proof. It still runs a
+      // real Codex container and CommitGate transaction, but intentionally
+      // uses the in-process test adapter rather than pretending to be the
+      // production authority topology.
+      NODE_ENV: "test",
       HOST: "127.0.0.1",
       PORT: String(port),
       LOG_LEVEL: "error",
       APP_AUTH_TOKEN: authToken,
+      // API/Verifier evidence must bind the exact clean source
+      // revision used by this evaluator. Do not rely on the caller to export
+      // it separately from the report provenance calculation above.
+      COMMITGATE_SOURCE_REVISION: sourceRevision,
       APP_DATA_DIR: path.join(tempRoot, "data"),
       AGENT_WORKSPACE_ROOT: workspaceRoot,
       COMMITGATE_CONTROL_ROOT: controlRoot,
@@ -283,10 +294,7 @@ try {
   server.stderr?.on("data", consume);
   await waitForHealth();
 
-  const home = await fetch(applicationUrl + "/", {
-    headers: { authorization: `Bearer ${authToken}` },
-  });
-  scenario.push({ id: "frontend-served", status: home.ok ? "verified" : "failed" });
+  scenario.push({ id: "provider-api-ready", status: "verified" });
   const { agent } = await api("/api/agents", {
     method: "POST",
     body: JSON.stringify({
@@ -438,23 +446,18 @@ try {
     },
     provenance: {
       realProviderRequest: true,
-      realModelArk: provider === "ark",
       realCodexContainer: true,
+      productAuthorityTopology: false,
       browserAutomation: false,
-      frontendAssetServed: scenario[0]?.status === "verified",
+      frontendAssetServed: false,
       credentialsRecorded: false,
       claimBoundary:
-        "Automated API E2E plus served frontend asset; clean-clone browser automation is separate evidence.",
+        "Provider/Responses compatibility E2E with a real Codex container and isolated in-process authority adapter; the default Worker/Broker product topology and clean-clone browser path are separate evidence.",
     },
-    officialProviderE2E: provider === "ark" ? status : "unverified",
-    alternateProviderVerified: provider === "openrouter" && status === "verified",
-    competitionVerified: false,
+    providerE2EVerified: status,
     scenario,
   };
   await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
-  if (provider === "ark") {
-    await writeFile(path.join(root, "eval", "real-report.json"), JSON.stringify(report, null, 2) + "\n", "utf8");
-  }
   console.log(`${status}: ${provider} provider evaluation report: ${reportPath}`);
   process.exitCode = status === "verified" ? 0 : 1;
 } catch (error) {
@@ -472,9 +475,7 @@ try {
       resolvedModel: null,
       credentialsRecorded: false,
     },
-    officialProviderE2E: "unverified",
-    alternateProviderVerified: false,
-    competitionVerified: false,
+    providerE2EVerified: "failed",
     scenario,
     error: redact(error instanceof Error ? error.message : String(error)),
     serverLog: redact(serverLog),

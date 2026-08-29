@@ -128,7 +128,12 @@ export class TransitionWorkerRpcClient {
         socket.end();
         try {
           const response = JSON.parse(buffered.slice(0, newline)) as WorkerRpcResponse;
-          if (response.id !== id) throw new Error("RPC_RESPONSE_ID_MISMATCH");
+          if (response.id !== id) {
+            throw new WorkerFault(
+              "RPC_RESPONSE_ID_MISMATCH",
+              "Transition Worker response did not bind the request id",
+            );
+          }
           if (!response.ok) {
             const error = new WorkerFault(response.error.code, response.error.message);
             finish(() => reject(error));

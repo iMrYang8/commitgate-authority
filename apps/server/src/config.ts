@@ -24,6 +24,7 @@ const envSchema = z.object({
   CODEX_MAX_OUTPUT_BYTES: z.coerce.number().int().min(65_536).default(2_097_152),
   RUNTIME_PROVIDER: z.enum(["local-process", "container", "broker"]).default("local-process"),
   RUNTIME_BROKER_SOCKET: z.string().optional(),
+  BROKER_ATTESTATION_KEY: z.string().optional(),
   CONTAINER_ENGINE: z.string().min(1).default("docker"),
   CONTAINER_RUNTIME_IMAGE: z.string().min(1).default("volc-agent-runtime:local"),
   CONTAINER_CPU_LIMIT: z.coerce.number().positive().default(2),
@@ -148,6 +149,28 @@ function isDedicatedAgentNetwork(value: string): boolean {
 
 export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
   const env = envSchema.parse(environment);
+  const sourceRevision = env.COMMITGATE_SOURCE_REVISION ?? "unverified";
+  const productionProofParticipant =
+    env.NODE_ENV === "production" &&
+    (env.PROCESS_ROLE === "runtime-broker" ||
+      (env.PROCESS_ROLE === "api" && env.COMMITGATE_ENABLED === "true"));
+  if (productionProofParticipant && !/^[a-f0-9]{40}$/.test(sourceRevision)) {
+    throw new Error(
+      "Production CommitGate API/Runtime Broker requires a full 40-hex COMMITGATE_SOURCE_REVISION",
+    );
+  }
+  if (
+    env.NODE_ENV === "production" &&
+    env.PROCESS_ROLE === "api" &&
+    [
+      "COMMITGATE_FAULT_INJECTION",
+      "COMMITGATE_API_FAULT_POINT",
+      "COMMITGATE_API_FAULT_AGENT_ID",
+      "COMMITGATE_API_FAULT_RUN_ID",
+    ].some((name) => environment[name] !== undefined)
+  ) {
+    throw new Error("Production API must not expose CommitGate fault-injection switches");
+  }
   const authToken = env.APP_AUTH_TOKEN?.trim() ?? "";
   const loopbackHosts = new Set(["127.0.0.1", "::1", "localhost"]);
   if (
@@ -235,6 +258,12 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
     if (!env.TRANSITION_WORKER_SOCKET) {
       throw new Error("Production CommitGate requires TRANSITION_WORKER_SOCKET");
     }
+    if (
+      env.BROKER_ATTESTATION_KEY?.trim() ||
+      environment.BROKER_ATTESTATION_KEY_FILE?.trim()
+    ) {
+      throw new Error("Production API must not receive the Broker attestation key");
+    }
   }
   if (env.NODE_ENV === "production" && env.PROCESS_ROLE === "runtime-broker") {
     if (env.RUNTIME_PROVIDER !== "container") {
@@ -253,6 +282,9 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
     }
     if (upstreamModelApiKey.length > 0) {
       throw new Error("Production Runtime Broker must not receive a Provider API key");
+    }
+    if (Buffer.byteLength(env.BROKER_ATTESTATION_KEY?.trim() ?? "", "utf8") < 32) {
+      throw new Error("Production Runtime Broker requires a 32-byte Broker attestation key");
     }
   }
   const modelRuntimeBaseUrl =
@@ -278,6 +310,11 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
     runtimeBrokerSocket: path.resolve(
       env.RUNTIME_BROKER_SOCKET || path.join(env.APP_DATA_DIR, "run", "runtime-broker.sock"),
     ),
+    brokerAttestationKey:
+      env.BROKER_ATTESTATION_KEY?.trim() ||
+      (env.NODE_ENV === "production"
+        ? ""
+        : "commitgate-development-broker-attestation-key-do-not-use-in-production"),
     containerEngine: env.CONTAINER_ENGINE,
     containerRuntimeImage: env.CONTAINER_RUNTIME_IMAGE,
     containerCpuLimit: env.CONTAINER_CPU_LIMIT,
@@ -317,7 +354,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
     commitGateVerifierMaxOutputBytes: env.COMMITGATE_VERIFIER_MAX_OUTPUT_BYTES,
     commitGateMaxUniqueSnapshots: env.COMMITGATE_MAX_UNIQUE_SNAPSHOTS,
     commitGateMaxSnapshotBytes: env.COMMITGATE_MAX_SNAPSHOT_BYTES,
-    commitGateSourceRevision: env.COMMITGATE_SOURCE_REVISION ?? "unverified",
+    commitGateSourceRevision: sourceRevision,
     runtimeInstanceId: env.RUNTIME_INSTANCE_ID,
     authToken,
     modelProvider,

@@ -1,5 +1,6 @@
 import type {
   CommitGateSummary,
+  EffectDispositionProof,
   ModelProviderIdentity,
   RunnerResult,
 } from "../types.js";
@@ -284,6 +285,8 @@ export interface GateReceipt {
   artifactRetention?: "destroyed" | "sealed" | "version_snapshot" | "deferred";
   /** Optional only for legacy receipts written before provider evidence existed. */
   provider?: ModelProviderIdentity | null;
+  /** Read/API projection only. Promotion never trusts this derived value. */
+  effectProof?: EffectDispositionProof;
   startedAt: string;
   completedAt: string;
 }
@@ -297,6 +300,8 @@ export interface CommitGateRunnerResult extends RunnerResult {
 export interface VerifierInput {
   runId: string;
   agentId: string;
+  runLeaseId?: string;
+  sessionEpoch?: number;
   verifyPath: string;
   workspaceRef?: {
     volumeId: string;

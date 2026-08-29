@@ -7,15 +7,23 @@ import { evidenceProvenance, executionIdentity } from "./evidence-utils.mjs";
 import { assertEvaluationRecord, evaluationRecord } from "./evaluation-record.mjs";
 
 const root = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
+const source = await evidenceProvenance(root);
+const sourceRevision = process.env.COMMITGATE_SOURCE_REVISION || source.sourceRevision;
+if (!sourceRevision) throw new Error("FROZEN_SOURCE_REVISION_UNAVAILABLE");
 const checks = [];
 const add = (id, status, detail) => checks.push({ id, status, detail });
+const composeProject = process.env.COMMITGATE_COMPOSE_PROJECT || "commitgate";
 const compose = (...args) => spawnSync(
   "docker",
-  ["compose", "--project-name", "commitgate", ...args],
+  ["compose", "--project-name", composeProject, ...args],
   {
     cwd: root,
     encoding: "utf8",
-    env: { ...process.env, MODEL_ID: process.env.MODEL_ID || "topology-audit" },
+    env: {
+      ...process.env,
+      MODEL_ID: process.env.MODEL_ID || "topology-audit",
+      COMMITGATE_SOURCE_REVISION: sourceRevision,
+    },
   },
 );
 
@@ -83,12 +91,111 @@ if (live) {
       detail || `exit=${attempt.status}`,
     );
   }
+  const privateKeyRead = compose(
+    "exec",
+    "-T",
+    "api",
+    "sh",
+    "-c",
+    "cat /control/signing/ed25519-private.pem >/dev/null",
+  );
+  const privateKeyReadDetail = `${privateKeyRead.stdout}\n${privateKeyRead.stderr}`.trim();
+  add(
+    "api-receipt-private-key-read-denied-live",
+    privateKeyRead.status !== 0 && /permission denied|operation not permitted/i.test(privateKeyReadDetail)
+      ? "verified"
+      : "failed",
+    privateKeyReadDetail || `exit=${privateKeyRead.status}`,
+  );
   add(
     "worker-exclusive-authority-rw",
     byDestination(worker, "/var/lib/commitgate/workspaces")?.rw === true &&
       byDestination(worker, "/var/lib/commitgate/control")?.rw === true &&
       !hasControl(broker) && !hasControl(relay),
     "Worker is the only service with authority/control RW; Broker and Relay have neither mount.",
+  );
+  const workerHealthResult = compose(
+    "exec",
+    "-T",
+    "transition-worker",
+    "node",
+    "apps/server/dist/transition-worker/cli.js",
+    "health",
+  );
+  let workerHealth = null;
+  try {
+    workerHealth = JSON.parse(workerHealthResult.stdout);
+  } catch {
+    workerHealth = null;
+  }
+  add(
+    "worker-linux-strong-manifest-v2",
+    workerHealthResult.status === 0 &&
+      workerHealth?.manifestSchemaVersion === 2 &&
+      workerHealth?.filesystemProfile === "linux-strong"
+      ? "verified"
+      : "failed",
+    workerHealth
+      ? JSON.stringify({
+          manifestSchemaVersion: workerHealth.manifestSchemaVersion,
+          filesystemProfile: workerHealth.filesystemProfile,
+        })
+      : (workerHealthResult.stderr || workerHealthResult.stdout || "Worker health unavailable").trim(),
+  );
+  const workspaceIdentityResult = compose(
+    "exec",
+    "-T",
+    "transition-worker",
+    "node",
+    "-e",
+    "console.log(JSON.stringify({uid:process.getuid(),gid:process.getgid()}))",
+  );
+  const agentIdentityResult = compose(
+    "exec",
+    "-T",
+    "runtime-broker",
+    "node",
+    "-e",
+    "console.log(process.env.CONTAINER_USER||'')",
+  );
+  const brokerIdentityResult = compose(
+    "exec",
+    "-T",
+    "runtime-broker",
+    "node",
+    "-e",
+    "console.log(JSON.stringify({uid:process.getuid(),gid:process.getgid()}))",
+  );
+  let workspaceIdentity = null;
+  let brokerIdentity = null;
+  try {
+    workspaceIdentity = JSON.parse(workspaceIdentityResult.stdout);
+  } catch {
+    workspaceIdentity = null;
+  }
+  try {
+    brokerIdentity = JSON.parse(brokerIdentityResult.stdout);
+  } catch {
+    brokerIdentity = null;
+  }
+  add(
+    "worker-broker-agent-artifact-identity-aligned",
+    workspaceIdentityResult.status === 0 &&
+      workspaceIdentity?.uid === 10001 &&
+      workspaceIdentity?.gid === 20000 &&
+      brokerIdentityResult.status === 0 &&
+      brokerIdentity?.uid === 10001 &&
+      brokerIdentity?.gid === 20002 &&
+      agentIdentityResult.status === 0 &&
+      agentIdentityResult.stdout.trim() === "10001:20000"
+      ? "verified"
+      : "failed",
+    JSON.stringify({
+      worker: workspaceIdentity,
+      broker: brokerIdentity,
+      agentUser: agentIdentityResult.stdout.trim(),
+      boundary: "shared artifact UID; disjoint socket groups and mounts",
+    }),
   );
   const socketOwners = services.filter((service) =>
     inspections[service].mounts.some((mount) => mount.destination === "/var/run/docker.sock"),
@@ -107,6 +214,37 @@ if (live) {
     providerKeyHolders.length === 1 && providerKeyHolders[0] === "model-relay" ? "verified" : "failed",
     `holders=${providerKeyHolders.join(",") || "none"}`,
   );
+  const attestationKeyEnvHolders = services.filter((service) =>
+    inspections[service].envNames.includes("BROKER_ATTESTATION_KEY") ||
+    inspections[service].envNames.includes("BROKER_ATTESTATION_KEY_FILE"),
+  );
+  const attestationSecretMountHolders = services.filter((service) =>
+    inspections[service].mounts.some(
+      (mount) => mount.destination === "/run/secrets/broker_attestation_key",
+    ),
+  );
+  const expectedAttestationHolders = ["runtime-broker", "transition-worker"];
+  const apiHasAttestationCredential =
+    api.envNames.includes("BROKER_ATTESTATION_KEY") ||
+    api.envNames.includes("BROKER_ATTESTATION_KEY_FILE") ||
+    api.mounts.some(
+      (mount) => mount.destination === "/run/secrets/broker_attestation_key",
+    );
+  add(
+    "broker-attestation-key-only-worker-and-broker",
+    JSON.stringify(attestationKeyEnvHolders.sort()) ===
+        JSON.stringify(expectedAttestationHolders) &&
+      JSON.stringify(attestationSecretMountHolders.sort()) ===
+        JSON.stringify(expectedAttestationHolders) &&
+      !apiHasAttestationCredential
+      ? "verified"
+      : "failed",
+    JSON.stringify({
+      envFileHolders: attestationKeyEnvHolders,
+      secretMountHolders: attestationSecretMountHolders,
+      apiHasAttestationCredential,
+    }),
+  );
   add(
     "relay-no-workspace",
     !hasControl(relay) && !relay.mounts.some((mount) => /exchange|session/i.test(mount.destination)),
@@ -117,6 +255,159 @@ if (live) {
     !hasControl(broker),
     "Broker has exchange/session/check volumes and Docker socket, but no authority/control mount.",
   );
+  const exchangeMount = byDestination(broker, "/var/lib/commitgate/exchange");
+  const exchangeOwnershipScript = [
+    "const s=require('node:fs').lstatSync('/var/lib/commitgate/exchange');",
+    "console.log(JSON.stringify({uid:s.uid,gid:s.gid,mode:s.mode&0o777}));",
+  ].join("");
+  const workerExchangeOwnershipResult = compose(
+    "exec",
+    "-T",
+    "transition-worker",
+    "node",
+    "-e",
+    exchangeOwnershipScript,
+  );
+  const brokerExchangeOwnershipResult = compose(
+    "exec",
+    "-T",
+    "runtime-broker",
+    "node",
+    "-e",
+    exchangeOwnershipScript,
+  );
+  let workerExchangeOwnership = null;
+  let brokerExchangeOwnership = null;
+  try {
+    workerExchangeOwnership = JSON.parse(workerExchangeOwnershipResult.stdout);
+  } catch {
+    workerExchangeOwnership = null;
+  }
+  try {
+    brokerExchangeOwnership = JSON.parse(brokerExchangeOwnershipResult.stdout);
+  } catch {
+    brokerExchangeOwnership = null;
+  }
+  const expectedExchangeOwnership = { uid: 10001, gid: 20000, mode: 0o770 };
+  add(
+    "exchange-volume-owner-aligned",
+    workerExchangeOwnershipResult.status === 0 &&
+      brokerExchangeOwnershipResult.status === 0 &&
+      [workerExchangeOwnership, brokerExchangeOwnership].every(
+        (entry) => entry?.uid === expectedExchangeOwnership.uid &&
+          entry?.gid === expectedExchangeOwnership.gid &&
+          entry?.mode === expectedExchangeOwnership.mode,
+      )
+      ? "verified"
+      : "failed",
+    JSON.stringify({
+      expected: expectedExchangeOwnership,
+      worker: workerExchangeOwnership,
+      broker: brokerExchangeOwnership,
+      workerExit: workerExchangeOwnershipResult.status,
+      brokerExit: brokerExchangeOwnershipResult.status,
+    }),
+  );
+  const exchangeStat = compose(
+    "exec",
+    "-T",
+    "runtime-broker",
+    "node",
+    "-e",
+    [
+      "const s=require('node:fs').statfsSync('/var/lib/commitgate/exchange',{bigint:true});",
+      "console.log(JSON.stringify({type:s.type.toString(16),capacityBytes:(s.blocks*s.bsize).toString(),files:s.files.toString()}));",
+    ].join(""),
+  );
+  let exchangeFilesystem = null;
+  try {
+    exchangeFilesystem = JSON.parse(exchangeStat.stdout);
+  } catch {
+    exchangeFilesystem = null;
+  }
+  const exchangeCapacity = Number(exchangeFilesystem?.capacityBytes ?? NaN);
+  const exchangeInodes = Number(exchangeFilesystem?.files ?? NaN);
+  add(
+    "exchange-volume-kernel-bounded",
+    exchangeMount?.type === "volume" &&
+      exchangeStat.status === 0 &&
+      exchangeFilesystem?.type === "1021994" &&
+      Number.isFinite(exchangeCapacity) &&
+      exchangeCapacity > 0 &&
+      exchangeCapacity <= Number(process.env.COMMITGATE_EXCHANGE_BYTES ?? 536_870_912) &&
+      Number.isFinite(exchangeInodes) &&
+      exchangeInodes > 0 &&
+      exchangeInodes <= Number(process.env.COMMITGATE_EXCHANGE_INODES ?? 100_000)
+      ? "verified"
+      : "failed",
+    JSON.stringify({ mount: exchangeMount, statfs: exchangeFilesystem }),
+  );
+  const transitionSocketDestination = "/run/commitgate/transition";
+  const brokerSocketDestination = "/run/commitgate/broker";
+  const apiTransitionSocket = byDestination(api, transitionSocketDestination);
+  const apiBrokerSocket = byDestination(api, brokerSocketDestination);
+  const workerTransitionSocket = byDestination(worker, transitionSocketDestination);
+  const brokerOwnSocket = byDestination(broker, brokerSocketDestination);
+  add(
+    "rpc-socket-volumes-separated",
+    apiTransitionSocket?.rw === false &&
+      apiBrokerSocket?.rw === false &&
+      workerTransitionSocket?.rw === true &&
+      brokerOwnSocket?.rw === true &&
+      !byDestination(worker, brokerSocketDestination) &&
+      !byDestination(broker, transitionSocketDestination) &&
+      apiTransitionSocket.name !== apiBrokerSocket.name &&
+      workerTransitionSocket.name === apiTransitionSocket.name &&
+      brokerOwnSocket.name === apiBrokerSocket.name
+      ? "verified"
+      : "failed",
+    JSON.stringify({
+      apiTransitionSocket,
+      apiBrokerSocket,
+      workerTransitionSocket,
+      brokerOwnSocket,
+    }),
+  );
+
+  const brokerToWorker = compose(
+    "exec",
+    "-T",
+    "runtime-broker",
+    "node",
+    "-e",
+    [
+      "const n=require('node:net');",
+      `const s=n.connect('${transitionSocketDestination}/transition-worker.sock');`,
+      "s.on('connect',()=>{console.error('UNEXPECTED_CONNECT');s.end();process.exit(42)});",
+      "s.on('error',e=>{console.error(e.code||e.message);process.exit(['ENOENT','EACCES'].includes(e.code)?0:1)});",
+    ].join(""),
+  );
+  add(
+    "broker-cannot-connect-transition-worker-socket",
+    brokerToWorker.status === 0 && /ENOENT|EACCES/.test(`${brokerToWorker.stdout}\n${brokerToWorker.stderr}`)
+      ? "verified"
+      : "failed",
+    `${brokerToWorker.stdout}\n${brokerToWorker.stderr}`.trim() || `exit=${brokerToWorker.status}`,
+  );
+
+  for (const [id, socketPath] of [
+    ["transition-worker", `${transitionSocketDestination}/transition-worker.sock`],
+    ["runtime-broker", `${brokerSocketDestination}/runtime-broker.sock`],
+  ]) {
+    const apiConnect = compose(
+      "exec",
+      "-T",
+      "api",
+      "node",
+      "-e",
+      `const n=require('node:net'),s=n.connect('${socketPath}');s.on('connect',()=>{s.end();process.exit(0)});s.on('error',e=>{console.error(e.code||e.message);process.exit(1)});`,
+    );
+    add(
+      `api-connects-${id}-socket`,
+      apiConnect.status === 0 ? "verified" : "failed",
+      `${apiConnect.stdout}\n${apiConnect.stderr}`.trim() || `exit=${apiConnect.status}`,
+    );
+  }
 }
 
 for (const check of checks) {
@@ -127,7 +418,6 @@ const status = checks.some((item) => item.status === "failed")
   : checks.some((item) => item.status === "unverified")
     ? "unverified"
     : "verified";
-const source = await evidenceProvenance(root);
 const identity = executionIdentity(root);
 const report = {
   schemaVersion: 2,

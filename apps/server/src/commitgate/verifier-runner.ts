@@ -3,6 +3,10 @@ import { createHash } from "node:crypto";
 import { lstat } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import type {
+  RuntimeTeardownAttestation,
+  RuntimeTeardownBinding,
+} from "../container-codex-runner.js";
 import {
   assertTrustedCheckBundleDescriptor,
   describeTrustedCheckBundle,
@@ -53,9 +57,22 @@ interface VerifierRunBinding {
   createdAt: number;
 }
 
+interface VerifierContainerTeardown {
+  containerExited: boolean;
+  containerRemoved: boolean;
+  mountsReleased: boolean;
+}
+
+interface VerifierRunTeardown {
+  runComplete: boolean;
+  containers: Map<string, VerifierContainerTeardown>;
+  binding: RuntimeTeardownBinding;
+}
+
 interface DockerVerifierDependencies {
   inspectImage?: (engine: string, image: string) => Promise<ImageIdentity>;
   spawnProcess?: typeof spawn;
+  inspectContainerRemoved?: (engine: string, name: string) => Promise<boolean>;
 }
 
 function sha256(value: string | Buffer): string {
@@ -153,6 +170,26 @@ async function inspectImage(engine: string, image: string): Promise<ImageIdentit
   };
 }
 
+async function inspectContainerRemoved(engine: string, name: string): Promise<boolean> {
+  try {
+    await execFileAsync(engine, ["container", "inspect", name], {
+      timeout: 5_000,
+      env: verifierHostEnvironment(),
+    });
+    return false;
+  } catch (error) {
+    const candidate = error as Error & { stderr?: string | Buffer };
+    const detail = `${candidate.message}\n${
+      typeof candidate.stderr === "string"
+        ? candidate.stderr
+        : candidate.stderr?.toString("utf8") ?? ""
+    }`;
+    return /no such (?:object|container)|no container with name or id|does not exist/i.test(
+      detail,
+    );
+  }
+}
+
 function verifierHostEnvironment(): NodeJS.ProcessEnv {
   const environment: NodeJS.ProcessEnv = {};
   for (const name of [
@@ -224,7 +261,17 @@ export function buildVerifierContainerArgs(
     "--name",
     name,
     "--label",
-    "io.commitgate.commitgate=verifier",
+    "io.commitgate.runtime=verifier",
+    "--label",
+    "io.commitgate.agent-id=" + input.agentId,
+    "--label",
+    "io.commitgate.run-id=" + input.runId,
+    "--label",
+    "io.commitgate.run-lease-id=" + (input.runLeaseId ?? input.runId),
+    "--label",
+    "io.commitgate.session-epoch=" + String(input.sessionEpoch ?? 0),
+    "--label",
+    "io.commitgate.instance-id=" + (config.instanceId ?? "default"),
     ...(engineName === "podman" ? ["--userns", "keep-id"] : []),
     "--network",
     "none",
@@ -323,8 +370,14 @@ export class DockerVerifierRunner implements VerifierRunner {
     engine: string,
     image: string,
   ) => Promise<ImageIdentity>;
+  private readonly inspectContainerRemovedFn: (
+    engine: string,
+    name: string,
+  ) => Promise<boolean>;
   private readonly spawnProcess: typeof spawn;
   private readonly bindings = new Map<string, VerifierRunBinding>();
+  /** Bounded Broker-lifetime teardown facts, keyed by the public runId. */
+  private readonly completedTeardowns = new Map<string, VerifierRunTeardown>();
   private readonly bundleStore: TrustedCheckBundleStore | null;
 
   constructor(
@@ -332,6 +385,8 @@ export class DockerVerifierRunner implements VerifierRunner {
     dependencies: DockerVerifierDependencies = {},
   ) {
     this.inspectImageFn = dependencies.inspectImage ?? inspectImage;
+    this.inspectContainerRemovedFn =
+      dependencies.inspectContainerRemoved ?? inspectContainerRemoved;
     this.spawnProcess = dependencies.spawnProcess ?? spawn;
     this.bundleStore = config.trustedChecksPath
       ? new TrustedCheckBundleStore(
@@ -377,6 +432,41 @@ export class DockerVerifierRunner implements VerifierRunner {
 
   releaseExecutionEnvironment(runId: string): void {
     this.bindings.delete(runId);
+  }
+
+  async attestCommitGateTeardown(
+    runId: string,
+    expectedBinding?: RuntimeTeardownBinding,
+  ): Promise<RuntimeTeardownAttestation | null> {
+    const run = this.completedTeardowns.get(runId);
+    if (!run) return null;
+    if (
+      expectedBinding &&
+      (run.binding.runId !== expectedBinding.runId ||
+        run.binding.agentId !== expectedBinding.agentId ||
+        run.binding.runLeaseId !== expectedBinding.runLeaseId ||
+        run.binding.sessionEpoch !== expectedBinding.sessionEpoch)
+    ) {
+      throw new Error("BROKER_VERIFIER_TEARDOWN_BINDING_MISMATCH");
+    }
+    const observations = await Promise.all(
+      [...run.containers.entries()].map(async ([name, stored]) => {
+        const removed = await this.inspectContainerRemovedFn(this.config.engine, name);
+        return {
+          containerExited: stored.containerExited,
+          containerRemoved: stored.containerRemoved && removed,
+          mountsReleased: stored.mountsReleased && removed,
+        };
+      }),
+    );
+    return {
+      containerExited:
+        run.runComplete && observations.every((entry) => entry.containerExited),
+      containerRemoved:
+        run.runComplete && observations.every((entry) => entry.containerRemoved),
+      mountsReleased:
+        run.runComplete && observations.every((entry) => entry.mountsReleased),
+    };
   }
 
   private executionEnvironment(
@@ -457,6 +547,12 @@ export class DockerVerifierRunner implements VerifierRunner {
       throw new Error("Trusted check bundle changed after evidence binding");
     }
 
+    this.beginTeardownRecord({
+      runId: input.runId,
+      agentId: input.agentId,
+      runLeaseId: input.runLeaseId ?? "",
+      sessionEpoch: input.sessionEpoch ?? 0,
+    });
     const budget = new VerifierRunBudget(input.timeoutMs, input.maxOutputBytes);
     const results: CheckResult[] = [];
     const pinnedConfig = { ...this.config, image: binding.identity.imageId };
@@ -486,6 +582,8 @@ export class DockerVerifierRunner implements VerifierRunner {
     } finally {
       const current = this.bindings.get(input.runId);
       if (current) current.state = "EXECUTED";
+      const teardown = this.completedTeardowns.get(input.runId);
+      if (teardown) teardown.runComplete = true;
     }
   }
 
@@ -502,6 +600,7 @@ export class DockerVerifierRunner implements VerifierRunner {
       check.id,
       this.config.instanceId,
     );
+    this.registerContainer(input.runId, name);
     const child = this.spawnProcess(
       this.config.engine,
       buildVerifierContainerArgs(input, check, executionConfig),
@@ -513,12 +612,18 @@ export class DockerVerifierRunner implements VerifierRunner {
     let output = "";
     let timedOut = false;
     let outputExceeded = false;
+    let containerExited = false;
+    const removal: { promise: Promise<void> | null } = { promise: null };
+    const requestRemoval = (): Promise<void> => {
+      removal.promise ??= this.forceRemove(name, child);
+      return removal.promise;
+    };
     const consume = (chunk: Buffer) => {
       const accepted = budget.consumeOutput(chunk.byteLength);
       if (accepted > 0) output += chunk.subarray(0, accepted).toString("utf8");
       if (budget.outputExceeded()) {
         outputExceeded = true;
-        void this.forceRemove(name, child);
+        void requestRemoval();
       }
     };
     child.stdout.on("data", consume);
@@ -530,21 +635,30 @@ export class DockerVerifierRunner implements VerifierRunner {
     );
     const timer = setTimeout(() => {
       timedOut = true;
-      void this.forceRemove(name, child);
+      void requestRemoval();
     }, timeoutMs);
     timer.unref();
-    const abort = () => void this.forceRemove(name, child);
+    const abort = () => void requestRemoval();
     input.signal?.addEventListener("abort", abort, { once: true });
     try {
       const exitCode = await new Promise<number | null>((resolve, reject) => {
         child.once("error", reject);
-        child.once("close", (code) => resolve(code));
+        child.once("close", (code) => {
+          containerExited = true;
+          resolve(code);
+        });
       });
       if (input.signal?.aborted) {
         throw input.signal.reason ?? new Error("Verification aborted");
       }
+      // A conventional trusted check failure exits 1..127 and is policy
+      // evidence. Exit codes in the signal range indicate that the container
+      // was terminated by the Runtime/host (for example SIGKILL => 137). That
+      // is infrastructure failure, not a trustworthy FAIL verdict, so keep it
+      // fail-closed as ERROR and let the coordinator disposition it ABORTED.
+      const unexpectedContainerExit = exitCode !== null && exitCode >= 128;
       const status =
-        timedOut || outputExceeded || exitCode === null
+        timedOut || outputExceeded || exitCode === null || unexpectedContainerExit
           ? "ERROR"
           : exitCode === 0
             ? "PASS"
@@ -553,7 +667,9 @@ export class DockerVerifierRunner implements VerifierRunner {
         ? "\n[VERIFIER_RUN_TIMEOUT]"
         : outputExceeded
           ? "\n[VERIFIER_RUN_OUTPUT_LIMIT_EXCEEDED]"
-          : "";
+          : unexpectedContainerExit
+            ? `\n[VERIFIER_CONTAINER_UNEXPECTED_EXIT:${exitCode}]`
+            : "";
       return {
         id: check.id,
         status,
@@ -575,7 +691,47 @@ export class DockerVerifierRunner implements VerifierRunner {
     } finally {
       clearTimeout(timer);
       input.signal?.removeEventListener("abort", abort);
+      await removal.promise?.catch(() => undefined);
+      const removed = await this.inspectContainerRemovedFn(this.config.engine, name);
+      this.recordContainerTeardown(input.runId, name, {
+        containerExited,
+        containerRemoved: removed,
+        mountsReleased: removed,
+      });
     }
+  }
+
+  private beginTeardownRecord(binding: RuntimeTeardownBinding): void {
+    this.completedTeardowns.set(binding.runId, {
+      runComplete: false,
+      containers: new Map(),
+      binding,
+    });
+    while (this.completedTeardowns.size > 1_024) {
+      const oldest = this.completedTeardowns.keys().next().value as string | undefined;
+      if (!oldest || oldest === binding.runId) break;
+      this.completedTeardowns.delete(oldest);
+    }
+  }
+
+  private registerContainer(runId: string, name: string): void {
+    const run = this.completedTeardowns.get(runId);
+    if (!run) throw new Error("VERIFIER_TEARDOWN_RECORD_MISSING");
+    run.containers.set(name, {
+      containerExited: false,
+      containerRemoved: false,
+      mountsReleased: false,
+    });
+  }
+
+  private recordContainerTeardown(
+    runId: string,
+    name: string,
+    teardown: VerifierContainerTeardown,
+  ): void {
+    const run = this.completedTeardowns.get(runId);
+    if (!run) return;
+    run.containers.set(name, teardown);
   }
 
   private async forceRemove(name: string, child?: ChildProcess): Promise<void> {

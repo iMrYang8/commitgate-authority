@@ -19,6 +19,7 @@ const suites = {
       "src/agent-service.test.ts",
       "src/app.test.ts",
       "src/commitgate/protocol.test.ts",
+      "src/commitgate/effect-proof.test.ts",
       "src/commitgate/rollback-permit-store.test.ts",
       "src/commitgate/manifest.test.ts",
       "src/commitgate/coordinator.test.ts",
@@ -47,6 +48,16 @@ const suites = {
       ["message-authority-fence", [/persists a playground conversation/i]],
       ["worker-product-commit", [/commits through proposal, evidence, permit and Worker generation CAS/i]],
       ["worker-product-noncommit", [/quarantines a protected-path change without advancing workspace generation/i]],
+      [
+        "worker-cas-conflict-decision",
+        [
+          /durably conflicts an H0 proposal after H1 wins without changing workspace, generation, or versions/i,
+          /durably classifies a stale promotion workspace hash as CONFLICTED/i,
+          /maps a stale Worker View CAS to one durable CONFLICTED disposition before finalize/i,
+        ],
+      ],
+      ["worker-cancellation-fence", [/makes cancellation authoritative before (verifier|permit|promotion)/i]],
+      ["explicit-non-effect-proof", [/proves no persistent effect for/i]],
     ],
   },
   adversarial: {
@@ -61,6 +72,10 @@ const suites = {
       "src/container-codex-runner.test.ts",
       "src/config.test.ts",
       "src/model-relay-server.test.ts",
+      "src/transition-worker/worker-policy.test.ts",
+      "src/runtime-broker/attestation.test.ts",
+      "src/transition-worker/broker-attestation.test.ts",
+      "src/transition-worker/opaque-ref-binding.test.ts",
     ],
     claims: [
       ["path-budget-canary-platform", [/rejects file budgets, canaries, and platform-managed edits/i]],
@@ -77,6 +92,30 @@ const suites = {
       ["sealed-source-tamper", [/(seal.*original candidate|original candidate.*seal|sealed.*tamper|promotes sealed bytes.*obsolete candidate)/i]],
       ["ignored-path-dos", [/(ignored path.*DoS|scratch.*quota|file count.*quota)/i]],
       ["receipt-redaction", [/(redacts credential-shaped verifier output|redacts per-run Model Relay capabilities)/i]],
+      [
+        "worker-owned-permit-policy",
+        [
+          /protected proposal even when the caller submits self-consistent PASS evidence/i,
+          /rejects a (missing|extra|wrong) trusted-check set/i,
+          /rejects a caller-selected (policy|check specification)/i,
+          /rejects an unpinned (trusted-check bundle|Verifier image|Verifier config|resource policy)/i,
+        ],
+      ],
+      [
+        "broker-authenticated-runtime-evidence",
+        [
+          /rejects caller-forged all-true teardown and PASS evidence/i,
+          /rejects payload tampering and the wrong key/i,
+        ],
+      ],
+      [
+        "worker-owned-opaque-exchange-refs",
+        [
+          /derives candidate-\$\{runId\}.*tombstones cross-Agent reuse/i,
+          /seals only the transition's durable candidate/i,
+          /exports only verify-\$\{runId\}.*another run's export/i,
+        ],
+      ],
     ],
   },
   recovery: {
@@ -90,6 +129,17 @@ const suites = {
       "src/transition-worker/filesystem.test.ts",
       "src/transition-worker/rpc.test.ts",
       "src/transition-worker/worker.test.ts",
+      "src/transition-worker/worker-terminal-recovery.test.ts",
+      "src/transition-worker/authority-intent-recovery.test.ts",
+      "src/transition-worker/evidence-blob-store.test.ts",
+      "src/transition-worker/signing-key-store.test.ts",
+      "src/transition-worker/runtime-teardown-handshake.test.ts",
+      "src/research/receipt-proof.test.ts",
+      "src/agent-service-worker-admission-recovery.test.ts",
+      "src/runtime-broker/rpc.test.ts",
+      "src/runtime-broker/lifecycle-ledger.test.ts",
+      "src/transition-worker/receipt-proof-projection-size.test.ts",
+      "src/worker-commitgate-runner.test.ts",
     ],
     claims: [
       ["rename-swap-rollback", [/restores the backup when the staging rename fails/i]],
@@ -107,11 +157,76 @@ const suites = {
       ["rollback-full-crash-matrix", [/(rollback.*crash point|permit.*CONSUMING|rollback.*acknowledgement stage)/i]],
       ["worker-one-shot-promotion", [/promotes only a sealed proposal with a one-shot permit/i]],
       ["worker-noop-rollback-generation", [/new generation for a no-op rollback snapshot/i]],
+      ["worker-rollback-target-binding", [/binds the rollback target version to its snapshot/i]],
       [
-        "worker-rpc-path-confinement",
-        [/private mode-0660 Unix socket/i, /rejects raw host paths and repair force flags/i],
+        "worker-rpc-wire-path-confinement",
+        [/rejects raw host paths and repair force flags/i],
       ],
       ["worker-filesystem-closure", [/fails closed for symlinks and hardlinks/i]],
+      [
+        "worker-cancellation-race",
+        [/fences an accepted run cancellation before permit consumption/i, /returns TOO_LATE after the permit enters CONSUMING/i],
+      ],
+      [
+        "receipt-proof-cryptographic-integrity",
+        [
+          /(signs and verifies a self-contained authority receipt proof bundle|binds a canonical authority receipt to its terminal event)/i,
+          /verifies a conflicted receipt against disposition-time HEAD and the full event chain/i,
+        ],
+      ],
+      [
+        "worker-atomic-noncommit-terminal",
+        [/derives the fresh non-commit View, revokes the permit, and records one atomic terminal fact/i],
+      ],
+      [
+        "worker-preterminal-abort-recovery",
+        [/recovers PREPARED into an ABORTED fresh-session receipt and destroys the candidate/i,
+          /surfaces RECOVERY_REQUIRED and never appends a fake rollback/i],
+      ],
+      [
+        "worker-durable-intent-recovery",
+        [/forwards initialization after its intent/i,
+          /adopts an already-renamed legacy tree/i,
+          /forwards platform regeneration from backup\+staging and archives exactly once/i,
+          /recovers a sealed proposal and verifier export intent/i],
+      ],
+      [
+        "worker-evidence-blob-integrity",
+        [/stores canonical JSON bytes under their SHA-256 ID/i,
+          /recomputes the digest on get and rejects post-write tampering/i],
+      ],
+      [
+        "worker-signing-key-confinement",
+        [/persists a Worker-only key and produces portable proofs/i,
+          /fails closed when persisted private-key permissions are widened/i],
+      ],
+      [
+        "worker-product-admission-gap-recovery",
+        [/terminalizes the DB-admitted\/Worker-unprepared run through Worker cancellation/i,
+          /releases a rollback busy marker when the API died before Worker prepare/i],
+      ],
+      [
+        "worker-broker-mount-release-handshake",
+        [/keeps candidate and verifier bytes intact across restart until ALL teardown is recorded/i,
+          /quiesces a Broker orphan before restart recovery destroys candidate bytes/i],
+      ],
+      [
+        "broker-orphan-reconciliation-fail-closed",
+        [/rediscovers and force-removes a labeled orphan before attesting mount release/i,
+          /fails closed when a bound orphan survives force removal/i],
+      ],
+      [
+        "broker-durable-lifecycle-tombstone",
+        [
+          /rejects closure for a binding that never launched/i,
+          /permits only the monotonic Agent -> Verifier -> closed sequence/i,
+          /persists tombstones across Broker instances and rejects cross-binding reuse/i,
+        ],
+      ],
+      [
+        "receipt-proof-projection-bounded",
+        [/keeps 21 compact receipts below the RPC cap and rebuilds one full v3 chain/i],
+      ],
     ],
   },
 };

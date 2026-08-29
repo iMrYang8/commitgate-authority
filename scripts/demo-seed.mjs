@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { cp, mkdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -29,10 +29,13 @@ if (process.env.DEMO_BASE_URL) {
   if (!["localhost", "127.0.0.1", "::1"].includes(url.hostname)) {
     throw new Error("DEMO_BASE_URL must point to the local demo server");
   }
+  const authToken = process.env.APP_AUTH_TOKEN_FILE
+    ? (await readFile(process.env.APP_AUTH_TOKEN_FILE, "utf8")).trim()
+    : (process.env.APP_AUTH_TOKEN ?? "").trim();
   const headers = {
     "content-type": "application/json",
-    ...(process.env.APP_AUTH_TOKEN
-      ? { authorization: `Bearer ${process.env.APP_AUTH_TOKEN}` }
+    ...(authToken
+      ? { authorization: `Bearer ${authToken}` }
       : {}),
   };
   const response = await fetch(new URL("/api/agents", url), {

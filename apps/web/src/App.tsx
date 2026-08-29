@@ -60,6 +60,19 @@ function displayDecision(decision: CommitGateSummary["decision"]): string {
   return "Aborted";
 }
 
+function displayDecisionReason(gate: CommitGateSummary): string | null {
+  if (gate.decision === "CONFLICTED") {
+    return "Base drift detected — HEAD unchanged";
+  }
+  if (gate.decision === "QUARANTINED") {
+    return "Trusted policy or check rejected the proposal — HEAD unchanged";
+  }
+  if (gate.decision === "ABORTED") {
+    return "Infrastructure or evidence did not complete — HEAD unchanged";
+  }
+  return null;
+}
+
 function displayAuthority(message: Message): MessageAuthority | "UNCLASSIFIED" {
   if (message.authority) return message.authority;
   return message.role === "user" ? "INPUT" : "UNCLASSIFIED";
@@ -244,6 +257,31 @@ function GateCard({ run, agent }: { run: AgentRun; agent: Agent }) {
   }
   if (!gate) return null;
 
+  const effectProof = receipt?.effectProof ?? gate.effectProof ?? {
+    candidateChanged: gate.candidateHash !== null && gate.candidateHash !== gate.baseHash,
+    candidateObservation: gate.candidateHash === null
+      ? ("unobserved" as const)
+      : gate.candidateHash === gate.baseHash
+        ? ("unchanged" as const)
+        : ("changed" as const),
+    admissionBaseHash: gate.baseHash,
+    authoritativeBeforeHash: gate.baseHash,
+    authoritativeAfterHash: gate.finalHash,
+    authoritativeChanged: gate.finalHash !== gate.baseHash,
+    sealedProposalHash: null,
+    verifierInputHash: null,
+    promotionSourceHash: null,
+    finalAuthoritativeHash: gate.finalHash,
+    invariant:
+      gate.decision === "COMMITTED"
+        ? ("PROMOTED_EXACT_PROPOSAL" as const)
+        : ("NO_PERSISTENT_EFFECT" as const),
+    invariantSatisfied:
+      gate.decision === "COMMITTED"
+        ? gate.candidateHash !== null && gate.candidateHash === gate.finalHash
+        : gate.baseHash === gate.finalHash,
+  };
+
   const loadReceipt = async () => {
     if (receipt || receiptBusy) return;
     setReceiptBusy(true);
@@ -296,8 +334,55 @@ function GateCard({ run, agent }: { run: AgentRun; agent: Agent }) {
           Artifact {gate.candidateCleanup === "deleted" ? "destroyed" : "cleanup pending"}
         </span>
       </div>
+      {displayDecisionReason(gate) && (
+        <p className="gate-decision-reason" role="status">
+          {displayDecisionReason(gate)}
+        </p>
+      )}
       <GateTimeline gate={gate} />
       <GateFlow gate={gate} receipt={receipt} />
+      <section
+        className={
+          "effect-proof " +
+          (effectProof.invariantSatisfied ? "effect-proof-valid" : "effect-proof-invalid")
+        }
+        aria-label="Persistence effect proof"
+      >
+        <div>
+          <span className="eyebrow">Candidate world</span>
+          <strong>
+            {effectProof.candidateObservation === "unobserved"
+              ? "Unobserved"
+              : effectProof.candidateChanged
+                ? "Changed"
+                : "Unchanged"}
+          </strong>
+          <code>{shortHash(gate.candidateHash)}</code>
+        </div>
+        <span className="effect-proof-divider" aria-hidden="true">/</span>
+        <div>
+          <span className="eyebrow">Persistent world</span>
+          <strong>{effectProof.authoritativeChanged ? "Changed" : "Unchanged"}</strong>
+          <code>{shortHash(effectProof.authoritativeAfterHash)}</code>
+        </div>
+        <div className="effect-proof-verdict" role="status">
+          <span>{effectProof.invariant.replaceAll("_", " ")}</span>
+          <strong>
+            {effectProof.invariantSatisfied ? "Invariant verified" : "Invariant violation"}
+          </strong>
+        </div>
+        {gate.decision === "COMMITTED" && (
+          <div className="effect-proof-chain" aria-label="Exact promotion hash binding">
+            <span><small>Sealed proposal</small><code>{shortHash(effectProof.sealedProposalHash)}</code></span>
+            <b aria-hidden="true">=</b>
+            <span><small>Verifier input</small><code>{shortHash(effectProof.verifierInputHash)}</code></span>
+            <b aria-hidden="true">=</b>
+            <span><small>Promotion source</small><code>{shortHash(effectProof.promotionSourceHash)}</code></span>
+            <b aria-hidden="true">=</b>
+            <span><small>Final authoritative</small><code>{shortHash(effectProof.finalAuthoritativeHash)}</code></span>
+          </div>
+        )}
+      </section>
       {gate.decision === "QUARANTINED" && (
         <div className="gate-retention" role="status">
           <span>Artifact retention: {gate.artifactRetention ?? (gate.candidateCleanup === "deleted" ? "destroyed" : "pending")}</span>

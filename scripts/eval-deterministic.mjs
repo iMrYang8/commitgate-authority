@@ -130,10 +130,10 @@ const report = {
   executionIdentity: executionIdentity(root),
   provenance: {
     runner: "Vitest + FakeRunner/function verifier + real local filesystem",
-    realModelArk: false,
+    realProviderRequest: false,
     containerExecution: false,
     claimBoundary:
-      "This report verifies deterministic middleware semantics; it is not evidence of a real ModelArk run.",
+      "This report verifies deterministic middleware semantics; it is not evidence of a real Provider request.",
   },
   testFiles: raw.testResults?.length ?? null,
   tests: {

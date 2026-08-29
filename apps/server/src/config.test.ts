@@ -22,6 +22,7 @@ import {
 } from "./model-provider.js";
 
 const roots: string[] = [];
+const sourceRevision = "a".repeat(40);
 
 afterEach(async () => {
   const { rm } = await import("node:fs/promises");
@@ -35,6 +36,37 @@ async function tempRoot(): Promise<string> {
 }
 
 describe("model provider configuration", () => {
+  it("requires a frozen 40-hex source revision for production proof participants", () => {
+    expect(() => loadConfig({
+      NODE_ENV: "production",
+      PROCESS_ROLE: "api",
+      COMMITGATE_ENABLED: "true",
+    })).toThrow(/40-hex COMMITGATE_SOURCE_REVISION/);
+    expect(() => loadConfig({
+      NODE_ENV: "production",
+      PROCESS_ROLE: "runtime-broker",
+      COMMITGATE_ENABLED: "false",
+      COMMITGATE_SOURCE_REVISION: "unverified",
+    })).toThrow(/40-hex COMMITGATE_SOURCE_REVISION/);
+  });
+
+  it("fails closed when a production API carries any fault-injection switch", () => {
+    expect(() => loadConfig({
+      NODE_ENV: "production",
+      COMMITGATE_SOURCE_REVISION: sourceRevision,
+      PROCESS_ROLE: "api",
+      HOST: "127.0.0.1",
+      COMMITGATE_FAULT_INJECTION: "false",
+    })).toThrow(/must not expose CommitGate fault-injection switches/);
+    expect(() => loadConfig({
+      NODE_ENV: "production",
+      COMMITGATE_SOURCE_REVISION: sourceRevision,
+      PROCESS_ROLE: "api",
+      HOST: "127.0.0.1",
+      COMMITGATE_API_FAULT_POINT: "API_PROJECTION_PENDING",
+    })).toThrow(/must not expose CommitGate fault-injection switches/);
+  });
+
   it("keeps ARK_* compatible while emitting the generic Responses provider", async () => {
     const root = await tempRoot();
     const config = loadConfig({
@@ -106,6 +138,7 @@ describe("model provider configuration", () => {
     expect(() =>
       loadConfig({
         NODE_ENV: "production",
+        COMMITGATE_SOURCE_REVISION: sourceRevision,
         HOST: "127.0.0.1",
         RUNTIME_PROVIDER: "broker",
         COMMITGATE_ENABLED: "true",
@@ -117,6 +150,7 @@ describe("model provider configuration", () => {
     expect(() =>
       loadConfig({
         NODE_ENV: "production",
+        COMMITGATE_SOURCE_REVISION: sourceRevision,
         HOST: "127.0.0.1",
         RUNTIME_PROVIDER: "local-process",
         COMMITGATE_ENABLED: "true",
@@ -127,6 +161,7 @@ describe("model provider configuration", () => {
   it("permits production CommitGate only with relay capability and a dedicated network", () => {
     const config = loadConfig({
       NODE_ENV: "production",
+      COMMITGATE_SOURCE_REVISION: sourceRevision,
       HOST: "127.0.0.1",
       RUNTIME_PROVIDER: "broker",
       COMMITGATE_ENABLED: "true",
@@ -146,10 +181,32 @@ describe("model provider configuration", () => {
     expect(config.modelAccessMode).toBe("relay");
     expect(config.containerAgentNetwork).toBe("commitgate-model-internal");
     expect(config.transitionAuthority).toBe("worker");
+    expect(config.brokerAttestationKey).toBe("");
 
     expect(() =>
       loadConfig({
         NODE_ENV: "production",
+        COMMITGATE_SOURCE_REVISION: sourceRevision,
+        PROCESS_ROLE: "api",
+        HOST: "127.0.0.1",
+        RUNTIME_PROVIDER: "broker",
+        COMMITGATE_ENABLED: "true",
+        TRANSITION_AUTHORITY: "worker",
+        TRANSITION_WORKER_SOCKET: "/run/commitgate/transition-worker.sock",
+        MODEL_ID: "model",
+        MODEL_ACCESS_MODE: "relay",
+        MODEL_RELAY_URL: "http://model-relay:8080/v1",
+        MODEL_RELAY_ADMIN_URL: "http://127.0.0.1:3100",
+        MODEL_RELAY_TOKEN: "relay-signing-secret-that-is-at-least-32-bytes",
+        CONTAINER_AGENT_NETWORK: "commitgate-model-internal",
+        BROKER_ATTESTATION_KEY: "api-must-not-receive-this-attestation-key-value",
+      }),
+    ).toThrow(/must not receive the Broker attestation key/);
+
+    expect(() =>
+      loadConfig({
+        NODE_ENV: "production",
+        COMMITGATE_SOURCE_REVISION: sourceRevision,
         HOST: "127.0.0.1",
         RUNTIME_PROVIDER: "broker",
         COMMITGATE_ENABLED: "true",
@@ -166,6 +223,7 @@ describe("model provider configuration", () => {
     expect(() =>
       loadConfig({
         NODE_ENV: "production",
+        COMMITGATE_SOURCE_REVISION: sourceRevision,
         HOST: "127.0.0.1",
         RUNTIME_PROVIDER: "broker",
         COMMITGATE_ENABLED: "true",
@@ -181,6 +239,7 @@ describe("model provider configuration", () => {
   it("requires the transition worker as production CommitGate authority", () => {
     const base = {
       NODE_ENV: "production",
+      COMMITGATE_SOURCE_REVISION: sourceRevision,
       HOST: "127.0.0.1",
       RUNTIME_PROVIDER: "broker",
       COMMITGATE_ENABLED: "true",
@@ -200,6 +259,7 @@ describe("model provider configuration", () => {
   it("enforces the dedicated relay-only boundary for the production Runtime Broker role", () => {
     const base = {
       NODE_ENV: "production",
+      COMMITGATE_SOURCE_REVISION: sourceRevision,
       PROCESS_ROLE: "runtime-broker",
       HOST: "127.0.0.1",
       RUNTIME_PROVIDER: "container",
@@ -209,9 +269,14 @@ describe("model provider configuration", () => {
       MODEL_RELAY_URL: "http://model-relay:3100/v1",
       MODEL_RELAY_ADMIN_URL: "http://127.0.0.1:3100/v1",
       MODEL_RELAY_TOKEN: "relay-signing-secret-that-is-at-least-32-bytes",
+      BROKER_ATTESTATION_KEY: "broker-attestation-secret-that-is-at-least-32-bytes",
       CONTAINER_AGENT_NETWORK: "commitgate-model-internal",
     } as const;
     expect(loadConfig(base).processRole).toBe("runtime-broker");
+    const { BROKER_ATTESTATION_KEY: _key, ...withoutAttestationKey } = base;
+    expect(() => loadConfig(withoutAttestationKey)).toThrow(
+      /requires a 32-byte Broker attestation key/,
+    );
     expect(() => loadConfig({ ...base, CONTAINER_AGENT_NETWORK: "bridge" })).toThrow(
       /dedicated internal/,
     );
@@ -234,6 +299,7 @@ describe("model provider configuration", () => {
     expect(
       loadConfig({
         NODE_ENV: "production",
+        COMMITGATE_SOURCE_REVISION: sourceRevision,
         HOST: "127.0.0.1",
         COMMITGATE_ENABLED: "false",
         MODEL_ACCESS_MODE: "direct",

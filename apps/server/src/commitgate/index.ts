@@ -17,3 +17,4 @@ export * from "./coordinator.js";
 export * from "./commitgate-runner.js";
 export * from "./recovery.js";
 export * from "./factory.js";
+export * from "./effect-proof.js";

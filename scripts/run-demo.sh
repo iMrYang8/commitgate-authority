@@ -14,7 +14,14 @@ fi
 export MODEL_PROVIDER="${MODEL_PROVIDER:-ark}"
 export MODEL_ID="${MODEL_ID:-${ARK_MODEL:-}}"
 export MODEL_API_KEY="${MODEL_API_KEY:-${ARK_API_KEY:-}}"
-export MODEL_BASE_URL="${MODEL_BASE_URL:-${ARK_BASE_URL:-https://ark.cn-beijing.volces.com/api/v3}}"
+if [[ -z "${MODEL_BASE_URL:-}" ]]; then
+  case "$MODEL_PROVIDER" in
+    ark) MODEL_BASE_URL="${ARK_BASE_URL:-https://ark.cn-beijing.volces.com/api/v3}" ;;
+    openrouter) MODEL_BASE_URL="https://openrouter.ai/api/v1" ;;
+    *) echo "MODEL_BASE_URL is required for Provider '$MODEL_PROVIDER'" >&2; exit 1 ;;
+  esac
+fi
+export MODEL_BASE_URL
 export MODEL_WIRE_API="${MODEL_WIRE_API:-responses}"
 
 if [[ -z "$MODEL_ID" || -z "$MODEL_API_KEY" ]]; then

@@ -159,6 +159,33 @@ describe("Container Codex runner", () => {
     });
   });
 
+  it("rejects a caller binding that differs from the completed Runtime run", async () => {
+    const config = loadConfig({ NODE_ENV: "test", RUNTIME_PROVIDER: "container" });
+    const runner = new ContainerCodexRunner(config);
+    const internals = runner as unknown as {
+      completedTeardowns: Map<string, unknown>;
+    };
+    internals.completedTeardowns.set("bound-run", {
+      containerName: "bound-container",
+      binding: {
+        runId: "bound-run",
+        agentId: "agent-a",
+        runLeaseId: "lease-a",
+        sessionEpoch: 3,
+      },
+      containerExited: true,
+      containerRemoved: true,
+      mountsReleased: true,
+    });
+
+    await expect(runner.attestCommitGateTeardown("bound-run", {
+      runId: "bound-run",
+      agentId: "agent-a",
+      runLeaseId: "forged-lease",
+      sessionEpoch: 3,
+    })).rejects.toThrow("BROKER_RUNTIME_TEARDOWN_BINDING_MISMATCH");
+  });
+
   it("resumes a thread inside the mounted Runtime workspace", () => {
     const config = loadConfig({
       NODE_ENV: "test",

@@ -23,15 +23,55 @@ function isSourcePath(relative) {
     relative === "tsconfig.base.json" ||
     relative === "docker-compose.yml" ||
     /^docker-compose(?:\.[^/]+)?\.ya?ml$/.test(relative) ||
-    relative === "Dockerfile.runtime" ||
+    relative === "Dockerfile" ||
     relative.startsWith("Dockerfile.") ||
     relative.startsWith(".github/") ||
     relative.startsWith("apps/") ||
     relative.startsWith("scripts/") ||
     relative.startsWith("docs/") ||
+    relative.startsWith("eval/fixtures/") ||
     relative.startsWith("eval/trusted-checks/") ||
     relative === "eval/demo-policy.json"
   );
+}
+
+/**
+ * Return the newest commit that changed the frozen product/source surface.
+ *
+ * Evidence is intentionally committed after the source freeze.  Using HEAD as
+ * the source revision would therefore make every report stale as soon as an
+ * evidence-only commit is created.  This path-scoped revision remains the
+ * source commit while still advancing whenever code, evaluators, fixtures, or
+ * product documentation changes.
+ */
+export function frozenSourceRevision(root) {
+  const result = git(root, [
+    "rev-list",
+    "-1",
+    "HEAD",
+    "--",
+    "package.json",
+    "package-lock.json",
+    "README.md",
+    ".gitignore",
+    ".dockerignore",
+    ".env.example",
+    ".env.local.example",
+    "tsconfig.base.json",
+    "Dockerfile*",
+    "docker-compose*.yml",
+    "docker-compose*.yaml",
+    ".github",
+    "apps",
+    "scripts",
+    "docs",
+    "eval/fixtures",
+    "eval/trusted-checks",
+    "eval/demo-policy.json",
+  ]);
+  if (result.status !== 0) return null;
+  const revision = result.stdout.trim();
+  return /^[a-f0-9]{40}$/.test(revision) ? revision : null;
 }
 
 export async function sourceTreeHash(root) {
@@ -51,7 +91,18 @@ export async function sourceTreeHash(root) {
   const hash = createHash("sha256");
   for (const relative of files) {
     const absolute = path.join(root, relative);
-    const stats = await lstat(absolute);
+    let stats;
+    try {
+      stats = await lstat(absolute);
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+      // Keep a deleted tracked source path in the identity. This lets callers
+      // report a dirty/mismatching tree instead of crashing before the clean
+      // source-surface gate can explain the deletion.
+      hash.update(relative);
+      hash.update("\0missing\0\0");
+      continue;
+    }
     const type = stats.isFile()
       ? "file"
       : stats.isSymbolicLink()
@@ -74,21 +125,42 @@ export async function sourceTreeHash(root) {
   return { hash: hash.digest("hex"), files: files.length };
 }
 
+function changedPaths(root) {
+  const status = git(root, ["status", "--porcelain=v1", "-z", "--untracked-files=all"]);
+  if (status.status !== 0) return { ok: false, paths: [] };
+  const entries = status.stdout.split("\0");
+  const paths = [];
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index];
+    if (!entry) continue;
+    const code = entry.slice(0, 2);
+    paths.push(entry.slice(3));
+    // In porcelain -z format a rename/copy is followed by the original path.
+    // Considering both sides prevents a source -> generated-evidence rename
+    // from being mistaken for a clean source surface.
+    if (/[RC]/.test(code)) {
+      const original = entries[index + 1];
+      if (original) paths.push(original);
+      index += 1;
+    }
+  }
+  return { ok: true, paths };
+}
+
 export async function evidenceProvenance(root) {
-  const revisionResult = git(root, ["rev-parse", "HEAD"]);
-  const revision = revisionResult.status === 0 ? revisionResult.stdout.trim() : null;
+  const revision = frozenSourceRevision(root);
+  const headResult = git(root, ["rev-parse", "HEAD"]);
+  const headCandidate = headResult.status === 0 ? headResult.stdout.trim() : "";
+  const headRevision = /^[a-f0-9]{40}$/.test(headCandidate) ? headCandidate : null;
   const tree = await sourceTreeHash(root);
-  const status = git(root, ["status", "--porcelain", "--untracked-files=all"]);
-  const dirtySourcePaths = status.stdout
-    .split(/\r?\n/)
-    .filter(Boolean)
-    .map((line) => line.slice(3).split(" -> ").at(-1) ?? "")
-    .filter(isSourcePath);
+  const status = changedPaths(root);
+  const dirtySourcePaths = status.paths.filter(isSourcePath);
   return {
     sourceRevision: revision,
+    headRevision,
     sourceTreeHash: tree.hash,
     sourceFileCount: tree.files,
-    workingTreeCleanAtCapture: status.status === 0 && dirtySourcePaths.length === 0,
+    workingTreeCleanAtCapture: status.ok && dirtySourcePaths.length === 0,
   };
 }
 
@@ -166,34 +238,47 @@ function configuredCredential(environment, providerId) {
  */
 export function executionIdentity(root, options = {}) {
   const environment = options.environment ?? process.env;
-  const providerId = options.providerId ?? environment.MODEL_PROVIDER ?? "ark";
-  const gateway = (
-    environment.MODEL_BASE_URL ??
-    (providerId === "openrouter"
-      ? "https://openrouter.ai/api/v1"
-      : environment.ARK_BASE_URL ?? "https://ark.cn-beijing.volces.com/api/v3")
-  ).replace(/\/+$/, "");
-  const requestedModel = (environment.MODEL_ID ?? environment.ARK_MODEL ?? "").trim() || null;
+  const providerId = options.providerId ?? environment.MODEL_PROVIDER ?? "not-applicable";
+  const providerApplicable = providerId !== "not-applicable";
+  const gateway = providerApplicable
+    ? (
+        environment.MODEL_BASE_URL ??
+        (providerId === "openrouter"
+          ? "https://openrouter.ai/api/v1"
+          : environment.ARK_BASE_URL ?? "https://ark.cn-beijing.volces.com/api/v3")
+      ).replace(/\/+$/, "")
+    : null;
+  const requestedModel = providerApplicable
+    ? (environment.MODEL_ID ?? environment.ARK_MODEL ?? "").trim() || null
+    : null;
   const engine = environment.CONTAINER_ENGINE || "docker";
   const runtimeReference = environment.CONTAINER_RUNTIME_IMAGE || "volc-agent-runtime:local";
   const verifierReference = environment.COMMITGATE_VERIFIER_IMAGE || runtimeReference;
+  const workerReference =
+    environment.COMMITGATE_TRANSITION_WORKER_IMAGE || "commitgate-transition-worker:local";
+  const brokerReference =
+    environment.COMMITGATE_RUNTIME_BROKER_IMAGE || "commitgate-runtime-broker:local";
   const runtimeImage = inspectImage(root, runtimeReference, engine);
   const verifierImage = verifierReference === runtimeReference
     ? { ...runtimeImage }
     : inspectImage(root, verifierReference, engine);
+  const workerImage = inspectImage(root, workerReference, engine);
+  const brokerImage = inspectImage(root, brokerReference, engine);
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     containerEngine: engine,
     runtimeImage,
     verifierImage,
+    workerImage,
+    brokerImage,
     provider: {
       providerId,
       gateway,
       requestedModel,
       resolvedModel: null,
-      wireApi: environment.MODEL_WIRE_API ?? "responses",
-      accessMode: environment.MODEL_ACCESS_MODE ?? "direct",
-      credentialConfigured: configuredCredential(environment, providerId),
+      wireApi: providerApplicable ? environment.MODEL_WIRE_API ?? "responses" : null,
+      accessMode: providerApplicable ? environment.MODEL_ACCESS_MODE ?? "direct" : null,
+      credentialConfigured: providerApplicable && configuredCredential(environment, providerId),
       credentialsRecorded: false,
     },
   };

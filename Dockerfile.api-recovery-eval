@@ -1,0 +1,32 @@
+ARG NODE_IMAGE=node:22-bookworm-slim
+FROM ${NODE_IMAGE} AS build
+WORKDIR /app
+
+COPY package.json package-lock.json tsconfig.base.json ./
+COPY apps/server/package.json apps/server/package.json
+COPY apps/web/package.json apps/web/package.json
+RUN npm ci
+
+COPY apps/server apps/server
+COPY apps/web apps/web
+RUN npm run build -w @launchpad/server \
+    && npm run build -w @launchpad/web \
+    && npm prune --omit=dev
+
+FROM ${NODE_IMAGE} AS runtime
+WORKDIR /app
+
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/server/package.json ./apps/server/package.json
+COPY --from=build /app/apps/server/dist ./apps/server/dist
+COPY --from=build /app/apps/web/dist ./apps/web/dist
+
+RUN mkdir -p /app/data /app/codex-home /run/commitgate \
+    && chown -R node:node /app/data /app/codex-home \
+    && chgrp -R 20000 /run/commitgate \
+    && chmod 0770 /run/commitgate
+
+USER node
+ENV NODE_ENV=test
+EXPOSE 3000
+CMD ["node", "apps/server/dist/index.js"]

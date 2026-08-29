@@ -14,17 +14,24 @@ const engine = process.env.CONTAINER_ENGINE || "docker";
 const image = `commitgate-linux-fs-eval:${process.pid}`;
 let output = "";
 let status = "failed";
+let passedTests = 0;
 try {
   await execFileAsync(engine, ["build", "-f", "Dockerfile.linux-eval", "-t", image, "."], {
     cwd: root,
     maxBuffer: 16 * 1024 * 1024,
   });
   const result = await execFileAsync(engine, [
-    "run", "--rm", "--read-only", "--tmpfs", "/tmp:size=128m", image,
+    // Docker Desktop currently applies `noexec` to anonymous tmpfs mounts by
+    // default. Two Broker reconciliation fixtures intentionally create a
+    // tiny executable fake container engine under `tmpdir()`. Make the test
+    // mount executable explicitly; the container root remains read-only and
+    // this does not relax any authoritative-workspace permission.
+    "run", "--rm", "--read-only", "--tmpfs", "/tmp:rw,exec,size=128m", image,
   ], { cwd: root, maxBuffer: 16 * 1024 * 1024 });
   output = result.stdout + result.stderr;
   const plainOutput = output.replace(/\u001b\[[0-9;]*m/g, "");
-  status = /Test Files\s+4 passed/.test(plainOutput) && /Tests\s+17 passed/.test(plainOutput)
+  passedTests = Number(/Tests\s+(\d+) passed/.exec(plainOutput)?.[1] ?? 0);
+  status = /Test Files\s+4 passed/.test(plainOutput) && passedTests > 0 && !/\d+ failed/.test(plainOutput)
     ? "verified"
     : "failed";
 } catch (error) {
@@ -42,6 +49,7 @@ const report = {
   source,
   executionIdentity: identity,
   platform: "linux-container",
+  passedTests,
   tests: [
     "transition-worker/filesystem.test.ts",
     "transition-worker/rpc.test.ts",

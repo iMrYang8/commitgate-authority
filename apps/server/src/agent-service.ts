@@ -9,6 +9,7 @@ import {
   type CommitGateComponents,
   type GateReceipt,
   type CommitGateLifecycleEvent,
+  deriveEffectDispositionProof,
   policyHash,
   VersionStoreError,
 } from "./commitgate/index.js";
@@ -32,13 +33,25 @@ import type {
   UpdateAgentInput,
   WorkspaceVersion,
 } from "./types.js";
-import { EMPTY_STATE_HASH, makeStateView, refreshAgentViewId, stateViewForAgent } from "./state-view.js";
+import { EMPTY_STATE_HASH, refreshAgentViewId, stateViewForAgent } from "./state-view.js";
 import { retireCodexSessionHome } from "./model-provider.js";
 import { WorkspaceManager } from "./workspace.js";
 import type { TransitionAuthority } from "./transition-authority.js";
+import type { AuthorityHealth } from "./transition-authority-client.js";
 import { createInProcessTransitionAuthority } from "./transition-authority-factory.js";
 import { TransitionEventLog } from "./transition-log.js";
-import type { WorkerProjection } from "./transition-worker/projection.js";
+import type {
+  ProjectedTerminalReceipt,
+  WorkerProjection,
+} from "./transition-worker/projection.js";
+import {
+  verifyAuthorityReceiptProof,
+  type AuthorityReceiptProofBundle,
+} from "./research/receipt-proof.js";
+import {
+  API_PROJECTION_FAULT_POINT,
+  maybeInjectApiProjectionFault,
+} from "./api-projection-fault-injection.js";
 
 const now = () => new Date().toISOString();
 const RECOVERY_REQUIRED_MESSAGE =
@@ -71,6 +84,7 @@ export class AgentService {
   private readonly cancellationRequests = new Set<string>();
   private readonly transitionWriter: TransitionAuthority | null;
   private readonly transitionEvents: TransitionEventLog;
+  private workerAuthorityHealth: AuthorityHealth | null = null;
 
   constructor(
     private readonly config: AppConfig,
@@ -111,7 +125,13 @@ export class AgentService {
   async initialize(): Promise<void> {
     await this.store.initialize();
     if (this.commitGate?.mode === "worker") {
-      await this.commitGate.authority.initialize();
+      this.workerAuthorityHealth = await this.commitGate.authority.initialize();
+      if (
+        this.config.nodeEnv === "production" &&
+        this.workerAuthorityHealth.filesystemProfile !== "linux-strong"
+      ) {
+        throw new Error("AUTHORITY_FILESYSTEM_PROFILE_INVALID");
+      }
       await this.initializeWorkerAuthorityProjection();
       return;
     }
@@ -363,7 +383,10 @@ export class AgentService {
     if (this.commitGate?.mode !== "worker") return;
     const agents = this.store.snapshot().agents;
     for (const current of agents) {
-      let projection = await this.commitGate.authority.recover(current.id);
+      let projection = await this.commitGate.runner.recoverAuthority(
+        current.id,
+        await this.commitGate.authority.getProjection(current.id),
+      );
       if (!projection.head) {
         if (!current.headVersionId) {
           throw new Error(`LEGACY_STATE_CONFLICT:${current.id}:missing head version`);
@@ -377,14 +400,411 @@ export class AgentService {
           versionId: current.headVersionId,
         });
       }
-      await this.store.mutate((database) => {
+      projection = await this.recoverWorkerAdmissionGap(current, projection);
+      const pendingProjection = this.latestWorkerTerminalProjectionGap(
+        this.store.snapshot(),
+        current.id,
+        projection,
+      );
+      if (pendingProjection) {
+        maybeInjectApiProjectionFault({
+          point: API_PROJECTION_FAULT_POINT,
+          source: "startup-recovery",
+          agentId: current.id,
+          runId: pendingProjection.runId,
+          decision: pendingProjection.receipt.decision,
+          viewId: pendingProjection.receipt.view.viewId,
+          generation: pendingProjection.receipt.view.generation,
+          projectionDigest: projection.digest,
+        });
+      }
+      const retireRecoveredSession = await this.store.mutate((database) => {
         const agent = database.agents.find((item) => item.id === current.id);
-        if (!agent) return;
-        agent.workspaceRef = { authority: "transition-worker", agentId: current.id };
-        this.applyWorkerHead(agent, projection);
-        this.applyWorkerVersions(database, current.id, projection);
+        if (!agent) return false;
+        return this.applyWorkerAuthorityProjection(database, agent, projection);
       });
+      if (retireRecoveredSession) await this.retireSessionFence(current.id);
     }
+  }
+
+  /**
+   * Closes the product/authority run-admission gap: the product DB can
+   * durably record a queued Run and its lease immediately before the API is
+   * killed, while the Worker has not yet appended TRANSITION_PREPARED.  On
+   * restart we replay that exact, CAS-bound admission into the Worker, accept
+   * cancellation there, and let ordinary Worker recovery create the terminal
+   * ABORTED receipt.  This keeps the Worker as the fact source instead of
+   * locally inventing a terminal Run or silently clearing its lease.
+   */
+  private async recoverWorkerAdmissionGap(
+    agent: Agent,
+    projection: WorkerProjection,
+  ): Promise<WorkerProjection> {
+    if (this.commitGate?.mode !== "worker") return projection;
+    const activeRuns = this.store.snapshot().runs.filter(
+      (run) =>
+        run.agentId === agent.id &&
+        (run.status === "queued" || run.status === "running"),
+    );
+    if (activeRuns.length === 0) return projection;
+    if (activeRuns.length !== 1) {
+      throw new Error(`WORKER_ADMISSION_DB_INVARIANT_VIOLATION:${agent.id}`);
+    }
+    const run = activeRuns[0]!;
+    const transition = projection.transitions[run.id];
+    if (transition) {
+      if (
+        transition.runId !== run.id ||
+        transition.runLeaseId !== run.runLeaseId
+      ) {
+        throw new Error(`WORKER_ADMISSION_TRANSITION_BINDING_MISMATCH:${run.id}`);
+      }
+      const terminal = projection.terminalReceipts.some(
+        (receipt) => receipt.transitionId === run.id,
+      );
+      if (!terminal) {
+        throw new Error(`WORKER_ACTIVE_TRANSITION_NOT_TERMINAL:${run.id}`);
+      }
+      return projection;
+    }
+    const head = projection.head;
+    if (!head) throw new Error(`WORKER_HEAD_MISSING:${agent.id}`);
+    // JsonStore intentionally clears an active lease while loading a v3 file
+    // after process restart. The immutable Run row still carries the exact
+    // admission lease; accept the cleared marker, but never a competing one.
+    if (
+      agent.activeRunLeaseId !== null &&
+      agent.activeRunLeaseId !== run.runLeaseId
+    ) {
+      throw new Error(`WORKER_ADMISSION_LEASE_MISMATCH:${run.id}`);
+    }
+    if (run.baseViewId !== head.view.viewId) {
+      throw new Error(`WORKER_ADMISSION_RUN_VIEW_MISMATCH:${run.id}`);
+    }
+    if (agent.currentViewId !== head.view.viewId) {
+      throw new Error(`WORKER_ADMISSION_AGENT_VIEW_MISMATCH:${run.id}`);
+    }
+    if (agent.currentLiveStateHash !== head.workspaceHash) {
+      throw new Error(`WORKER_ADMISSION_WORKSPACE_HASH_MISMATCH:${run.id}`);
+    }
+
+    await this.commitGate.authority.prepareRun({
+      agentId: agent.id,
+      transitionId: run.id,
+      runId: run.id,
+      runLeaseId: run.runLeaseId,
+      candidateVolumeId: `candidate-${run.id}`,
+      expectedViewId: head.view.viewId,
+      expectedWorkspaceHash: head.workspaceHash,
+      baseGeneration: head.view.generation,
+      sessionEpoch: head.view.sessionEpoch,
+    });
+    const cancellation = await this.commitGate.authority.cancelRun({
+      agentId: agent.id,
+      transitionId: run.id,
+      runId: run.id,
+      runLeaseId: run.runLeaseId,
+      expectedViewId: head.view.viewId,
+    });
+    if (cancellation.state !== "CANCELLED") {
+      throw new Error(`WORKER_ADMISSION_RECOVERY_CANCEL_FAILED:${run.id}:${cancellation.state}`);
+    }
+    return this.commitGate.runner.recoverAuthority(
+      agent.id,
+      await this.commitGate.authority.getProjection(agent.id),
+    );
+  }
+
+  /**
+   * Reconciles the product database from the append-only Worker facts. This is
+   * deliberately a projection, not a second transition: it never asks the
+   * Worker to change HEAD and is safe to repeat after any API process crash.
+   */
+  private applyWorkerAuthorityProjection(
+    database: Database,
+    agent: Agent,
+    projection: WorkerProjection,
+  ): boolean {
+    const head = projection.head;
+    if (!head) throw new Error(`WORKER_HEAD_MISSING:${agent.id}`);
+    const previousViewId = agent.currentViewId;
+    agent.workspaceRef = { authority: "transition-worker", agentId: agent.id };
+    this.applyWorkerHead(agent, projection);
+    this.applyWorkerVersions(database, agent.id, projection);
+
+    const latestReceiptByRun = new Map<string, ProjectedTerminalReceipt>();
+    for (const receipt of projection.terminalReceipts) {
+      const transition = projection.transitions[receipt.transitionId];
+      if (!transition?.runId) continue;
+      const existing = latestReceiptByRun.get(transition.runId);
+      if (!existing || existing.sequence < receipt.sequence) {
+        latestReceiptByRun.set(transition.runId, receipt);
+      }
+    }
+
+    let latestRecovered:
+      | {
+          receipt: ProjectedTerminalReceipt;
+          runLeaseId: string | null;
+          cancelled: boolean;
+        }
+      | null = null;
+    for (const [runId, receipt] of latestReceiptByRun) {
+      const run = database.runs.find(
+        (candidate) => candidate.id === runId && candidate.agentId === agent.id,
+      );
+      if (!run) continue;
+      const transition = projection.transitions[receipt.transitionId];
+      if (!transition) throw new Error(`WORKER_TERMINAL_TRANSITION_MISSING:${runId}`);
+      if (transition.runLeaseId && transition.runLeaseId !== run.runLeaseId) {
+        // A terminal fact for another admission attempt must never overwrite
+        // the current Run row. Leave it visible only in the Worker audit log.
+        continue;
+      }
+      const cancelled = receipt.reasonCodes.some((code) => code.startsWith("RUN_CANCELLED"));
+      const expectedStatus = this.workerRunStatus(receipt.decision, cancelled);
+      const expectedAuthority: Message["authority"] =
+        receipt.decision === "COMMITTED" ? "AUTHORITATIVE" : "REJECTED";
+      const assistant = database.messages.find(
+        (message) => message.runId === run.id && message.role === "assistant",
+      );
+      const hadProjectionGap =
+        run.transactionStatus !== "TERMINAL" ||
+        run.status !== expectedStatus ||
+        run.commitGate?.decision !== receipt.decision ||
+        run.commitGate?.nextViewId !== receipt.view.viewId ||
+        run.commitGate?.nextGeneration !== receipt.view.generation;
+      const summary = this.summaryFromWorkerProjection(
+        run,
+        projection,
+        receipt,
+        hadProjectionGap,
+      );
+
+      run.status = expectedStatus;
+      run.error = receipt.decision === "ABORTED" && !cancelled
+        ? summary.failureClass ?? "infra_errored"
+        : null;
+      run.commitGate = summary;
+      run.transactionStatus = "TERMINAL";
+      run.baseViewId = summary.baseViewId ?? run.baseViewId;
+      run.proposalId = summary.proposalId ?? null;
+      run.evaluationContextHash = summary.evaluationContextHash ?? null;
+      run.permitId = summary.permitId ?? null;
+      run.completedAt = run.completedAt ?? now();
+      if (!run.output && assistant) run.output = assistant.content;
+
+      if (assistant) {
+        assistant.authority = expectedAuthority;
+        assistant.viewId = receipt.view.viewId;
+        assistant.proposalId = summary.proposalId ?? null;
+      } else if (run.output) {
+        this.upsertAssistantMessage(database, {
+          agentId: agent.id,
+          runId: run.id,
+          content: run.output,
+          authority: expectedAuthority,
+          viewId: receipt.view.viewId,
+          proposalId: summary.proposalId ?? null,
+          createdAt: run.completedAt,
+        });
+      }
+
+      if (
+        hadProjectionGap &&
+        (!latestRecovered || latestRecovered.receipt.sequence < receipt.sequence)
+      ) {
+        latestRecovered = {
+          receipt,
+          runLeaseId: transition.runLeaseId,
+          cancelled,
+        };
+      }
+    }
+
+    if (!latestRecovered) {
+      const hasActiveProductRun = database.runs.some(
+        (run) =>
+          run.agentId === agent.id &&
+          (run.status === "queued" || run.status === "running"),
+      );
+      if (agent.status === "busy" && !hasActiveProductRun) {
+        // Rollback has no AgentRun row. A kill after its DB admission but
+        // before Worker prepare therefore leaves only a stale busy marker; a
+        // kill after Worker prepare/apply is reflected by the recovered HEAD.
+        // In either case no execution survives process restart, so release the
+        // product lock. Retire continuation state only when Worker recovery
+        // actually changed the authoritative View.
+        agent.status = "ready";
+        agent.activeRunLeaseId = null;
+        agent.lastError = null;
+        agent.updatedAt = now();
+        if (previousViewId !== head.view.viewId) {
+          agent.codexThreadId = null;
+          agent.needsReconciliation = true;
+          return true;
+        }
+      }
+      return false;
+    }
+    const ownsProjectedLease =
+      agent.activeRunLeaseId === null ||
+      agent.activeRunLeaseId === latestRecovered.runLeaseId;
+    if (!ownsProjectedLease) return false;
+    if (agent.status !== "stopped") {
+      agent.status =
+        latestRecovered.receipt.decision === "ABORTED" && !latestRecovered.cancelled
+          ? "error"
+          : "ready";
+    }
+    agent.activeRunLeaseId = null;
+    agent.codexThreadId = null;
+    agent.needsReconciliation = true;
+    agent.lastError =
+      latestRecovered.receipt.decision === "ABORTED" && !latestRecovered.cancelled
+        ? "infra_errored"
+        : null;
+    agent.updatedAt = now();
+    return true;
+  }
+
+  private workerRunStatus(
+    decision: ProjectedTerminalReceipt["decision"],
+    cancelled: boolean,
+  ): AgentRun["status"] {
+    if (decision === "ABORTED") return cancelled ? "cancelled" : "failed";
+    return "completed";
+  }
+
+  private latestWorkerTerminalProjectionGap(
+    database: Database,
+    agentId: string,
+    projection: WorkerProjection,
+  ): { runId: string; receipt: ProjectedTerminalReceipt } | null {
+    let latest: { runId: string; receipt: ProjectedTerminalReceipt } | null = null;
+    for (const receipt of projection.terminalReceipts) {
+      const transition = projection.transitions[receipt.transitionId];
+      if (!transition?.runId) continue;
+      const run = database.runs.find(
+        (candidate) => candidate.id === transition.runId && candidate.agentId === agentId,
+      );
+      if (
+        !run ||
+        (transition.runLeaseId !== null && transition.runLeaseId !== run.runLeaseId)
+      ) {
+        continue;
+      }
+      const cancelled = receipt.reasonCodes.some((code) => code.startsWith("RUN_CANCELLED"));
+      const gap =
+        run.transactionStatus !== "TERMINAL" ||
+        run.status !== this.workerRunStatus(receipt.decision, cancelled) ||
+        run.commitGate?.decision !== receipt.decision ||
+        run.commitGate?.nextViewId !== receipt.view.viewId ||
+        run.commitGate?.nextGeneration !== receipt.view.generation;
+      if (gap && (!latest || latest.receipt.sequence < receipt.sequence)) {
+        latest = { runId: transition.runId, receipt };
+      }
+    }
+    return latest;
+  }
+
+  private summaryFromWorkerProjection(
+    run: AgentRun,
+    projection: WorkerProjection,
+    receipt: ProjectedTerminalReceipt,
+    recoveredProjection: boolean,
+  ): CommitGateSummary {
+    const transition = projection.transitions[receipt.transitionId];
+    if (!transition?.baseViewId) {
+      throw new Error(`WORKER_TERMINAL_BINDING_MISSING:${run.id}:transition`);
+    }
+    const proposal = transition.proposalId
+      ? projection.proposals[transition.proposalId]
+      : undefined;
+    const evidence = transition.proposalId
+      ? projection.evidence[transition.proposalId]
+      : undefined;
+    const permit = transition.permitId
+      ? projection.permits[transition.permitId]
+      : undefined;
+    if (
+      receipt.decision === "COMMITTED" &&
+      transition.kind === "AGENT_COMMIT" &&
+      (!proposal || !evidence || !permit || permit.state !== "CONSUMED")
+    ) {
+      throw new Error(`WORKER_TERMINAL_BINDING_MISSING:${run.id}:commit-proof`);
+    }
+    const failureClass: CommitGateSummary["failureClass"] =
+      receipt.decision === "COMMITTED"
+        ? null
+        : receipt.decision === "QUARANTINED"
+          ? "agent_wrong"
+          : receipt.decision === "CONFLICTED"
+            ? "state_conflict"
+            : "infra_errored";
+    const checks = evidence?.checks.map((check) => ({
+      id: check.id,
+      status: check.status,
+      reasonCode: check.status === "PASS" ? null : `TRUSTED_CHECK_${check.status}`,
+    })) ?? run.commitGate?.checks ?? [];
+    const candidateHash = proposal?.artifactHash ?? run.commitGate?.candidateHash ?? null;
+    // ACK proves the authoritative HEAD transition, not cleanup.  Only the
+    // later RUN_ARTIFACTS_DESTROYED fact may claim that run-owned bytes are
+    // gone; a post-ACK cleanup failure therefore remains explicitly deferred.
+    const candidateCleanup: CommitGateSummary["candidateCleanup"] =
+      transition.artifactsDestroyed ? "deleted" : "deferred";
+    const artifactRetention: NonNullable<CommitGateSummary["artifactRetention"]> =
+      transition.artifactsDestroyed
+        ? receipt.decision === "COMMITTED"
+          ? "version_snapshot"
+          : "destroyed"
+        : "deferred";
+    const summary: CommitGateSummary = {
+      transactionStatus: "TERMINAL",
+      decision: receipt.decision,
+      failureClass,
+      receiptId: receipt.receiptId,
+      baseHash: transition.baseWorkspaceHash,
+      candidateHash,
+      finalHash: receipt.workspaceHash,
+      policyHash: evidence?.policyHash ?? run.commitGate?.policyHash ?? "worker-authority",
+      checks,
+      changedPaths: proposal?.changedPaths ?? run.commitGate?.changedPaths ?? [],
+      threadDisposition:
+        receipt.decision === "COMMITTED" && !recoveredProjection
+          ? run.commitGate?.threadDisposition ?? "resumed"
+          : "reset",
+      candidateCleanup,
+      baseViewId: transition.baseViewId,
+      nextViewId: receipt.view.viewId,
+      baseGeneration: transition.baseGeneration,
+      nextGeneration: receipt.view.generation,
+      proposalId: proposal?.proposalId ?? null,
+      proposalHash: candidateHash,
+      evaluationContextHash: evidence?.evaluationContextHash ?? null,
+      evidenceDigest: evidence?.evidenceDigest ?? null,
+      permitId: permit?.permitId ?? null,
+      permitState: permit?.state ?? null,
+      artifactRetention,
+      provider: run.provider,
+      ...(run.commitGate?.lifecycle ? { lifecycle: run.commitGate.lifecycle } : {}),
+      finalView: receipt.view,
+      effectProof: deriveEffectDispositionProof({
+        decision: receipt.decision,
+        baseHash: transition.baseWorkspaceHash,
+        candidateHash,
+        finalHash: receipt.workspaceHash,
+        authoritativeBeforeHash:
+          receipt.decision === "COMMITTED"
+            ? transition.baseWorkspaceHash
+            : receipt.workspaceHash,
+        sealedProposalHash: proposal?.artifactHash ?? null,
+        verifierInputHash: evidence?.verifierInputHash ?? null,
+        promotionSourceHash: permit?.targetArtifactHash ?? null,
+        finalAuthoritativeHash: receipt.workspaceHash,
+      }),
+    };
+    return summary;
   }
 
   private applyWorkerHead(agent: Agent, projection: WorkerProjection): void {
@@ -407,10 +827,21 @@ export class AgentService {
     agentId: string,
     projection: WorkerProjection,
   ): void {
+    const existingVersions = new Map(
+      database.versions
+        .filter((version) => version.agentId === agentId)
+        .map((version) => [version.id, version]),
+    );
+    const existingSnapshots = new Map(
+      database.snapshots
+        .filter((snapshot) => snapshot.agentId === agentId)
+        .map((snapshot) => [snapshot.hash, snapshot]),
+    );
     database.versions = database.versions.filter((version) => version.agentId !== agentId);
     let parentVersionId: string | null = null;
     for (let index = 0; index < projection.versions.length; index += 1) {
       const version = projection.versions[index]!;
+      const existing = existingVersions.get(version.versionId);
       database.versions.push({
         id: version.versionId,
         agentId,
@@ -419,29 +850,31 @@ export class AgentService {
         kind: version.kind,
         snapshotHash: version.workspaceHash,
         liveStateHash: version.workspaceHash,
-        pathPolicyHash: "worker-authority",
+        pathPolicyHash: existing?.pathPolicyHash ?? "worker-authority",
         sourceRunId: version.kind === "INITIAL" ? null : version.transitionId,
         sourceReceiptId: version.receiptId,
         rollbackTargetVersionId: version.rollbackTargetVersionId,
-        changedPaths: [],
+        changedPaths: existing?.changedPaths ?? [],
         snapshotAvailable: true,
         generation: version.generation,
         viewId: version.viewId,
         transitionEventId: version.transitionId,
-        createdAt: now(),
+        createdAt: existing?.createdAt ?? now(),
       });
       parentVersionId = version.versionId;
     }
     const snapshotHashes = new Set(projection.versions.map((version) => version.snapshotId));
     database.snapshots = [
       ...database.snapshots.filter((snapshot) => snapshot.agentId !== agentId),
-      ...[...snapshotHashes].map((hash) => ({
-        agentId,
-        hash,
-        sizeBytes: 0,
-        state: "available" as const,
-        createdAt: now(),
-      })),
+      ...[...snapshotHashes].map((hash) =>
+        existingSnapshots.get(hash) ?? {
+          agentId,
+          hash,
+          sizeBytes: 0,
+          state: "available" as const,
+          createdAt: now(),
+        },
+      ),
     ];
   }
 
@@ -776,11 +1209,224 @@ export class AgentService {
   async getCommitGateReceipt(runId: string): Promise<GateReceipt> {
     const run = this.getRun(runId);
     if (!this.commitGate) throw new HttpError(404, "CommitGate receipt not found");
-    const receipt = this.commitGate.mode === "worker"
-      ? this.commitGate.runner.getReceipt(run.id) ?? this.rebuildWorkerReceipt(run)
-      : await this.commitGate.receiptStore.get(run.agentId, run.id);
+    if (this.commitGate.mode === "worker") {
+      const projection = await this.commitGate.authority.getProjection(run.agentId);
+      const terminal = projection.terminalReceipts.find(
+        (item) => item.receiptId === run.id && item.transitionId === run.id,
+      );
+      if (terminal) {
+        return this.receiptFromWorkerProjection(run, projection, terminal);
+      }
+      // A live run may expose a bounded pending receipt, but no terminal claim
+      // is reconstructed from API memory. Once a terminal Worker event exists,
+      // every authoritative field comes from the projection path above.
+      const pending = this.commitGate.runner.getReceipt(run.id);
+      if (!pending) throw new HttpError(404, "CommitGate receipt not found");
+      if (pending.phase === "TERMINAL") {
+        throw new HttpError(
+          503,
+          "API receipt is terminal but the Worker terminal event is missing",
+          "RECEIPT_PROJECTION_MISMATCH",
+        );
+      }
+      return {
+        ...pending,
+        effectProof: deriveEffectDispositionProof({
+          decision: pending.decision,
+          baseHash: pending.baseSnapshotHash,
+          candidateHash: pending.candidateSnapshotHash,
+          finalHash: pending.finalSnapshotHash,
+        }),
+      };
+    }
+    const receipt = await this.commitGate.receiptStore.get(run.agentId, run.id);
     if (!receipt) throw new HttpError(404, "CommitGate receipt not found");
-    return receipt;
+    let effectProof = deriveEffectDispositionProof({
+      decision: receipt.decision,
+      baseHash: receipt.baseSnapshotHash,
+      candidateHash: receipt.candidateSnapshotHash,
+      finalHash: receipt.finalSnapshotHash,
+    });
+    return {
+      ...receipt,
+      effectProof,
+    };
+  }
+
+  private receiptFromWorkerProjection(
+    run: AgentRun,
+    projection: WorkerProjection,
+    terminal: ProjectedTerminalReceipt,
+  ): GateReceipt {
+    const transition = projection.transitions[terminal.transitionId];
+    if (!transition?.baseViewId) {
+      throw new HttpError(503, "Worker terminal transition is incomplete", "RECEIPT_PROJECTION_MISMATCH");
+    }
+    const proposal = transition.proposalId
+      ? projection.proposals[transition.proposalId]
+      : undefined;
+    const evidence = transition.proposalId
+      ? projection.evidence[transition.proposalId]
+      : undefined;
+    const permit = transition.permitId
+      ? projection.permits[transition.permitId]
+      : undefined;
+    if (
+      terminal.decision === "COMMITTED" &&
+      (!proposal || !evidence || !permit || permit.state !== "CONSUMED")
+    ) {
+      throw new HttpError(503, "Worker commit proof is incomplete", "RECEIPT_PROJECTION_MISMATCH");
+    }
+    const summary = this.summaryFromWorkerProjection(run, projection, terminal, false);
+    const cached = this.commitGate?.mode === "worker"
+      ? this.commitGate.runner.getReceipt(run.id)
+      : null;
+    const baseView =
+      cached?.baseView?.viewId === transition.baseViewId &&
+      cached.baseView.generation === transition.baseGeneration &&
+      cached.baseView.liveStateHash === transition.baseWorkspaceHash
+        ? cached.baseView
+        : null;
+    return {
+      schemaVersion: 2,
+      runId: run.id,
+      agentId: run.agentId,
+      phase: "TERMINAL",
+      decision: terminal.decision,
+      failureClass: summary.failureClass,
+      reasonCodes: terminal.reasonCodes,
+      baseSnapshotHash: transition.baseWorkspaceHash,
+      candidateSnapshotHash: proposal?.artifactHash ?? null,
+      patchHash: null,
+      finalSnapshotHash: terminal.workspaceHash,
+      policyHash: evidence?.policyHash ?? summary.policyHash,
+      evidence: { trusted: evidence?.coverage ?? "unavailable" },
+      checks: evidence?.checks.map((check) => ({
+        id: check.id,
+        status: check.status,
+        exitCode: check.exitCode,
+        durationMs: check.durationMs,
+        output: "[redacted authority evidence]",
+        timedOut: check.timedOut,
+      })) ?? [],
+      changedPaths: proposal?.changedPaths ?? [],
+      threadDisposition: terminal.decision === "COMMITTED" ? "resumed" : "reset",
+      candidateCleanup: summary.candidateCleanup,
+      sessionEpoch: terminal.view.sessionEpoch,
+      versionId: terminal.view.headVersionId,
+      promotionPendingDatabaseAck: false,
+      baseView,
+      nextView: terminal.view,
+      baseViewId: transition.baseViewId,
+      finalViewId: terminal.view.viewId,
+      baseGeneration: transition.baseGeneration,
+      nextGeneration: terminal.view.generation,
+      generation: terminal.view.generation,
+      proposalId: proposal?.proposalId ?? null,
+      evaluationContextHash: evidence?.evaluationContextHash ?? null,
+      evidenceDigest: evidence?.evidenceDigest ?? null,
+      permitId: permit?.permitId ?? null,
+      permitState: permit?.state ?? null,
+      transactionStatus: "TERMINAL",
+      artifactRetention: summary.artifactRetention ?? "deferred",
+      provider: run.provider,
+      ...(summary.effectProof ? { effectProof: summary.effectProof } : {}),
+      startedAt: run.startedAt ?? run.createdAt,
+      completedAt: run.completedAt ?? now(),
+    };
+  }
+
+  async getCommitGateProof(runId: string): Promise<AuthorityReceiptProofBundle> {
+    const run = this.getRun(runId);
+    return this.getCommitGateProofByReceipt(run.agentId, run.id);
+  }
+
+  /**
+   * Reads any Worker-owned terminal receipt proof, including rollback receipts
+   * that intentionally do not have an AgentRun row. The projection is selected
+   * by Agent first, so a caller cannot use a receipt id as a cross-Agent oracle
+   * or turn it into a filesystem path.
+   */
+  async getCommitGateProofByReceipt(
+    agentId: string,
+    receiptId: string,
+  ): Promise<AuthorityReceiptProofBundle> {
+    this.getAgent(agentId);
+    if (!this.commitGate || this.commitGate.mode !== "worker") {
+      throw new HttpError(404, "CommitGate receipt proof not found");
+    }
+    let projection = await this.commitGate.authority.getProjection(agentId);
+    let terminal = projection.terminalReceipts.find(
+      (candidate) => candidate.receiptId === receiptId,
+    );
+    if (!terminal) {
+      throw new HttpError(404, "CommitGate receipt proof not found");
+    }
+    let compactProof = projection.receiptProofs[receiptId];
+    if (!compactProof) {
+      projection = await this.commitGate.runner.recoverAuthority(agentId, projection);
+      terminal = projection.terminalReceipts.find(
+        (candidate) => candidate.receiptId === receiptId,
+      );
+      compactProof = projection.receiptProofs[receiptId];
+    }
+    if (!terminal) {
+      throw new HttpError(404, "CommitGate receipt proof not found");
+    }
+    if (!compactProof) {
+      throw new HttpError(
+        503,
+        "CommitGate receipt is terminal but its proof is pending recovery",
+        "RECEIPT_PROOF_PENDING",
+      );
+    }
+    let bundle: AuthorityReceiptProofBundle;
+    try {
+      bundle = await this.commitGate.authority.getReceiptProof(agentId, receiptId);
+    } catch (error) {
+      const code =
+        error && typeof error === "object" && "code" in error &&
+          typeof error.code === "string"
+          ? error.code
+          : null;
+      if (code === "RECEIPT_PROOF_PENDING") {
+        throw new HttpError(
+          503,
+          "CommitGate receipt is terminal but its proof is pending recovery",
+          "RECEIPT_PROOF_PENDING",
+        );
+      }
+      throw error;
+    }
+    if (
+      compactProof.receiptId !== receiptId ||
+      compactProof.transitionId !== terminal.transitionId ||
+      compactProof.terminalEventId !== terminal.eventId ||
+      bundle.schemaVersion !== 3 ||
+      !Array.isArray(bundle.eventChain) ||
+      bundle.eventChain.length === 0 ||
+      bundle.receipt.receiptId !== receiptId ||
+      bundle.receipt.agentId !== agentId ||
+      bundle.receipt.transitionId !== terminal.transitionId ||
+      bundle.receipt.decision !== terminal.decision ||
+      bundle.receipt.finalViewId !== terminal.viewId ||
+      bundle.receipt.finalWorkspaceHash !== terminal.workspaceHash
+    ) {
+      throw new HttpError(
+        503,
+        "CommitGate receipt proof does not belong to the requested Agent receipt",
+        "RECEIPT_PROOF_BINDING_MISMATCH",
+      );
+    }
+    const verification = verifyAuthorityReceiptProof(bundle);
+    if (!verification.valid) {
+      throw new HttpError(
+        503,
+        `CommitGate receipt proof failed verification: ${verification.reason ?? "unknown"}`,
+        "RECEIPT_PROOF_INVALID",
+      );
+    }
+    return bundle;
   }
 
   private rebuildWorkerReceipt(run: AgentRun): GateReceipt | null {
@@ -790,14 +1436,18 @@ export class AgentService {
     const agent = database.agents.find((item) => item.id === run.agentId);
     if (!agent) return null;
     const baseViewId = summary.baseViewId ?? run.baseViewId;
-    const baseGeneration = summary.baseGeneration ?? Math.max(0, agent.stateGeneration - 1);
-    const nextGeneration = summary.nextGeneration ?? agent.stateGeneration;
     const baseVersion = database.versions.find(
       (version) =>
         version.agentId === run.agentId &&
-        version.generation === baseGeneration &&
         version.viewId === baseViewId,
     );
+    const baseGeneration =
+      summary.baseGeneration ??
+      baseVersion?.generation ??
+      (summary.decision === "COMMITTED"
+        ? Math.max(0, agent.stateGeneration - 1)
+        : agent.stateGeneration);
+    const nextGeneration = summary.nextGeneration ?? agent.stateGeneration;
     const baseView: StateViewRef = {
       schemaVersion: 1,
       viewId: baseViewId,
@@ -857,6 +1507,14 @@ export class AgentService {
       transactionStatus: "TERMINAL",
       artifactRetention: summary.artifactRetention ?? "deferred",
       provider: summary.provider ?? run.provider,
+      effectProof:
+        summary.effectProof ??
+        deriveEffectDispositionProof({
+          decision: summary.decision,
+          baseHash: summary.baseHash,
+          candidateHash: summary.candidateHash,
+          finalHash: summary.finalHash,
+        }),
       startedAt: run.startedAt ?? run.createdAt,
       completedAt: run.completedAt ?? now(),
     };
@@ -1157,17 +1815,6 @@ export class AgentService {
         expectedWorkspaceHash: agentAtStart.currentLiveStateHash,
         baseGeneration: agentAtStart.stateGeneration,
       });
-      const nextView = makeStateView({
-        agentId: agentAtStart.id,
-        headVersionId: versionId,
-        generation: agentAtStart.stateGeneration + 1,
-        versionedHash: target.snapshotHash,
-        platformManagedHash: target.snapshotHash,
-        liveStateHash: target.snapshotHash,
-        sessionEpoch: agentAtStart.sessionEpoch + 1,
-        agentConfigVersion: agentAtStart.agentConfigVersion,
-        policyVersion: agentAtStart.policyVersion,
-      });
       const projection = await this.commitGate.authority.applyRollback({
         agentId: agentAtStart.id,
         transitionId: rollbackRunId,
@@ -1176,7 +1823,6 @@ export class AgentService {
         targetVersionId,
         expectedViewId: agentAtStart.currentViewId,
         expectedWorkspaceHash: agentAtStart.currentLiveStateHash,
-        nextView,
         versionId,
         receiptId: rollbackRunId,
       });
@@ -1213,6 +1859,13 @@ export class AgentService {
     agentId: string,
     prompt: string,
   ): Promise<{ run: AgentRun; message: Message }> {
+    // A terminal Run/Agent projection can become observable one microtask
+    // before the execution Promise releases its in-memory mutation fence
+    // (for example while session-home retirement is returning). A fresh
+    // follow-up should wait for that already-terminal cleanup instead of
+    // intermittently surfacing AGENT_BUSY. Truly running Agents remain
+    // fail-fast below because they still own an active lease.
+    await this.awaitTerminalExecutionCleanup(agentId);
     this.assertRecoveryReady(this.getAgent(agentId));
     this.assertNoActiveMutation(agentId);
     if (!isModelConfigured(this.config)) {
@@ -1336,8 +1989,6 @@ export class AgentService {
       modelGateway: this.config.modelRuntimeBaseUrl,
       modelId: this.config.modelId || null,
       modelAccessMode: this.config.modelAccessMode,
-      alternateProviderVerified: false,
-      officialProviderE2E: "unverified",
       // Legacy fields remain during the v3 UI migration.
       arkConfigured: this.config.modelProvider === "ark" && isModelConfigured(this.config),
       arkBaseUrl: this.config.arkBaseUrl,
@@ -1349,6 +2000,14 @@ export class AgentService {
       transitionAuthority: this.commitGate?.mode === "worker" ? "worker" : "in-process",
       authorityWriteIsolation:
         this.commitGate?.mode === "worker" ? "os-enforced" : "in-process",
+      authorityManifestSchemaVersion:
+        this.workerAuthorityHealth?.manifestSchemaVersion ?? null,
+      authorityFilesystemProfile:
+        this.workerAuthorityHealth?.filesystemProfile ?? null,
+      // This is captured independently before a Run and serves as the TOFU
+      // anchor for the Worker-signed terminal receipt proof returned later.
+      authorityReceiptSigningKeyId:
+        this.workerAuthorityHealth?.signingKeyId ?? null,
       containerEngine:
         ["container", "broker"].includes(this.config.runtimeProvider) ? this.config.containerEngine : null,
       runtime:
@@ -1589,13 +2248,34 @@ export class AgentService {
       throw new Error("WORKER_COMMITTED_VIEW_MISSING");
     }
     const projection = await this.commitGate.authority.getProjection(agentAtStart.id);
-    const finalView = result.commitGate.finalView;
+    const terminalReceipt = projection.terminalReceipts.find(
+      (receipt) => receipt.receiptId === run.id && receipt.transitionId === run.id,
+    );
+    if (!terminalReceipt || terminalReceipt.decision !== "COMMITTED") {
+      throw new Error("WORKER_COMMITTED_RECEIPT_MISSING");
+    }
+    const finalView = terminalReceipt.view;
     if (
       projection.head?.view.viewId !== finalView.viewId ||
+      result.commitGate.finalView.viewId !== finalView.viewId ||
       finalView.generation !== agentAtStart.stateGeneration + 1
     ) {
       throw new Error("WORKER_COMMITTED_PROJECTION_MISMATCH");
     }
+    const authoritativeSummary = {
+      ...this.summaryFromWorkerProjection(run, projection, terminalReceipt, false),
+      provider: result.commitGate.provider ?? run.provider,
+    };
+    maybeInjectApiProjectionFault({
+      point: API_PROJECTION_FAULT_POINT,
+      source: "live-finalize",
+      agentId: agentAtStart.id,
+      runId: run.id,
+      decision: terminalReceipt.decision,
+      viewId: finalView.viewId,
+      generation: finalView.generation,
+      projectionDigest: projection.digest,
+    });
     const completedAt = now();
     const sanitizedOutput = this.redactAgentText(result.output, this.config.codexMaxOutputBytes);
     let stale = false;
@@ -1612,12 +2292,12 @@ export class AgentService {
       storedRun.status = "completed";
       storedRun.output = sanitizedOutput;
       storedRun.usage = result.usage;
-      storedRun.commitGate = result.commitGate!;
+      storedRun.commitGate = authoritativeSummary;
       storedRun.transactionStatus = "TERMINAL";
-      storedRun.proposalId = result.commitGate!.proposalId ?? null;
-      storedRun.evaluationContextHash = result.commitGate!.evaluationContextHash ?? null;
-      storedRun.permitId = result.commitGate!.permitId ?? null;
-      storedRun.provider = result.commitGate!.provider ?? storedRun.provider;
+      storedRun.proposalId = authoritativeSummary.proposalId ?? null;
+      storedRun.evaluationContextHash = authoritativeSummary.evaluationContextHash ?? null;
+      storedRun.permitId = authoritativeSummary.permitId ?? null;
+      storedRun.provider = authoritativeSummary.provider ?? storedRun.provider;
       storedRun.completedAt = completedAt;
       this.upsertAssistantMessage(database, {
         agentId: agent.id,
@@ -1625,7 +2305,7 @@ export class AgentService {
         content: sanitizedOutput,
         authority: "AUTHORITATIVE",
         viewId: finalView.viewId,
-        proposalId: result.commitGate!.proposalId ?? null,
+        proposalId: authoritativeSummary.proposalId ?? null,
         createdAt: completedAt,
       });
       agent.status = "ready";
@@ -1652,6 +2332,15 @@ export class AgentService {
     run: AgentRun,
     result: Awaited<ReturnType<AgentRunner["run"]>>,
   ): Promise<void> {
+    if (this.commitGate?.mode === "worker") {
+      await this.persistWorkerNonCommitRun(agentAtStart, run, {
+        output: result.output,
+        usage: result.usage,
+        gate: result.commitGate ?? null,
+        cancelled: false,
+      });
+      return;
+    }
     const gate = result.commitGate;
     if (!gate) throw new Error("CommitGate result is missing");
     const completedAt = now();
@@ -1730,6 +2419,147 @@ export class AgentService {
     }
   }
 
+  /**
+   * Terminalize a Worker-owned negative decision before publishing it in the
+   * product database.  The append-only authority is the fact source; DB,
+   * message and session state are a replayable projection.  A process kill
+   * after Worker terminalization but before the mutation below is repaired by
+   * initializeWorkerAuthorityProjection on restart.
+   */
+  private async persistWorkerNonCommitRun(
+    agentAtStart: Agent,
+    run: AgentRun,
+    input: {
+      output: string | null;
+      usage: AgentRun["usage"];
+      gate: CommitGateSummary | null;
+      cancelled: boolean;
+      errorMessage?: string | null;
+    },
+  ): Promise<void> {
+    if (this.commitGate?.mode !== "worker" || !input.gate) {
+      throw new Error("WORKER_NON_COMMIT_RESULT_MISSING");
+    }
+    const before = this.store.snapshot();
+    const beforeRun = before.runs.find((item) => item.id === run.id);
+    const beforeAgent = before.agents.find((item) => item.id === agentAtStart.id);
+    if (
+      !beforeRun ||
+      !beforeAgent ||
+      !this.leaseMatches(beforeAgent, beforeRun, agentAtStart, run)
+    ) {
+      await this.recordStaleCallback(
+        agentAtStart.id,
+        run.id,
+        "worker-non-commit-before-authority",
+        run.runLeaseId,
+        run.baseViewId,
+        agentAtStart.sessionEpoch,
+      );
+      return;
+    }
+
+    // The Worker derives the final non-commit View from its current HEAD. The
+    // legacy StateView argument is ignored by WorkerCommitGateRunner and is
+    // retained only for the in-process runner interface.
+    await this.commitGate.runner.finalizeDisposition(
+      agentAtStart.id,
+      run.id,
+      stateViewForAgent(beforeAgent),
+    );
+    const projection = await this.commitGate.authority.getProjection(agentAtStart.id);
+    const terminalReceipt = projection.terminalReceipts.find(
+      (receipt) => receipt.receiptId === run.id && receipt.transitionId === run.id,
+    );
+    if (!terminalReceipt || terminalReceipt.decision !== input.gate.decision) {
+      throw new Error("WORKER_NON_COMMIT_RECEIPT_MISMATCH");
+    }
+    const authoritativeSummary = {
+      ...this.summaryFromWorkerProjection(run, projection, terminalReceipt, false),
+      provider: input.gate.provider ?? run.provider,
+    };
+    maybeInjectApiProjectionFault({
+      point: API_PROJECTION_FAULT_POINT,
+      source: "live-finalize",
+      agentId: agentAtStart.id,
+      runId: run.id,
+      decision: terminalReceipt.decision,
+      viewId: terminalReceipt.view.viewId,
+      generation: terminalReceipt.view.generation,
+      projectionDigest: projection.digest,
+    });
+
+    const completedAt = now();
+    const sanitizedOutput = input.output === null
+      ? null
+      : this.redactAgentText(input.output, this.config.codexMaxOutputBytes);
+    let staleCallback = false;
+    await this.store.mutate((database) => {
+      const storedRun = database.runs.find((item) => item.id === run.id);
+      const agent = database.agents.find((item) => item.id === agentAtStart.id);
+      if (!storedRun || !agent) return;
+      if (!this.leaseMatches(agent, storedRun, agentAtStart, run)) {
+        staleCallback = true;
+        return;
+      }
+      this.applyWorkerHead(agent, projection);
+      this.applyWorkerVersions(database, agent.id, projection);
+      const cancelled = input.cancelled || terminalReceipt.reasonCodes.some(
+        (code) => code.startsWith("RUN_CANCELLED"),
+      );
+      storedRun.status = this.workerRunStatus(terminalReceipt.decision, cancelled);
+      storedRun.output = sanitizedOutput;
+      storedRun.error =
+        terminalReceipt.decision === "ABORTED" && !cancelled
+          ? input.errorMessage ?? authoritativeSummary.failureClass ?? "infra_errored"
+          : null;
+      storedRun.usage = input.usage;
+      storedRun.commitGate = authoritativeSummary;
+      storedRun.transactionStatus = "TERMINAL";
+      storedRun.proposalId = authoritativeSummary.proposalId ?? null;
+      storedRun.evaluationContextHash = authoritativeSummary.evaluationContextHash ?? null;
+      storedRun.permitId = authoritativeSummary.permitId ?? null;
+      storedRun.provider = authoritativeSummary.provider ?? storedRun.provider;
+      storedRun.completedAt = completedAt;
+      if (sanitizedOutput !== null) {
+        this.upsertAssistantMessage(database, {
+          agentId: agent.id,
+          runId: run.id,
+          content: sanitizedOutput,
+          authority: "REJECTED",
+          viewId: terminalReceipt.view.viewId,
+          proposalId: authoritativeSummary.proposalId ?? null,
+          createdAt: completedAt,
+        });
+      }
+      if (agent.status !== "stopped") {
+        agent.status = terminalReceipt.decision === "ABORTED" && !cancelled
+          ? "error"
+          : "ready";
+      }
+      agent.codexThreadId = null;
+      agent.needsReconciliation = true;
+      agent.activeRunLeaseId = null;
+      agent.lastError =
+        terminalReceipt.decision === "ABORTED" && !cancelled
+          ? authoritativeSummary.failureClass ?? "infra_errored"
+          : null;
+      agent.updatedAt = completedAt;
+    });
+    if (staleCallback) {
+      await this.recordStaleCallback(
+        agentAtStart.id,
+        run.id,
+        "worker-non-commit-after-authority",
+        run.runLeaseId,
+        run.baseViewId,
+        agentAtStart.sessionEpoch,
+      );
+      return;
+    }
+    await this.retireSessionFence(agentAtStart.id);
+  }
+
   private async persistRunFailure(
     agentAtStart: Agent,
     run: AgentRun,
@@ -1752,12 +2582,40 @@ export class AgentService {
     } catch (readError) {
       receiptReadError = readError;
     }
-    const recoveryPending = Boolean(
+    let recoveryPending = Boolean(
       error instanceof CommitGateRecoveryRequiredError ||
-        (receipt?.decision === "COMMITTED" && receipt.promotionPendingDatabaseAck),
+        (receipt?.decision === "COMMITTED" && receipt.promotionPendingDatabaseAck) ||
+        (this.commitGate?.mode === "worker" && !receipt && !cancelled),
     );
     if (recoveryPending) this.recoveryReservations.add(agentAtStart.id);
     const summary = receipt ? this.summaryFromReceipt(receipt) : null;
+    if (
+      this.commitGate?.mode === "worker" &&
+      receipt?.phase === "PENDING_DISPOSITION" &&
+      summary &&
+      !recoveryPending
+    ) {
+      try {
+        await this.persistWorkerNonCommitRun(agentAtStart, run, {
+          output: null,
+          usage: null,
+          gate: summary,
+          cancelled,
+          errorMessage: message,
+        });
+        return;
+      } catch (finalizationError) {
+        // Do not publish a local terminal/session View when the authority did
+        // not confirm one. Startup recovery will terminalize and replay the
+        // Worker fact; the product row remains explicitly pending.
+        recoveryPending = true;
+        this.recoveryReservations.add(agentAtStart.id);
+        error = new AggregateError(
+          [error, finalizationError],
+          "Worker non-commit terminalization is pending recovery",
+        );
+      }
+    }
     let resetEpoch: number | null = null;
     let staleCallback = false;
     await this.store.mutate((database) => {
@@ -1784,13 +2642,15 @@ export class AgentService {
         }
         if (this.commitGate) {
           agent.codexThreadId = null;
-          agent.sessionEpoch = Math.max(
-            agent.sessionEpoch + 1,
-            receipt?.sessionEpoch ?? agentAtStart.sessionEpoch + 1,
-          );
-          resetEpoch = agent.sessionEpoch;
+          if (!(this.commitGate.mode === "worker" && recoveryPending)) {
+            agent.sessionEpoch = Math.max(
+              agent.sessionEpoch + 1,
+              receipt?.sessionEpoch ?? agentAtStart.sessionEpoch + 1,
+            );
+            resetEpoch = agent.sessionEpoch;
+            refreshAgentViewId(agent);
+          }
           agent.needsReconciliation = true;
-          refreshAgentViewId(agent);
         }
         agent.activeRunLeaseId = null;
         if (recoveryPending) {
@@ -2141,6 +3001,14 @@ export class AgentService {
           : receipt.artifactRetention ??
             (receipt.decision === "COMMITTED" ? "version_snapshot" : "destroyed"),
       provider: receipt.provider ?? null,
+      effectProof:
+        receipt.effectProof ??
+        deriveEffectDispositionProof({
+          decision: receipt.decision,
+          baseHash: receipt.baseSnapshotHash,
+          candidateHash: receipt.candidateSnapshotHash,
+          finalHash: receipt.finalSnapshotHash,
+        }),
     };
   }
 
@@ -2188,6 +3056,14 @@ export class AgentService {
       return;
     }
     throw new HttpError(409, "Agent is busy", "AGENT_BUSY");
+  }
+
+  private async awaitTerminalExecutionCleanup(agentId: string): Promise<void> {
+    const execution = this.activeExecutions.get(agentId);
+    if (!execution) return;
+    const agent = this.store.snapshot().agents.find((item) => item.id === agentId);
+    if (!agent || agent.status === "busy" || agent.activeRunLeaseId !== null) return;
+    await execution.catch(() => undefined);
   }
 
   private leaseMatches(

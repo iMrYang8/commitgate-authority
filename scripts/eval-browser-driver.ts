@@ -27,6 +27,7 @@ import {
   parseFlag,
 } from "./evidence-utils.mjs";
 import { removeEvaluatorTempTree } from "./evaluator-temp-cleanup.js";
+import { verifyAuthorityReceiptProof } from "../apps/server/src/research/receipt-proof.js";
 
 const root = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const execFileAsync = promisify(execFile);
@@ -122,6 +123,22 @@ const brokerSocket = process.platform === "darwin"
   : path.join(tempRoot, "run", "runtime-broker.sock");
 const tracePath = path.join(artifactDirectory, "trace.zip");
 const screenshotPath = path.join(artifactDirectory, "final-state.png");
+const receiptProofPath = path.resolve(
+  process.env.COMMITGATE_RECEIPT_PROOF_OUTPUT ??
+    path.join(artifactDirectory, "receipt-proof-bundle.json"),
+);
+const receiptProofKeyIdPath = path.resolve(
+  process.env.COMMITGATE_RECEIPT_PROOF_KEY_ID_OUTPUT ??
+    path.join(path.dirname(receiptProofPath), "receipt-proof-key-id.txt"),
+);
+const rollbackReceiptProofPath = path.resolve(
+  process.env.COMMITGATE_ROLLBACK_RECEIPT_PROOF_OUTPUT ??
+    path.join(path.dirname(receiptProofPath), "rollback-receipt-proof-bundle.json"),
+);
+const terminalReceiptProofSetPath = path.resolve(
+  process.env.COMMITGATE_TERMINAL_RECEIPT_PROOF_SET_OUTPUT ??
+    path.join(path.dirname(receiptProofPath), "terminal-receipt-proof-bundles.json"),
+);
 const tsxCli = path.join(root, "node_modules", "tsx", "dist", "cli.mjs");
 
 let server: ChildProcess | null = null;
@@ -137,7 +154,13 @@ let videoPath: string | null = null;
 let serverLog = "";
 let brokerLog = "";
 let fatalError: string | null = null;
+let authorityReceiptSigningKeyAnchor: string | null = null;
 const scenario: Array<Record<string, unknown>> = [];
+const terminalReceiptProofs: Array<{
+  label: string;
+  expectedDecision: "COMMITTED" | "QUARANTINED" | "ABORTED";
+  bundle: any;
+}> = [];
 
 const redact = (value: string): string => {
   let output = value;
@@ -325,6 +348,10 @@ async function replayConsumedPermit(
       permitId: receipt.permitId,
       surface: "POST /api/runs/:id/commitgate/promotion-attempts",
       headUnchanged: after.currentViewId === before.currentViewId,
+      beforeHash: before.currentLiveStateHash ?? null,
+      afterHash: after.currentLiveStateHash ?? null,
+      beforeGeneration: before.stateGeneration ?? null,
+      afterGeneration: after.stateGeneration ?? null,
     };
   } catch (error) {
     return {
@@ -373,6 +400,51 @@ function bindings(run: any, receipt: any): Record<string, unknown> {
           failureClass: check?.failureClass ?? null,
         }))
       : [],
+    effectProof: receipt?.effectProof ?? null,
+    authoritativeBeforeHash: receipt?.effectProof?.authoritativeBeforeHash ?? null,
+    authoritativeAfterHash: receipt?.effectProof?.authoritativeAfterHash ?? null,
+    invariant: receipt?.effectProof?.invariant ?? null,
+    invariantSatisfied: receipt?.effectProof?.invariantSatisfied ?? null,
+  };
+}
+
+function collectTerminalReceiptProof(input: {
+  label: string;
+  expectedDecision: "COMMITTED" | "QUARANTINED" | "ABORTED";
+  expectedRunId: string;
+  expectedAgentId: string;
+  proof: any;
+}): {
+  valid: boolean;
+  cryptographicValid: boolean;
+  reason: string | null;
+  signingKeyId: string | null;
+} {
+  const verification = verifyAuthorityReceiptProof(input.proof);
+  const signingKeyId =
+    typeof input.proof?.proof?.signingKeyId === "string"
+      ? input.proof.proof.signingKeyId
+      : null;
+  const bindingsValid =
+    input.proof?.schemaVersion === 3 &&
+    Array.isArray(input.proof?.eventChain) &&
+    input.proof.eventChain.length > 0 &&
+    input.proof?.receipt?.runId === input.expectedRunId &&
+    input.proof?.receipt?.agentId === input.expectedAgentId &&
+    input.proof?.receipt?.decision === input.expectedDecision &&
+    input.proof?.receipt?.sourceRevision === source.sourceRevision &&
+    signingKeyId !== null &&
+    signingKeyId === authorityReceiptSigningKeyAnchor;
+  terminalReceiptProofs.push({
+    label: input.label,
+    expectedDecision: input.expectedDecision,
+    bundle: input.proof,
+  });
+  return {
+    valid: verification.valid && bindingsValid,
+    cryptographicValid: verification.valid,
+    reason: verification.reason ?? (bindingsValid ? null : "browser proof binding mismatch"),
+    signingKeyId,
   };
 }
 
@@ -551,16 +623,27 @@ try {
       "Authority V2 product stack health",
       60_000,
     );
-    const system = await api("/api/system");
-    if (
-      system.runtimeProvider !== "broker" ||
-      system.transitionAuthority !== "worker" ||
-      system.authorityWriteIsolation !== "os-enforced" ||
-      system.modelAccessMode !== "relay"
-    ) {
-      throw new Error(`Authority V2 topology mismatch: ${JSON.stringify(system)}`);
-    }
   }
+
+  // Establish a release-time TOFU anchor before the evaluator creates an
+  // Agent or starts any Run. The later proof bundle is not allowed to define
+  // its own trust anchor.
+  const preRunSystem = await api("/api/system");
+  if (
+    preRunSystem.runtimeProvider !== "broker" ||
+    preRunSystem.transitionAuthority !== "worker" ||
+    preRunSystem.authorityWriteIsolation !== "os-enforced" ||
+    preRunSystem.modelAccessMode !== "relay"
+  ) {
+    throw new Error(`Authority V2 topology mismatch: ${JSON.stringify(preRunSystem)}`);
+  }
+  const preRunSigningKeyId = String(
+    preRunSystem.authorityReceiptSigningKeyId ?? "",
+  );
+  if (!/^[a-f0-9]{24}$/.test(preRunSigningKeyId)) {
+    throw new Error("AUTHORITY_RECEIPT_SIGNING_KEY_ID_INVALID");
+  }
+  authorityReceiptSigningKeyAnchor = preRunSigningKeyId;
 
   browser = await chromium.launch({
     headless: process.env.PLAYWRIGHT_HEADLESS !== "false",
@@ -624,6 +707,8 @@ try {
     agentId: agent.id,
     baseViewId: admittedAgent.currentViewId,
     admittedStatus: admittedAgent.status,
+    authorityReceiptSigningKeyId: authorityReceiptSigningKeyAnchor,
+    signingKeyAnchorCapturedBeforeAgentCreation: true,
   });
 
   const positive = await browserSend(
@@ -633,6 +718,37 @@ try {
   const positiveReceipt = (
     await api(`/api/runs/${positive.id}/commitgate`)
   ).receipt;
+  const positiveProof = (
+    await api(`/api/runs/${positive.id}/commitgate/proof`)
+  ).proof;
+  const positiveProofObservation = collectTerminalReceiptProof({
+    label: "positive-commit",
+    expectedDecision: "COMMITTED",
+    expectedRunId: positive.id,
+    expectedAgentId: agent.id,
+    proof: positiveProof,
+  });
+  await mkdir(path.dirname(receiptProofPath), { recursive: true });
+  await writeFile(
+    receiptProofPath,
+    JSON.stringify(positiveProof, null, 2) + "\n",
+    { encoding: "utf8", mode: 0o600 },
+  );
+  const proofSigningKeyId = String(positiveProof?.proof?.signingKeyId ?? "");
+  if (!/^[a-f0-9]{24}$/.test(proofSigningKeyId)) {
+    throw new Error("RECEIPT_PROOF_SIGNING_KEY_ID_INVALID");
+  }
+  if (
+    authorityReceiptSigningKeyAnchor === null ||
+    proofSigningKeyId !== authorityReceiptSigningKeyAnchor
+  ) {
+    throw new Error("RECEIPT_PROOF_SIGNING_KEY_ID_MISMATCH");
+  }
+  await writeFile(
+    receiptProofKeyIdPath,
+    `${authorityReceiptSigningKeyAnchor}\n`,
+    { encoding: "utf8", mode: 0o644 },
+  );
   scenario.push({
     id: "browser-positive-committed",
     status:
@@ -644,10 +760,13 @@ try {
         positiveReceipt?.baseGeneration + 1 &&
       positiveReceipt?.baseView?.viewId === positiveReceipt?.baseViewId &&
       positiveReceipt?.nextView?.viewId === positiveReceipt?.finalViewId &&
-      positiveReceipt?.checks?.every((check: any) => check.status === "PASS")
+      positiveReceipt?.checks?.every((check: any) => check.status === "PASS") &&
+      positiveProofObservation.valid
         ? "verified"
         : "failed",
     ...bindings(positive, positiveReceipt),
+    receiptProofVerified: positiveProofObservation.valid,
+    receiptProofVerificationReason: positiveProofObservation.reason,
   });
   const positivePaths = new Set(positiveReceipt?.changedPaths ?? []);
   scenario.push({
@@ -741,6 +860,16 @@ try {
     rejectedAgent.headVersionId === beforeQuarantine.headVersionId &&
     rejectedAgent.stateGeneration === beforeQuarantine.stateGeneration &&
     rejectedAgent.currentLiveStateHash === beforeQuarantine.currentLiveStateHash;
+  const quarantinedProof = (
+    await api(`/api/runs/${quarantined.id}/commitgate/proof`)
+  ).proof;
+  const quarantinedProofObservation = collectTerminalReceiptProof({
+    label: "protected-path-quarantine",
+    expectedDecision: "QUARANTINED",
+    expectedRunId: quarantined.id,
+    expectedAgentId: agent.id,
+    proof: quarantinedProof,
+  });
   scenario.push({
     id: "browser-protected-quarantined",
     status:
@@ -752,7 +881,8 @@ try {
       rejectedAgent.sessionEpoch === beforeQuarantine.sessionEpoch + 1 &&
       (externalStack || (markerAbsent === true && protectedFixtureAbsent === true)) &&
       rejectedAgent.codexThreadId === null &&
-      rejectedAgent.needsReconciliation === true
+      rejectedAgent.needsReconciliation === true &&
+      quarantinedProofObservation.valid
         ? "verified"
         : "failed",
     ...bindings(quarantined, quarantinedReceipt),
@@ -763,6 +893,8 @@ try {
     sessionViewAdvanced:
       rejectedAgent.currentViewId !== beforeQuarantine.currentViewId &&
       rejectedAgent.sessionEpoch === beforeQuarantine.sessionEpoch + 1,
+    receiptProofVerified: quarantinedProofObservation.valid,
+    receiptProofVerificationReason: quarantinedProofObservation.reason,
   });
 
   await execFileAsync(engine, ["network", "disconnect", relayEgressNetwork, relayContainer]);
@@ -792,15 +924,29 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 2_000));
   }
   const abortedReceipt = (await api(`/api/runs/${aborted.id}/commitgate`)).receipt;
+  const abortedProof = (
+    await api(`/api/runs/${aborted.id}/commitgate/proof`)
+  ).proof;
+  const abortedProofObservation = collectTerminalReceiptProof({
+    label: "provider-or-verifier-abort",
+    expectedDecision: "ABORTED",
+    expectedRunId: aborted.id,
+    expectedAgentId: agent.id,
+    proof: abortedProof,
+  });
   scenario.push({
     id: "browser-provider-or-verifier-aborted",
     status:
-      aborted.status === "failed" && aborted.commitGate?.decision === "ABORTED"
+      aborted.status === "failed" &&
+      aborted.commitGate?.decision === "ABORTED" &&
+      abortedProofObservation.valid
         ? "verified"
         : "failed",
     ...bindings(aborted, abortedReceipt),
     failureInjection: "Model Relay egress disconnected during browser-submitted run",
     codexTimeoutMs,
+    receiptProofVerified: abortedProofObservation.valid,
+    receiptProofVerificationReason: abortedProofObservation.reason,
   });
 
   await api(`/api/agents/${agent.id}/start`, { method: "POST" });
@@ -831,6 +977,16 @@ try {
     await api(`/api/runs/${followUp.id}/commitgate`)
   ).receipt;
   const afterFollowUp = (await api(`/api/agents/${agent.id}`)).agent;
+  const followUpProof = (
+    await api(`/api/runs/${followUp.id}/commitgate/proof`)
+  ).proof;
+  const followUpProofObservation = collectTerminalReceiptProof({
+    label: "fresh-follow-up-commit",
+    expectedDecision: "COMMITTED",
+    expectedRunId: followUp.id,
+    expectedAgentId: agent.id,
+    proof: followUpProof,
+  });
   scenario.push({
     id: "browser-fresh-follow-up",
     status:
@@ -840,10 +996,13 @@ try {
       typeof afterFollowUp.codexThreadId === "string" &&
       afterFollowUp.codexThreadId.length > 0 &&
       afterFollowUp.needsReconciliation === false &&
-      afterFollowUp.sessionEpoch === beforeFollowUp.sessionEpoch
+      afterFollowUp.sessionEpoch === beforeFollowUp.sessionEpoch &&
+      followUpProofObservation.valid
         ? "verified"
         : "failed",
     ...bindings(followUp, followUpReceipt),
+    receiptProofVerified: followUpProofObservation.valid,
+    receiptProofVerificationReason: followUpProofObservation.reason,
   });
 
   await page.getByRole("button", { name: /Versions/ }).click();
@@ -862,20 +1021,95 @@ try {
     return Boolean(rollbackVersion);
   }, "browser-triggered rollback", 60_000);
   const rollbackAgent = (await api(`/api/agents/${agent.id}`)).agent;
+  const rollbackReceiptId = String(rollbackVersion?.sourceReceiptId ?? "");
+  if (!/^[A-Za-z0-9_.-]{1,128}$/.test(rollbackReceiptId)) {
+    throw new Error("ROLLBACK_RECEIPT_ID_INVALID");
+  }
+  const rollbackProof = (
+    await api(
+      `/api/agents/${agent.id}/commitgate/proofs/${encodeURIComponent(rollbackReceiptId)}`,
+    )
+  ).proof;
+  await mkdir(path.dirname(rollbackReceiptProofPath), { recursive: true });
+  await writeFile(
+    rollbackReceiptProofPath,
+    JSON.stringify(rollbackProof, null, 2) + "\n",
+    { encoding: "utf8", mode: 0o600 },
+  );
+  const rollbackProofKeyId = String(rollbackProof?.proof?.signingKeyId ?? "");
+  const rollbackProofObservation = collectTerminalReceiptProof({
+    label: "manual-rollback",
+    expectedDecision: "COMMITTED",
+    expectedRunId: rollbackReceiptId,
+    expectedAgentId: agent.id,
+    proof: rollbackProof,
+  });
+  const rollbackTerminalTargetVersionId = String(
+    rollbackProof?.terminalEvent?.payload?.rollbackTargetVersionId ?? "",
+  );
+  const rollbackReceiptProofVerified =
+    rollbackProofObservation.valid === true &&
+    rollbackProof?.schemaVersion === 3 &&
+    Array.isArray(rollbackProof?.eventChain) &&
+    rollbackProof.eventChain.length > 0 &&
+    rollbackProof?.receipt?.receiptId === rollbackReceiptId &&
+    rollbackProof?.receipt?.runId === rollbackReceiptId &&
+    rollbackProof?.receipt?.agentId === agent.id &&
+    rollbackProof?.receipt?.transitionId === rollbackReceiptId &&
+    rollbackProof?.receipt?.decision === "COMMITTED" &&
+    rollbackProof?.receipt?.permitState === "CONSUMED" &&
+    rollbackProof?.receipt?.finalViewId === rollbackAgent.currentViewId &&
+    rollbackProof?.receipt?.nextGeneration === rollbackAgent.stateGeneration &&
+    rollbackProof?.receipt?.finalWorkspaceHash === rollbackAgent.currentLiveStateHash &&
+    rollbackProof?.receipt?.sourceRevision === source.sourceRevision &&
+    rollbackProof?.terminalEvent?.type === "TRANSITION_ACKNOWLEDGED" &&
+    rollbackProof?.terminalEvent?.transitionId === rollbackReceiptId &&
+    rollbackTerminalTargetVersionId === firstCommit.id &&
+    rollbackProofKeyId === authorityReceiptSigningKeyAnchor;
   scenario.push({
     id: "browser-manual-rollback",
     status:
       rollbackVersion?.kind === "ROLLBACK" &&
       rollbackVersion?.rollbackTargetVersionId === firstCommit.id &&
+      rollbackVersion?.sourceReceiptId === rollbackReceiptId &&
       rollbackAgent.codexThreadId === null &&
-      rollbackAgent.needsReconciliation === true
+      rollbackAgent.needsReconciliation === true &&
+      rollbackReceiptProofVerified
         ? "verified"
         : "failed",
     rollbackVersionId: rollbackVersion?.id ?? null,
     rollbackTargetVersionId: rollbackVersion?.rollbackTargetVersionId ?? null,
+    rollbackVersionSourceReceiptId: rollbackVersion?.sourceReceiptId ?? null,
+    rollbackReceiptId,
+    rollbackReceiptProofVerified,
+    rollbackProofCryptographicValid: rollbackProofObservation.cryptographicValid,
+    rollbackProofVerificationReason: rollbackProofObservation.reason,
+    rollbackProofSourceRevisionMatches:
+      rollbackProof?.receipt?.sourceRevision === source.sourceRevision,
+    rollbackProofSigningKeyId: rollbackProofKeyId,
+    rollbackProofSigningKeyMatchesPreRunAnchor:
+      rollbackProofKeyId === authorityReceiptSigningKeyAnchor,
+    rollbackProofTerminalEventId: rollbackProof?.terminalEvent?.eventId ?? null,
+    rollbackProofTerminalEventDigest: rollbackProof?.terminalEvent?.digest ?? null,
+    rollbackProofReceiptHash: rollbackProof?.proof?.receiptHash ?? null,
+    rollbackProofTargetVersionId: rollbackTerminalTargetVersionId,
+    rollbackProofFinalWorkspaceHash:
+      rollbackProof?.receipt?.finalWorkspaceHash ?? null,
+    rollbackAuthoritativeAfterHash: rollbackAgent.currentLiveStateHash,
     nextViewId: rollbackAgent.currentViewId,
     nextGeneration: rollbackAgent.stateGeneration,
   });
+  await writeFile(
+    terminalReceiptProofSetPath,
+    JSON.stringify({
+      schemaVersion: 1,
+      kind: "authority-terminal-receipt-proof-set",
+      sourceRevision: source.sourceRevision,
+      signingKeyId: authorityReceiptSigningKeyAnchor,
+      proofs: terminalReceiptProofs,
+    }, null, 2) + "\n",
+    { encoding: "utf8", mode: 0o600 },
+  );
   await page.screenshot({ path: screenshotPath, fullPage: true });
 } catch (error) {
   fatalError = redact(error instanceof Error ? error.stack ?? error.message : String(error));
@@ -939,6 +1173,10 @@ try {
 const artifactCandidates = [
   [tracePath, "playwright-trace"],
   [screenshotPath, "final-screenshot"],
+  [receiptProofPath, "receipt-proof-bundle"],
+  [receiptProofKeyIdPath, "receipt-proof-key-id"],
+  [rollbackReceiptProofPath, "rollback-receipt-proof-bundle"],
+  [terminalReceiptProofSetPath, "terminal-receipt-proof-set"],
   ...(videoPath ? [[videoPath, "playwright-video"]] : []),
 ] as Array<[string, string]>;
 const artifacts: Array<Record<string, unknown>> = [];
@@ -970,6 +1208,10 @@ const artifactsComplete = [
   "playwright-trace",
   "playwright-video",
   "final-screenshot",
+  "receipt-proof-bundle",
+  "receipt-proof-key-id",
+  "rollback-receipt-proof-bundle",
+  "terminal-receipt-proof-set",
 ].every((kind) => artifactKinds.has(kind));
 const status =
   fatalError || anyRequiredFailed || !artifactsComplete

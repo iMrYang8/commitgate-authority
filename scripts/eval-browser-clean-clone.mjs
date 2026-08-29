@@ -81,6 +81,27 @@ async function staticContractCheck() {
         /PERMIT_REPLAY/.test(driver) &&
         /Public promotion-attempt API rejected the consumed permit/.test(driver),
     },
+    {
+      id: "driver-contract:receipt-proof-api",
+      ok:
+        /\/api\/runs\/\$\{positive\.id\}\/commitgate\/proof/.test(driver) &&
+        /receipt-proof-bundle/.test(driver),
+    },
+    {
+      id: "driver-contract:rollback-receipt-proof-api",
+      ok:
+        driver.includes("/commitgate/proofs/${encodeURIComponent(rollbackReceiptId)}") &&
+        /rollback-receipt-proof-bundle/.test(driver),
+    },
+    {
+      id: "driver-contract:all-terminal-receipt-proofs",
+      ok:
+        /terminal-receipt-proof-bundles/.test(driver) &&
+        /protected-path-quarantine/.test(driver) &&
+        /provider-or-verifier-abort/.test(driver) &&
+        /fresh-follow-up-commit/.test(driver) &&
+        /authority-terminal-receipt-proof-set/.test(driver),
+    },
     ...requiredScenarioIds.map((id) => ({
       id: `driver-contract:scenario-id:${id}`,
       ok: driver.includes(`id: "${id}"`),
@@ -194,9 +215,7 @@ function baseReport(status, reason) {
       ...requiredScenarioIds.map((id) => ({ id, status: "unverified" })),
     ],
     artifacts: [],
-    officialProviderE2E: "unverified",
-    alternateProviderVerified: false,
-    competitionVerified: false,
+    providerE2EVerified: "unverified",
     reason,
     launcher: {
       cleanClone: true,
@@ -355,6 +374,24 @@ try {
     COMMITGATE_MODEL_RELAY_IMAGE: "commitgate-model-relay:local",
     COMMITGATE_BROWSER_RAW_REPORT: rawReportPath,
     COMMITGATE_BROWSER_ARTIFACT_DIR: artifactDirectory,
+    COMMITGATE_RECEIPT_PROOF_OUTPUT: path.join(
+      root,
+      "eval",
+      "evidence",
+      "receipt-proof-bundle.json",
+    ),
+    COMMITGATE_RECEIPT_PROOF_KEY_ID_OUTPUT: path.join(
+      root,
+      "eval",
+      "evidence",
+      "receipt-proof-key-id.txt",
+    ),
+    COMMITGATE_TERMINAL_RECEIPT_PROOF_SET_OUTPUT: path.join(
+      root,
+      "eval",
+      "evidence",
+      "terminal-receipt-proof-bundles.json",
+    ),
     COMMITGATE_CLEAN_CLONE_EXPECTED_REVISION: source.sourceRevision,
     COMMITGATE_BROWSER_EXTERNAL_STACK: "true",
     COMMITGATE_BROWSER_BASE_URL: `http://127.0.0.1:${publicPort}`,
@@ -440,6 +477,10 @@ const requiredArtifactKinds = new Set([
   "playwright-trace",
   "playwright-video",
   "final-screenshot",
+  "receipt-proof-bundle",
+  "receipt-proof-key-id",
+  "rollback-receipt-proof-bundle",
+  "terminal-receipt-proof-set",
   "driver-report",
 ]);
 const artifactsVerified =
@@ -506,10 +547,7 @@ const report = {
     providerIdentityBound: providerIdentityVerified,
     credentialsRecorded: false,
   },
-  officialProviderE2E:
-    provider === "ark" && status === "verified" ? "verified" : "unverified",
-  alternateProviderVerified: provider === "openrouter" && status === "verified",
-  competitionVerified: provider === "ark" && status === "verified",
+  providerE2EVerified: status,
   reason:
     status === "verified"
       ? null

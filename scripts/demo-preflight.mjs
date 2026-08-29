@@ -40,7 +40,7 @@ add("pinned-starter-base", base.status === 0 && base.stdout.trim() === pinned, b
 const branch = command("git", ["branch", "--show-current"]);
 add(
   "feature-branch",
-  ["feature/commitgate", "feature/commitgate-sealed-view", "feature/commitgate-94", "feature/commitgate-authority-v2"].includes(
+  ["feature/commitgate", "feature/commitgate-sealed-view", "feature/commitgate-94", "feature/commitgate-authority-v2", "feature/commitgate-proof-closure"].includes(
     branch.stdout.trim(),
   ),
   branch.stdout.trim() || "detached HEAD",
@@ -58,12 +58,13 @@ const trackedImplementation = command("git", [
   "scripts/eval-suite.mjs",
   "scripts/audit-authority.mjs",
   "scripts/score.mjs",
+  "scripts/demo-auth.mjs",
 ]);
 add(
   "implementation-tracked",
   trackedImplementation.status === 0,
   trackedImplementation.status === 0
-    ? "CommitGate core and scoring scripts are part of the checked-out revision"
+    ? "CommitGate core, evidence-checklist, and Demo-auth scripts are part of the checked-out revision"
     : trackedImplementation.stderr.trim(),
 );
 
@@ -122,10 +123,8 @@ const report = {
   source,
   executionIdentity: executionIdentity(root),
   credentialIndependentReady: status === "verified",
-  realModelReady: status === "verified" && modelConfigured,
-  officialArkReady: status === "verified" && modelConfigured && modelProvider === "ark",
-  alternateProviderReady:
-    status === "verified" && modelConfigured && modelProvider === "openrouter",
+  providerReady: status === "verified" && modelConfigured,
+  providerId: modelProvider,
   checks,
 };
 await mkdir(evidenceDir, { recursive: true });

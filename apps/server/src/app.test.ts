@@ -27,6 +27,57 @@ describe("HTTP boundary", () => {
     await app.close();
   });
 
+  it("exposes an Agent-scoped rollback receipt proof only with APP_AUTH_TOKEN", async () => {
+    const agentId = "11111111-1111-4111-8111-111111111111";
+    const receiptId = "rollback-22222222-2222-4222-8222-222222222222";
+    const boundary = {
+      listAgents: () => [],
+      systemInfo: async () => ({}),
+      getCommitGateProofByReceipt: async (
+        requestedAgentId: string,
+        requestedReceiptId: string,
+      ) => ({
+        schemaVersion: 2,
+        receipt: {
+          receiptId: requestedReceiptId,
+          agentId: requestedAgentId,
+          decision: "COMMITTED",
+        },
+        proof: { signingKeyId: "worker-key", signatureAlgorithm: "Ed25519" },
+        terminalEvent: { eventId: "rollback-terminal-event" },
+        predecessorEvent: null,
+        publicKeyPem: "PUBLIC KEY",
+      }),
+    } as unknown as AgentService;
+    const app = await createApp(
+      loadConfig({ NODE_ENV: "test", APP_AUTH_TOKEN: "a-strong-test-token" }),
+      boundary,
+    );
+    const url = `/api/agents/${agentId}/commitgate/proofs/${receiptId}`;
+
+    const denied = await app.inject({ method: "GET", url });
+    expect(denied.statusCode).toBe(401);
+
+    const allowed = await app.inject({
+      method: "GET",
+      url,
+      headers: { authorization: "Bearer a-strong-test-token" },
+    });
+    expect(allowed.statusCode).toBe(200);
+    expect(allowed.json().proof).toMatchObject({
+      receipt: { receiptId, agentId, decision: "COMMITTED" },
+      proof: { signingKeyId: "worker-key", signatureAlgorithm: "Ed25519" },
+    });
+
+    const pathLikeReceipt = await app.inject({
+      method: "GET",
+      url: `/api/agents/${agentId}/commitgate/proofs/..%2Fcontrol%2Flog`,
+      headers: { authorization: "Bearer a-strong-test-token" },
+    });
+    expect(pathLikeReceipt.statusCode).toBe(400);
+    await app.close();
+  });
+
   it("preserves Fastify client error status codes", async () => {
     const app = await createApp(
       loadConfig({ NODE_ENV: "test", COMMITGATE_ENABLED: "false" }),
@@ -58,6 +109,14 @@ describe("HTTP boundary", () => {
       systemInfo: async () => ({}),
       getVersions: () => [{ id: "v1", sequence: 1 }],
       getCommitGateReceipt: async () => ({ runId, decision: "COMMITTED" }),
+      getCommitGateProof: async () => ({
+        schemaVersion: 2,
+        receipt: { receiptId: runId, decision: "COMMITTED" },
+        proof: { signingKeyId: "worker-key", signatureAlgorithm: "Ed25519" },
+        terminalEvent: { eventId: "terminal-event" },
+        predecessorEvent: null,
+        publicKeyPem: "PUBLIC KEY",
+      }),
       attemptPromotionReplay: async () => ({
         code: "PERMIT_REPLAY" as const,
         permitState: "CONSUMED" as const,
@@ -84,6 +143,17 @@ describe("HTTP boundary", () => {
     const receipt = await app.inject({ method: "GET", url: `/api/runs/${runId}/commitgate` });
     expect(receipt.statusCode).toBe(200);
     expect(receipt.json().receipt.decision).toBe("COMMITTED");
+
+    const proof = await app.inject({
+      method: "GET",
+      url: `/api/runs/${runId}/commitgate/proof`,
+    });
+    expect(proof.statusCode).toBe(200);
+    expect(proof.json().proof).toMatchObject({
+      schemaVersion: 2,
+      receipt: { receiptId: runId, decision: "COMMITTED" },
+      proof: { signingKeyId: "worker-key", signatureAlgorithm: "Ed25519" },
+    });
 
     const replay = await app.inject({
       method: "POST",

@@ -11,6 +11,7 @@ compose_project="${COMMITGATE_COMPOSE_PROJECT:-commitgate}"
 stack_id="${COMMITGATE_STACK_ID:-$compose_project}"
 
 load_environment() {
+  local require_credentials="${1:-true}"
   if [[ -f .env.local ]]; then
     set -a
     # shellcheck disable=SC1091
@@ -20,17 +21,53 @@ load_environment() {
   export MODEL_PROVIDER="${MODEL_PROVIDER:-ark}"
   export MODEL_ID="${MODEL_ID:-${ARK_MODEL:-}}"
   export MODEL_API_KEY="${MODEL_API_KEY:-${ARK_API_KEY:-}}"
-  export MODEL_BASE_URL="${MODEL_BASE_URL:-${ARK_BASE_URL:-https://ark.cn-beijing.volces.com/api/v3}}"
+  if [[ -z "${MODEL_BASE_URL:-}" ]]; then
+    case "$MODEL_PROVIDER" in
+      ark) MODEL_BASE_URL="${ARK_BASE_URL:-https://ark.cn-beijing.volces.com/api/v3}" ;;
+      openrouter) MODEL_BASE_URL="https://openrouter.ai/api/v1" ;;
+      *)
+        if [[ "$require_credentials" == "true" ]]; then
+          echo "MODEL_BASE_URL is required for Provider '$MODEL_PROVIDER'" >&2
+          exit 1
+        fi
+        MODEL_BASE_URL="http://shutdown.invalid"
+        ;;
+    esac
+  fi
+  export MODEL_BASE_URL
   export MODEL_WIRE_API="${MODEL_WIRE_API:-responses}"
   export PUBLIC_PORT="$port"
   export COMMITGATE_COMPOSE_PROJECT="$compose_project"
   export COMMITGATE_STACK_ID="$stack_id"
-  export COMMITGATE_SOURCE_REVISION="$(git rev-parse HEAD)"
-  if [[ -z "$MODEL_ID" || -z "$MODEL_API_KEY" ]]; then
+  # Evidence may be committed after the frozen product source. Bind runtime
+  # proofs to the newest source-surface commit rather than an evidence-only
+  # HEAD, and refuse to start while that source surface is dirty.
+  COMMITGATE_SOURCE_REVISION="$(
+    node --input-type=module -e '
+      import("./scripts/evidence-utils.mjs").then(async ({ evidenceProvenance }) => {
+        const source = await evidenceProvenance(process.cwd());
+        if (!source.sourceRevision || !source.workingTreeCleanAtCapture) process.exit(1);
+        process.stdout.write(source.sourceRevision);
+      });
+    '
+  )"
+  export COMMITGATE_SOURCE_REVISION
+  if [[ "$require_credentials" == "true" && ( -z "$MODEL_ID" || -z "$MODEL_API_KEY" ) ]]; then
     echo "MODEL_ID and MODEL_API_KEY are required in .env.local" >&2
     exit 1
   fi
-  if [[ -z "${DOCKER_SOCKET_GID:-}" ]]; then
+  # `docker compose down`, logs, and status must remain usable after a key was
+  # revoked or .env.local was moved. Compose still parses MODEL_ID on those
+  # control-plane commands, but it never needs the Provider credential value.
+  if [[ "$require_credentials" != "true" && -z "$MODEL_ID" ]]; then
+    export MODEL_ID="shutdown-only-placeholder"
+  fi
+  if [[ "$require_credentials" != "true" ]]; then
+    # Control-plane commands consume the already-materialized runtime secret
+    # file, never the Provider credential from the caller's environment.
+    unset MODEL_API_KEY ARK_API_KEY
+  fi
+  if [[ "$require_credentials" == "true" && -z "${DOCKER_SOCKET_GID:-}" ]]; then
     # Docker Desktop/Colima can translate the mounted socket ownership inside
     # the VM, so the macOS host gid is not authoritative. Observe the gid from
     # the same container namespace that Runtime Broker will use.
@@ -52,13 +89,15 @@ compose() {
 write_secrets() {
   mkdir -p "$secret_dir" "$state_dir/workspaces"
   chmod 700 "$state_dir" "$secret_dir"
-  local relay_token auth_token
+  local relay_token auth_token broker_attestation_key
   relay_token="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(36).toString("base64url"))')"
   auth_token="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(24).toString("base64url"))')"
+  broker_attestation_key="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(48).toString("base64url"))')"
   printf '%s' "$MODEL_API_KEY" > "$secret_dir/model_api_key"
   printf '%s' "$relay_token" > "$secret_dir/relay_token"
   printf '%s' "$auth_token" > "$secret_dir/app_auth_token"
-  chmod 600 "$secret_dir/model_api_key" "$secret_dir/relay_token" "$secret_dir/app_auth_token"
+  printf '%s' "$broker_attestation_key" > "$secret_dir/broker_attestation_key"
+  chmod 600 "$secret_dir/model_api_key" "$secret_dir/relay_token" "$secret_dir/app_auth_token" "$secret_dir/broker_attestation_key"
 }
 
 remove_runtime_secrets() {
@@ -68,12 +107,45 @@ remove_runtime_secrets() {
   rm -f \
     "$secret_dir/model_api_key" \
     "$secret_dir/relay_token" \
-    "$secret_dir/app_auth_token"
+    "$secret_dir/app_auth_token" \
+    "$secret_dir/broker_attestation_key"
   rmdir "$secret_dir" >/dev/null 2>&1 || true
+}
+
+clear_demo_clipboard() {
+  # Clear only when the clipboard still contains this stack's credential. The
+  # helper deliberately leaves unrelated clipboard contents untouched.
+  node scripts/demo-auth.mjs --clear >/dev/null 2>&1 || true
+}
+
+authenticated_system_status() {
+  if [[ ! -s "$secret_dir/app_auth_token" ]]; then
+    echo "Demo authentication secret is unavailable; start the stack first" >&2
+    return 1
+  fi
+  DEMO_SYSTEM_URL="http://127.0.0.1:$port/api/system" \
+    node - "$secret_dir/app_auth_token" <<'NODE'
+const { readFileSync } = require("node:fs");
+const token = readFileSync(process.argv[2], "utf8").trim();
+fetch(process.env.DEMO_SYSTEM_URL, {
+  headers: { authorization: `Bearer ${token}` },
+}).then(async (response) => {
+  const body = await response.text();
+  if (!response.ok) {
+    console.error(`system status request failed: HTTP ${response.status}`);
+    process.exit(1);
+  }
+  process.stdout.write(`${body}\n`);
+}).catch((error) => {
+  console.error(`system status request failed: ${error.message}`);
+  process.exit(1);
+});
+NODE
 }
 
 foreground_cleanup() {
   compose down --remove-orphans || true
+  clear_demo_clipboard
   remove_runtime_secrets
 }
 
@@ -109,17 +181,28 @@ start() {
   local mode="${1:-detached}"
   load_environment
   legacy_down
+  # Freeze the exact Runtime/Verifier image and verifier policy inputs before
+  # the Worker starts. `compose up` below is deliberately no-build so the
+  # evidence-producing Broker cannot drift from these startup pins.
+  compose build
+  # Pin derivation runs before runtime secrets exist. Its launcher-local
+  # synthetic attestation key validates config only and is never output;
+  # write_secrets below creates the real per-start Broker/Worker key.
+  eval "$(node --import tsx scripts/derive-worker-evidence-pins.ts --shell)"
   write_secrets
+  # Candidate/export exchange state is never authoritative. Recreate this
+  # volume on every start so a legacy unbounded local volume cannot silently
+  # bypass the current tmpfs byte/inode contract; authority/control persist.
+  compose down --remove-orphans >/dev/null 2>&1 || true
+  docker volume rm "${stack_id}-exchange" >/dev/null 2>&1 || true
   # Secrets are rotated on every start. Force recreation so long-lived local
   # containers never retain the previous auth or relay capability in memory.
-  compose up --detach --build --remove-orphans --force-recreate
+  compose up --detach --no-build --remove-orphans --force-recreate
   wait_ready
   PATH="/opt/homebrew/bin:$PATH" npm run demo:preflight
 
-  local auth_token
-  auth_token="$(cat "$secret_dir/app_auth_token")"
   DEMO_BASE_URL="http://127.0.0.1:$port" \
-    APP_AUTH_TOKEN="$auth_token" \
+    APP_AUTH_TOKEN_FILE="$secret_dir/app_auth_token" \
     node scripts/demo-seed.mjs
 
   echo "CommitGate Authority V2 ready: http://127.0.0.1:$port"
@@ -137,25 +220,27 @@ case "${1:-status}" in
   start) start ;;
   foreground) start foreground ;;
   status)
-    load_environment
+    load_environment false
     compose ps
-    curl --fail --silent "http://127.0.0.1:$port/api/system" && printf '\n'
+    authenticated_system_status
     ;;
   logs)
-    load_environment
+    load_environment false
     compose logs --tail=200 api transition-worker runtime-broker model-relay
     ;;
   down)
-    load_environment
+    load_environment false
     legacy_down
     compose down --remove-orphans
+    clear_demo_clipboard
     remove_runtime_secrets
     echo "CommitGate demo stopped"
     ;;
   reset)
-    load_environment
+    load_environment false
     legacy_down
     compose down --volumes --remove-orphans
+    clear_demo_clipboard
     remove_runtime_secrets
     echo "CommitGate demo state volumes reset; .env.local was preserved"
     ;;

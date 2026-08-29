@@ -17,13 +17,14 @@ const identity = executionIdentity(root);
 
 async function emitEarly(reason) {
   const report = {
-    schemaVersion: 2,
-    kind: "independent-clean-worktree-audit",
+    schemaVersion: 3,
+    kind: "project-defined-clean-worktree-replay",
     generatedAt: new Date().toISOString(),
     status: "unverified",
     source,
     executionIdentity: identity,
-    independent: false,
+    auditOrigin: "project-defined",
+    externallyIndependent: false,
     cleanClone: false,
     readOnlySource: false,
     reason,
@@ -31,7 +32,7 @@ async function emitEarly(reason) {
   };
   await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
   console.log(`unverified: ${reason}`);
-  console.log(`independent report: ${reportPath}`);
+  console.log(`project-defined clean-worktree replay report: ${reportPath}`);
   process.exit(2);
 }
 
@@ -105,7 +106,7 @@ try {
 
   const listed = spawnSync("git", ["ls-files", "-z"], { cwd: cloneRoot, encoding: "utf8" });
   if (listed.status !== 0) throw new Error("git ls-files failed");
-  const protectedPrefixes = ["apps/", "scripts/", "docs/"];
+  const protectedPrefixes = ["apps/", "scripts/", "docs/", "eval/fixtures/"];
   const protectedExact = new Set([
     "package.json",
     "package-lock.json",
@@ -196,13 +197,14 @@ const status = results.some((entry) => entry.status === "failed")
     ? "unverified"
     : "verified";
 const report = {
-  schemaVersion: 2,
-  kind: "independent-clean-worktree-audit",
+  schemaVersion: 3,
+  kind: "project-defined-clean-worktree-replay",
   generatedAt: new Date().toISOString(),
   status,
   source,
   executionIdentity: identity,
-  independent: true,
+  auditOrigin: "project-defined",
+  externallyIndependent: false,
   cleanClone: cloneRevision === source.sourceRevision && cloneHash?.hash === source.sourceTreeHash,
   readOnlySource,
   cloneRevision,
@@ -210,8 +212,8 @@ const report = {
   results,
   copiedEvidenceDirectory: path.relative(root, artifactRoot),
   claimBoundary:
-    "Commands ran from a separate no-hardlink clone. Tracked application, script and documentation files were made read-only before protocol/adversarial/recovery/container/authority/secret evaluation.",
+    "This team-authored script ran commands from a separate no-hardlink clone. Tracked application, script and documentation files were made read-only before protocol/adversarial/recovery/container/authority/secret evaluation. It is not an external independent audit.",
 };
 await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
-console.log(`${status}: independent report: ${reportPath}`);
+console.log(`${status}: project-defined clean-worktree replay report: ${reportPath}`);
 process.exitCode = status === "verified" ? 0 : status === "unverified" ? 2 : 1;

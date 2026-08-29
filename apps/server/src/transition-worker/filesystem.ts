@@ -1,145 +1,555 @@
 import { createHash } from "node:crypto";
-import type { BigIntStats, Dirent } from "node:fs";
-import {
-  chmod,
-  lstat,
-  mkdir,
-  readFile,
-  readdir,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { constants, type BigIntStats, type Dirent } from "node:fs";
+import { chmod, lstat, mkdir, open, opendir, readdir, rm } from "node:fs/promises";
 import path from "node:path";
+import { hashManifestEntries } from "../commitgate/manifest.js";
+import {
+  DEFAULT_CANDIDATE_RESOURCE_LIMITS,
+  normalizeCandidateResourceLimits,
+  type CandidateResourceLimits,
+} from "../commitgate/resource-budget.js";
+import { classifyPath, defaultCommitGatePolicy } from "../commitgate/policy.js";
+import type {
+  CommitGatePolicy,
+  ManifestEntry,
+  SnapshotManifest,
+} from "../commitgate/types.js";
 
-export interface WorkerManifestEntry {
-  path: string;
-  type: "directory" | "file";
-  mode: number;
-  size: number;
-  hash: string | null;
+export const WORKER_MANIFEST_SCHEMA_VERSION = 2 as const;
+
+export type WorkerManifestEntry = ManifestEntry;
+
+export interface WorkerResourceLimits extends CandidateResourceLimits {
+  /** Includes authoritative and ignored directories/files. */
+  maxScannedEntries: number;
+  /** Logical bytes, not allocated blocks, across the complete candidate tree. */
+  maxScannedBytes: number;
+  /** Wall-clock budget for one complete manifest walk. */
+  maxScanDurationMs: number;
 }
 
-export interface WorkerManifest {
-  schemaVersion: 1;
+export const DEFAULT_WORKER_RESOURCE_LIMITS: WorkerResourceLimits = Object.freeze({
+  ...DEFAULT_CANDIDATE_RESOURCE_LIMITS,
+  maxScannedEntries: 100_000,
+  maxScannedBytes: 2 * 1024 * 1024 * 1024,
+  maxScanDurationMs: 30_000,
+});
+
+export interface WorkerResourceUsage {
+  scannedEntries: number;
+  scannedFiles: number;
+  scannedBytes: number;
+  authoritativeEntries: number;
+  authoritativeFiles: number;
+  authoritativeBytes: number;
+  ignoredEntries: number;
+  ignoredFiles: number;
+  ignoredBytes: number;
+}
+
+export interface WorkerExtendedMetadata {
+  /** Names only. Values must never enter an event log or receipt. */
+  xattrs: readonly string[];
+  /** Only non-trivial ACL entries; the three POSIX mode-derived entries are omitted. */
+  aclEntries: readonly string[];
+}
+
+export type WorkerExtendedMetadataInspector = (
+  absolutePath: string,
+) => Promise<WorkerExtendedMetadata>;
+
+export interface WorkerManifestOptions {
+  policy?: CommitGatePolicy;
+  resourceLimits?: Partial<WorkerResourceLimits>;
+  expectedUid?: number;
+  expectedGid?: number;
+  /** Reject when xattr/ACL inspection is unavailable instead of weakening the claim. */
+  requireExtendedMetadataInspection?: boolean;
+  extendedMetadataInspector?: WorkerExtendedMetadataInspector;
+  /** Linux exposes allocated block counts used to reject sparse files. */
+  requireSparseFileDetection?: boolean;
+  /** Reject nested mount points as well as rename-swap across devices. */
+  requireSingleFilesystem?: boolean;
+  /** Deterministic test hook; production uses performance.now(). */
+  monotonicNow?: () => number;
+}
+
+export interface WorkerFilesystemSupportMatrix {
+  platform: NodeJS.Platform;
+  regularFilesAndDirectoriesOnly: "enforced";
+  symlinksAndHardlinks: "rejected";
+  pathIdentityCollisions: "rejected";
+  ownership: "enforced";
+  posixMode: "enforced";
+  singleFilesystem: "enforced" | "not-requested";
+  sparseFiles: "enforced" | "unsupported";
+  extendedAttributesAndAcl: "enforced" | "unsupported-not-inspected";
+}
+
+export interface WorkerManifest extends SnapshotManifest {
+  schemaVersion: typeof WORKER_MANIFEST_SCHEMA_VERSION;
   entries: WorkerManifestEntry[];
-  hash: string;
+  /** Audit-only usage. It is deliberately excluded from the authoritative hash. */
+  resourceUsage: WorkerResourceUsage;
+  filesystemSupport: WorkerFilesystemSupportMatrix;
 }
 
-const sha256 = (value: string | Buffer): string =>
-  createHash("sha256").update(value).digest("hex");
+const compareCanonicalPath = (left: string, right: string): number =>
+  left < right ? -1 : left > right ? 1 : 0;
 
-const isSameReadIdentity = (
-  before: BigIntStats,
-  after: BigIntStats,
-): boolean =>
+const isSameReadIdentity = (before: BigIntStats, after: BigIntStats): boolean =>
   before.dev === after.dev &&
   before.ino === after.ino &&
   before.mode === after.mode &&
+  before.nlink === after.nlink &&
+  before.uid === after.uid &&
+  before.gid === after.gid &&
   before.size === after.size &&
   before.mtimeNs === after.mtimeNs &&
   before.ctimeNs === after.ctimeNs;
 
-/**
- * Builds the transition-worker's closed authoritative-state manifest.
- * Directories and regular files are accepted; symlinks, special files and
- * multiply-linked files fail closed. File identity is checked before/after
- * each read so an inbox cannot be switched while it is imported.
- */
-export async function buildWorkerManifest(root: string): Promise<WorkerManifest> {
-  const entries: WorkerManifestEntry[] = [];
-  const normalized = new Map<string, string>();
-  const folded = new Map<string, string>();
-
-  const visit = async (absoluteDirectory: string, relativeDirectory: string): Promise<void> => {
-    const children = (await readdir(absoluteDirectory, { withFileTypes: true })).sort((a, b) =>
-      a.name.localeCompare(b.name, "en"),
-    );
-    for (const child of children) {
-      const relative = relativeDirectory
-        ? `${relativeDirectory}/${child.name}`
-        : child.name;
-      const posixRelative = relative.split(path.sep).join("/");
-      const nfc = posixRelative.normalize("NFC");
-      const casefold = nfc.toLocaleLowerCase("und");
-      const priorNormalized = normalized.get(nfc);
-      if (priorNormalized && priorNormalized !== posixRelative) {
-        throw new Error(`UNICODE_NORMALIZATION_COLLISION:${priorNormalized}:${posixRelative}`);
-      }
-      const priorFolded = folded.get(casefold);
-      if (priorFolded && priorFolded !== posixRelative) {
-        throw new Error(`CASEFOLD_PATH_COLLISION:${priorFolded}:${posixRelative}`);
-      }
-      normalized.set(nfc, posixRelative);
-      folded.set(casefold, posixRelative);
-
-      const absolute = path.join(absoluteDirectory, child.name);
-      const before = await lstat(absolute, { bigint: true });
-      const mode = Number(before.mode & 0o777n);
-      if (before.isSymbolicLink()) throw new Error(`SYMLINK_FILE:${posixRelative}`);
-      if (before.isDirectory()) {
-        entries.push({ path: posixRelative, type: "directory", mode, size: 0, hash: null });
-        await visit(absolute, posixRelative);
-        continue;
-      }
-      if (!before.isFile()) throw new Error(`SPECIAL_FILE:${posixRelative}`);
-      if (before.nlink > 1n) throw new Error(`HARDLINK_FILE:${posixRelative}`);
-      const content = await readFile(absolute);
-      const after = await lstat(absolute, { bigint: true });
-      if (!isSameReadIdentity(before, after) || BigInt(content.byteLength) !== before.size) {
-        throw new Error(`FILE_CHANGED_DURING_READ:${posixRelative}`);
-      }
-      entries.push({
-        path: posixRelative,
-        type: "file",
-        mode,
-        size: content.byteLength,
-        hash: sha256(content),
-      });
-    }
+function normalizedWorkerResourceLimits(
+  overrides: Partial<WorkerResourceLimits> = {},
+): WorkerResourceLimits {
+  const candidate = normalizeCandidateResourceLimits({
+    maxIgnoredEntries:
+      overrides.maxIgnoredEntries ?? DEFAULT_WORKER_RESOURCE_LIMITS.maxIgnoredEntries,
+    maxIgnoredBytes:
+      overrides.maxIgnoredBytes ?? DEFAULT_WORKER_RESOURCE_LIMITS.maxIgnoredBytes,
+    maxIgnoredSingleFileBytes:
+      overrides.maxIgnoredSingleFileBytes ??
+      DEFAULT_WORKER_RESOURCE_LIMITS.maxIgnoredSingleFileBytes,
+  });
+  const result = {
+    ...candidate,
+    maxScannedEntries:
+      overrides.maxScannedEntries ?? DEFAULT_WORKER_RESOURCE_LIMITS.maxScannedEntries,
+    maxScannedBytes:
+      overrides.maxScannedBytes ?? DEFAULT_WORKER_RESOURCE_LIMITS.maxScannedBytes,
+    maxScanDurationMs:
+      overrides.maxScanDurationMs ?? DEFAULT_WORKER_RESOURCE_LIMITS.maxScanDurationMs,
   };
-
-  const rootStat = await lstat(root, { bigint: true });
-  if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) {
-    throw new Error("AUTHORITATIVE_ROOT_NOT_DIRECTORY");
+  for (const [name, value] of Object.entries(result)) {
+    if (!Number.isSafeInteger(value) || value <= 0) {
+      throw new Error(`${name} must be a positive safe integer`);
+    }
   }
-  await visit(root, "");
-  entries.sort((left, right) => left.path.localeCompare(right.path, "en"));
+  return result;
+}
+
+export function workerFilesystemSupportMatrix(
+  options: WorkerManifestOptions = {},
+): WorkerFilesystemSupportMatrix {
   return {
-    schemaVersion: 1,
-    entries,
-    hash: sha256(JSON.stringify({ schemaVersion: 1, entries })),
+    platform: process.platform,
+    regularFilesAndDirectoriesOnly: "enforced",
+    symlinksAndHardlinks: "rejected",
+    pathIdentityCollisions: "rejected",
+    ownership: "enforced",
+    posixMode: "enforced",
+    singleFilesystem:
+      options.requireSingleFilesystem === false ? "not-requested" : "enforced",
+    sparseFiles: process.platform === "linux" ? "enforced" : "unsupported",
+    extendedAttributesAndAcl: options.extendedMetadataInspector
+      ? "enforced"
+      : "unsupported-not-inspected",
   };
 }
 
-export async function copyClosedTree(source: string, destination: string): Promise<WorkerManifest> {
-  const before = await buildWorkerManifest(source);
+/**
+ * Use this in a strong-guarantee preflight. Portable development can still
+ * build manifests, while an evaluator that claims xattr/ACL closure must
+ * provide an inspector and run on Linux.
+ */
+export function assertWorkerStrongFilesystemSupport(
+  options: WorkerManifestOptions = {},
+): void {
+  const support = workerFilesystemSupportMatrix(options);
+  if (support.sparseFiles !== "enforced") {
+    throw new Error("SPARSE_FILE_DETECTION_UNAVAILABLE");
+  }
+  if (support.extendedAttributesAndAcl !== "enforced") {
+    throw new Error("EXTENDED_METADATA_INSPECTION_UNAVAILABLE");
+  }
+  if (support.singleFilesystem !== "enforced") {
+    throw new Error("SINGLE_FILESYSTEM_CHECK_DISABLED");
+  }
+}
+
+export function assertNoWorkerPathIdentityCollisions(paths: readonly string[]): void {
+  const normalized = new Map<string, string>();
+  const folded = new Map<string, string>();
+  for (const relative of paths) {
+    registerWorkerPathIdentity(relative, normalized, folded);
+  }
+}
+
+function registerWorkerPathIdentity(
+  relative: string,
+  normalized: Map<string, string>,
+  folded: Map<string, string>,
+): void {
+  const nfc = relative.normalize("NFC");
+  const priorNormalized = normalized.get(nfc);
+  if (priorNormalized && priorNormalized !== relative) {
+    throw new Error(`UNICODE_NORMALIZATION_COLLISION:${priorNormalized}:${relative}`);
+  }
+  const casefold = nfc.toLocaleLowerCase("und");
+  const priorFolded = folded.get(casefold);
+  if (priorFolded && priorFolded !== relative) {
+    throw new Error(`CASEFOLD_PATH_COLLISION:${priorFolded}:${relative}`);
+  }
+  normalized.set(nfc, relative);
+  folded.set(casefold, relative);
+}
+
+function assertSafePathSegment(name: string): void {
+  if (
+    name.length === 0 ||
+    name === "." ||
+    name === ".." ||
+    name.includes("/") ||
+    name.includes("\\") ||
+    name.includes("\0")
+  ) {
+    throw new Error(`INVALID_PATH_SEGMENT:${JSON.stringify(name)}`);
+  }
+}
+
+function safeSize(value: bigint, relative: string): number {
+  if (value < 0n || value > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error(`FILE_SIZE_UNREPRESENTABLE:${relative}`);
+  }
+  return Number(value);
+}
+
+function assertNormalizedMetadata(
+  stats: BigIntStats,
+  relative: string,
+  expectedUid: bigint,
+  expectedGid: bigint,
+  rootDevice: bigint,
+  requireSingleFilesystem: boolean,
+): number {
+  if (stats.uid !== expectedUid || stats.gid !== expectedGid) {
+    throw new Error(`OWNERSHIP_MISMATCH:${relative}`);
+  }
+  if (requireSingleFilesystem && stats.dev !== rootDevice) {
+    throw new Error(`UNSUPPORTED_FILESYSTEM_EXDEV:${relative}`);
+  }
+  if ((stats.mode & 0o7000n) !== 0n) {
+    throw new Error(`SPECIAL_MODE_BITS:${relative}`);
+  }
+  return Number(stats.mode & 0o777n);
+}
+
+async function assertNoExtendedMetadata(
+  absolute: string,
+  relative: string,
+  inspector: WorkerExtendedMetadataInspector | undefined,
+): Promise<void> {
+  if (!inspector) return;
+  const metadata = await inspector(absolute);
+  if (metadata.xattrs.length > 0) {
+    throw new Error(`XATTR_NOT_ALLOWED:${relative}`);
+  }
+  if (metadata.aclEntries.length > 0) {
+    throw new Error(`ACL_NOT_ALLOWED:${relative}`);
+  }
+}
+
+async function hashBoundRegularFile(
+  absolute: string,
+  relative: string,
+  before: BigIntStats,
+): Promise<string> {
+  const handle = await open(absolute, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const opened = await handle.stat({ bigint: true });
+    if (!opened.isFile() || !isSameReadIdentity(before, opened)) {
+      throw new Error(`FILE_CHANGED_DURING_OPEN:${relative}`);
+    }
+    const hash = createHash("sha256");
+    for await (const chunk of handle.createReadStream({ autoClose: false })) {
+      hash.update(chunk as Buffer);
+    }
+    const afterHandle = await handle.stat({ bigint: true });
+    const afterPath = await lstat(absolute, { bigint: true });
+    if (!isSameReadIdentity(opened, afterHandle) || !isSameReadIdentity(opened, afterPath)) {
+      throw new Error(`FILE_CHANGED_DURING_READ:${relative}`);
+    }
+    return hash.digest("hex");
+  } finally {
+    await handle.close();
+  }
+}
+
+/**
+ * Builds the transition-worker's canonical manifest schema v2.
+ *
+ * The complete tree is streamed for collision, inode and resource checks.
+ * Ephemeral path segments are never authoritative and never copied, but their
+ * inode/byte usage is still charged to finite candidate quotas.
+ */
+export async function buildWorkerManifest(
+  root: string,
+  options: WorkerManifestOptions = {},
+): Promise<WorkerManifest> {
+  if (options.requireExtendedMetadataInspection && !options.extendedMetadataInspector) {
+    throw new Error("EXTENDED_METADATA_INSPECTION_UNAVAILABLE");
+  }
+  if (options.requireSparseFileDetection && process.platform !== "linux") {
+    throw new Error("SPARSE_FILE_DETECTION_UNAVAILABLE");
+  }
+
+  const policy = options.policy ?? defaultCommitGatePolicy;
+  const limits = normalizedWorkerResourceLimits(options.resourceLimits);
+  const requireSingleFilesystem = options.requireSingleFilesystem !== false;
+  const absoluteRoot = path.resolve(root);
+  const rootStat = await lstat(absoluteRoot, { bigint: true });
+  if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) {
+    throw new Error("AUTHORITATIVE_ROOT_NOT_DIRECTORY");
+  }
+  const expectedUid = BigInt(options.expectedUid ?? Number(rootStat.uid));
+  const expectedGid = BigInt(options.expectedGid ?? Number(rootStat.gid));
+  assertNormalizedMetadata(
+    rootStat,
+    ".",
+    expectedUid,
+    expectedGid,
+    rootStat.dev,
+    requireSingleFilesystem,
+  );
+  await assertNoExtendedMetadata(absoluteRoot, ".", options.extendedMetadataInspector);
+
+  const entries: WorkerManifestEntry[] = [];
+  const normalizedPaths = new Map<string, string>();
+  const foldedPaths = new Map<string, string>();
+  const usage: WorkerResourceUsage = {
+    scannedEntries: 0,
+    scannedFiles: 0,
+    scannedBytes: 0,
+    authoritativeEntries: 0,
+    authoritativeFiles: 0,
+    authoritativeBytes: 0,
+    ignoredEntries: 0,
+    ignoredFiles: 0,
+    ignoredBytes: 0,
+  };
+  const monotonicNow = options.monotonicNow ?? (() => performance.now());
+  const scanDeadline = monotonicNow() + limits.maxScanDurationMs;
+  const assertScanTimeBudget = (relative: string): void => {
+    if (monotonicNow() > scanDeadline) {
+      throw new Error(`CANDIDATE_SCAN_TIME_BUDGET_EXCEEDED:${relative}`);
+    }
+  };
+
+  const charge = (relative: string, size: number, isFile: boolean, ignored: boolean): void => {
+    assertScanTimeBudget(relative);
+    usage.scannedEntries += 1;
+    if (isFile) usage.scannedFiles += 1;
+    if (usage.scannedEntries > limits.maxScannedEntries) {
+      throw new Error(`CANDIDATE_ENTRY_BUDGET_EXCEEDED:${relative}`);
+    }
+    if (size > limits.maxScannedBytes - usage.scannedBytes) {
+      throw new Error(`CANDIDATE_BYTE_BUDGET_EXCEEDED:${relative}`);
+    }
+    usage.scannedBytes += size;
+    if (ignored) {
+      usage.ignoredEntries += 1;
+      if (isFile) usage.ignoredFiles += 1;
+      if (usage.ignoredEntries > limits.maxIgnoredEntries) {
+        throw new Error(`IGNORED_EPHEMERAL_FILE_BUDGET_EXCEEDED:${relative}`);
+      }
+      if (isFile && size > limits.maxIgnoredSingleFileBytes) {
+        throw new Error(`IGNORED_EPHEMERAL_SINGLE_FILE_BUDGET_EXCEEDED:${relative}`);
+      }
+      if (size > limits.maxIgnoredBytes - usage.ignoredBytes) {
+        throw new Error(`IGNORED_EPHEMERAL_BYTE_BUDGET_EXCEEDED:${relative}`);
+      }
+      usage.ignoredBytes += size;
+      return;
+    }
+    usage.authoritativeEntries += 1;
+    usage.authoritativeBytes += size;
+    if (isFile) usage.authoritativeFiles += 1;
+  };
+
+  const visit = async (
+    absoluteDirectory: string,
+    relativeDirectory: string,
+    directoryBefore: BigIntStats,
+    inheritedIgnored: boolean,
+  ): Promise<void> => {
+    const directory = await opendir(absoluteDirectory);
+    try {
+      for await (const child of directory) {
+        const name = child.name;
+        assertSafePathSegment(name);
+        const relative = relativeDirectory ? `${relativeDirectory}/${name}` : name;
+        assertScanTimeBudget(relative);
+        registerWorkerPathIdentity(relative, normalizedPaths, foldedPaths);
+
+        const absolute = path.join(absoluteDirectory, name);
+        const before = await lstat(absolute, { bigint: true });
+        const ignored = inheritedIgnored || classifyPath(relative, policy) === "ignoredEphemeral";
+        const mode = assertNormalizedMetadata(
+          before,
+          relative,
+          expectedUid,
+          expectedGid,
+          rootStat.dev,
+          requireSingleFilesystem,
+        );
+        await assertNoExtendedMetadata(absolute, relative, options.extendedMetadataInspector);
+
+        if (before.isSymbolicLink()) {
+          throw new Error(`SYMLINK_FILE:${relative}`);
+        }
+        if (before.isDirectory()) {
+          charge(relative, 0, false, ignored);
+          if (!ignored) {
+            entries.push({
+              path: relative,
+              type: "dir",
+              mode,
+              size: 0,
+              pathClass: classifyPath(relative, policy),
+            });
+          }
+          await visit(absolute, relative, before, ignored);
+          continue;
+        }
+        if (!before.isFile()) {
+          throw new Error(`SPECIAL_FILE:${relative}`);
+        }
+        if (before.nlink > 1n) {
+          throw new Error(`HARDLINK_FILE:${relative}`);
+        }
+        const size = safeSize(before.size, relative);
+        if (
+          process.platform === "linux" &&
+          before.size > 0n &&
+          before.blocks * 512n < before.size
+        ) {
+          throw new Error(`SPARSE_FILE:${relative}`);
+        }
+        charge(relative, size, true, ignored);
+        if (!ignored) {
+          entries.push({
+            path: relative,
+            type: "file",
+            mode,
+            size,
+            contentHash: await hashBoundRegularFile(absolute, relative, before),
+            pathClass: classifyPath(relative, policy),
+          });
+          assertScanTimeBudget(relative);
+        }
+      }
+    } finally {
+      await directory.close().catch(() => undefined);
+    }
+    const directoryAfter = await lstat(absoluteDirectory, { bigint: true });
+    if (!isSameReadIdentity(directoryBefore, directoryAfter)) {
+      throw new Error(`DIRECTORY_CHANGED_DURING_SCAN:${relativeDirectory || "."}`);
+    }
+  };
+
+  await visit(absoluteRoot, "", rootStat, false);
+  entries.sort((left, right) => compareCanonicalPath(left.path, right.path));
+  return {
+    schemaVersion: WORKER_MANIFEST_SCHEMA_VERSION,
+    entries,
+    hash: hashManifestEntries(entries),
+    resourceUsage: usage,
+    filesystemSupport: workerFilesystemSupportMatrix(options),
+  };
+}
+
+async function copyBoundRegularFile(
+  source: string,
+  destination: string,
+  relative: string,
+  expectedMode: number,
+): Promise<void> {
+  const before = await lstat(source, { bigint: true });
+  if (!before.isFile() || before.isSymbolicLink() || before.nlink > 1n) {
+    throw new Error(`COPY_SOURCE_NOT_REGULAR:${relative}`);
+  }
+  const sourceHandle = await open(source, constants.O_RDONLY | constants.O_NOFOLLOW);
+  let destinationHandle: Awaited<ReturnType<typeof open>> | undefined;
+  try {
+    const opened = await sourceHandle.stat({ bigint: true });
+    if (!isSameReadIdentity(before, opened)) {
+      throw new Error(`FILE_CHANGED_DURING_COPY:${relative}`);
+    }
+    destinationHandle = await open(
+      destination,
+      constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL,
+      expectedMode,
+    );
+    const buffer = Buffer.allocUnsafe(64 * 1024);
+    while (true) {
+      const { bytesRead } = await sourceHandle.read(buffer, 0, buffer.length, null);
+      if (bytesRead === 0) break;
+      let offset = 0;
+      while (offset < bytesRead) {
+        const { bytesWritten } = await destinationHandle.write(
+          buffer,
+          offset,
+          bytesRead - offset,
+          null,
+        );
+        if (bytesWritten === 0) throw new Error(`FILE_COPY_STALLED:${relative}`);
+        offset += bytesWritten;
+      }
+    }
+    const afterHandle = await sourceHandle.stat({ bigint: true });
+    const afterPath = await lstat(source, { bigint: true });
+    if (!isSameReadIdentity(opened, afterHandle) || !isSameReadIdentity(opened, afterPath)) {
+      throw new Error(`FILE_CHANGED_DURING_COPY:${relative}`);
+    }
+  } finally {
+    await destinationHandle?.close().catch(() => undefined);
+    await sourceHandle.close().catch(() => undefined);
+  }
+  // open(2)'s creation mode is umask-filtered; normalize it explicitly.
+  await chmod(destination, expectedMode);
+}
+
+export async function copyClosedTree(
+  source: string,
+  destination: string,
+  options: WorkerManifestOptions = {},
+): Promise<WorkerManifest> {
+  const before = await buildWorkerManifest(source, options);
   await rm(destination, { recursive: true, force: true });
   await mkdir(destination, { recursive: false, mode: 0o700 });
   try {
     for (const entry of before.entries) {
       const target = path.join(destination, ...entry.path.split("/"));
       const origin = path.join(source, ...entry.path.split("/"));
-      if (entry.type === "directory") {
-        await mkdir(target, { mode: entry.mode });
+      if (entry.type === "dir") {
+        // Parent directories may be read-only in the source. Materialize with
+        // worker-only permissions and apply the canonical mode after children.
+        await mkdir(target, { mode: 0o700 });
         continue;
       }
-      const statBefore = await lstat(origin, { bigint: true });
-      const content = await readFile(origin);
-      const statAfter = await lstat(origin, { bigint: true });
-      if (!isSameReadIdentity(statBefore, statAfter)) {
-        throw new Error(`FILE_CHANGED_DURING_COPY:${entry.path}`);
+      if (entry.type !== "file") {
+        throw new Error(`COPY_SOURCE_NOT_REGULAR:${entry.path}`);
       }
-      await writeFile(target, content, { flag: "wx", mode: entry.mode });
+      await copyBoundRegularFile(origin, target, entry.path, entry.mode);
     }
     // Apply directory modes after children have been materialized.
     for (const entry of [...before.entries].reverse()) {
-      if (entry.type === "directory") {
+      if (entry.type === "dir") {
         await chmod(path.join(destination, ...entry.path.split("/")), entry.mode);
       }
     }
     const [sourceAfter, copied] = await Promise.all([
-      buildWorkerManifest(source),
-      buildWorkerManifest(destination),
+      buildWorkerManifest(source, options),
+      buildWorkerManifest(destination, options),
     ]);
     if (sourceAfter.hash !== before.hash || copied.hash !== before.hash) {
       throw new Error("TREE_CHANGED_DURING_COPY");
@@ -187,4 +597,13 @@ export async function assertSameFilesystem(left: string, right: string): Promise
     lstat(right, { bigint: true }),
   ]);
   if (leftStat.dev !== rightStat.dev) throw new Error("UNSUPPORTED_FILESYSTEM_EXDEV");
+}
+
+export async function assertSameFilesystemSet(paths: readonly string[]): Promise<void> {
+  if (paths.length < 2) return;
+  const [first, ...rest] = paths;
+  if (!first) return;
+  for (const candidate of rest) {
+    await assertSameFilesystem(first, candidate);
+  }
 }

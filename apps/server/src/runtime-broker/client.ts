@@ -1,17 +1,31 @@
 import { randomUUID } from "node:crypto";
 import { createConnection } from "node:net";
 import { RunCancelledError } from "../errors.js";
-import type { RuntimeTeardownAttestation } from "../container-codex-runner.js";
 import type { AgentRunner, RunnerCancellation, RunnerRequest, RunnerResult } from "../types.js";
 import type {
   BrokerRpcRequestInput,
   BrokerRpcResponse,
   BrokerVerifierRequest,
   BrokerVerifierResult,
+  BrokerReconcileRequest,
+  BrokerTeardownRequest,
+  SignedBrokerRuntimeTeardownAttestation,
+  RuntimeReconciliationAttestation,
   RuntimeBrokerHealth,
 } from "./contracts.js";
 
 const MAX_RPC_BYTES = 4 * 1024 * 1024;
+export const VERIFIER_RPC_TEARDOWN_GRACE_MS = 30_000;
+
+export function verifierRpcTimeoutMs(globalVerifierBudgetMs: number): number {
+  if (!Number.isSafeInteger(globalVerifierBudgetMs) || globalVerifierBudgetMs < 1_000) {
+    throw new RuntimeBrokerFault(
+      "BROKER_VERIFIER_TIMEOUT_INVALID",
+      "Verifier RPC timeout requires a positive global verifier budget",
+    );
+  }
+  return globalVerifierBudgetMs + VERIFIER_RPC_TEARDOWN_GRACE_MS;
+}
 
 export class RuntimeBrokerFault extends Error {
   constructor(readonly code: string, message: string) {
@@ -118,11 +132,25 @@ export class RuntimeBrokerRunner implements AgentRunner {
     }
   }
 
-  attestCommitGateTeardown(runId: string): Promise<RuntimeTeardownAttestation> {
-    return this.rpc.request({ method: "teardown", runId });
+  attestCommitGateTeardown(
+    request: BrokerTeardownRequest,
+  ): Promise<SignedBrokerRuntimeTeardownAttestation> {
+    return this.rpc.request({ method: "teardown", request });
+  }
+
+  reconcileCommitGateRuntime(
+    request: BrokerReconcileRequest,
+  ): Promise<RuntimeReconciliationAttestation> {
+    return this.rpc.request({ method: "reconcile", request }, 30_000);
   }
 
   runVerifier(request: BrokerVerifierRequest): Promise<BrokerVerifierResult> {
-    return this.rpc.request({ method: "runVerifier", request });
+    // The RPC client must outlive the complete verifier budget plus bounded
+    // container teardown. Otherwise the caller could fail first while a
+    // Broker-owned verifier container continues running in the background.
+    return this.rpc.request(
+      { method: "runVerifier", request },
+      verifierRpcTimeoutMs(request.timeoutMs),
+    );
   }
 }

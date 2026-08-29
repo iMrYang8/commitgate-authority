@@ -1,20 +1,35 @@
 import { createHash, randomUUID } from "node:crypto";
 import { chmod, mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { maybeInjectWorkerEventFault } from "./transition-worker/fault-injection.js";
 
 export type TransitionEventType =
+  | "AGENT_INITIALIZATION_PREPARED"
   | "AGENT_INITIALIZED"
+  | "LEGACY_ADOPTION_PREPARED"
   | "LEGACY_STATE_ADOPTED"
   | "TRANSITION_PREPARED"
+  | "RUNTIME_TEARDOWN_RECORDED"
+  | "RUN_CANCELLED"
+  | "PROPOSAL_SEAL_PREPARED"
   | "PROPOSAL_SEALED"
+  | "PROPOSAL_EXPORT_PREPARED"
+  | "PROPOSAL_EXPORTED"
+  | "RUN_ARTIFACTS_DESTROYED"
   | "EVIDENCE_RECORDED"
   | "PERMIT_ISSUED"
   | "PERMIT_CONSUMING"
+  | "BACKUP_CREATED"
   | "WORKSPACE_APPLIED"
+  | "ROLLBACK_APPLIED"
+  | "PLATFORM_STATE_REGENERATION_PREPARED"
   | "PLATFORM_STATE_REGENERATED"
+  | "NON_COMMIT_DISPOSITIONED"
   | "VIEW_DISPOSITIONED"
   | "TRANSITION_ACKNOWLEDGED"
+  | "RECEIPT_PROOF_RECORDED"
   | "TRANSITION_ROLLED_BACK"
+  | "AGENT_ARCHIVE_PREPARED"
   | "AGENT_ARCHIVED"
   | "REPAIR_APPLIED"
   | "STALE_CALLBACK_RECORDED";
@@ -86,6 +101,7 @@ export class TransitionEventLog {
       });
       await rename(temporary, destination);
       await chmod(destination, 0o400);
+      maybeInjectWorkerEventFault(event);
       return event;
     });
   }

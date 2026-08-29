@@ -12,16 +12,23 @@ services:
       - -ec
       - |
         chown -R 10001:20000 /authority /control /exchange
-        chown -R 10003:20000 /sessions /trusted /sockets
+        # Worker, Runtime/Verifier artifacts, and Broker intentionally share
+        # UID 10001 so the Broker can hash Worker exports normalized to
+        # 0500/0600. RPC and volume authority remain separated by groups and
+        # mounts; this topology does not claim a distinct Broker UID.
+        chown -R 10001:20000 /sessions /trusted
+        chown -R 10001:20001 /transition-socket
+        chown -R 10001:20002 /broker-socket
         chown -R 1000:1000 /api-data
-        chmod 0770 /authority /control /exchange /sessions /trusted /sockets /api-data
+        chmod 0770 /authority /control /exchange /sessions /trusted /transition-socket /broker-socket /api-data
     volumes:
       - authority:/authority
       - control:/control
       - exchange:/exchange
       - sessions:/sessions
       - trusted-checks:/trusted
-      - sockets:/sockets
+      - transition-socket:/transition-socket
+      - broker-socket:/broker-socket
       - api-data:/api-data
     network_mode: none
     cap_drop: [ALL]
@@ -47,22 +54,36 @@ services:
       args:
         NODE_IMAGE: ${CONTAINER_RUNTIME_BASE_IMAGE:-node:22-bookworm-slim}
     image: commitgate-transition-worker:local
+    # The Worker and Agent use the same primary workspace GID so newly-created
+    # candidate files satisfy Manifest v2 ownership normalization. The RPC
+    # socket group remains supplemental and is not used for workspace bytes.
     user: "10001:20000"
+    group_add: ["20001"]
     depends_on:
       volume-init:
         condition: service_completed_successfully
     environment:
+      NODE_ENV: production
+      PROCESS_ROLE: transition-worker
       COMMITGATE_TRANSITION_WORKER: enabled
       TRANSITION_WORKER_WORKSPACE_ROOT: /var/lib/commitgate/workspaces
       TRANSITION_WORKER_CONTROL_ROOT: /var/lib/commitgate/control
       TRANSITION_WORKER_INBOX_ROOT: /var/lib/commitgate/exchange
-      TRANSITION_WORKER_SOCKET: /run/commitgate/transition-worker.sock
+      TRANSITION_WORKER_SOCKET: /run/commitgate/transition/transition-worker.sock
       TRANSITION_WORKER_LEGACY_WORKSPACE_ROOT: /legacy/workspaces
+      COMMITGATE_SOURCE_REVISION: ${COMMITGATE_SOURCE_REVISION:?Set COMMITGATE_SOURCE_REVISION to the frozen 40-hex source commit}
+      COMMITGATE_EXPECTED_CHECK_BUNDLE_HASH: ${COMMITGATE_EXPECTED_CHECK_BUNDLE_HASH:-}
+      COMMITGATE_EXPECTED_VERIFIER_IMAGE_DIGEST: ${COMMITGATE_EXPECTED_VERIFIER_IMAGE_DIGEST:-}
+      COMMITGATE_EXPECTED_VERIFIER_CONFIG_HASH: ${COMMITGATE_EXPECTED_VERIFIER_CONFIG_HASH:-}
+      COMMITGATE_EXPECTED_RESOURCE_POLICY_HASH: ${COMMITGATE_EXPECTED_RESOURCE_POLICY_HASH:-}
+      BROKER_ATTESTATION_KEY_FILE: /run/secrets/broker_attestation_key
+    secrets:
+      - broker_attestation_key
     volumes:
       - authority:/var/lib/commitgate/workspaces
       - control:/var/lib/commitgate/control
       - exchange:/var/lib/commitgate/exchange
-      - sockets:/run/commitgate
+      - transition-socket:/run/commitgate/transition
       - ./.demo-state/workspaces:/legacy/workspaces:ro
     read_only: true
     tmpfs:
@@ -82,8 +103,11 @@ services:
       args:
         NODE_IMAGE: ${CONTAINER_RUNTIME_BASE_IMAGE:-node:22-bookworm-slim}
     image: commitgate-runtime-broker:local
-    user: "10003:20000"
+    # Same artifact-owner UID as Worker/Runtime; independent primary socket
+    # group 20002 and absence of authority/control mounts preserve roles.
+    user: "10001:20002"
     group_add:
+      - "20000"
       - "${DOCKER_SOCKET_GID:-0}"
     depends_on:
       volume-init:
@@ -98,7 +122,7 @@ services:
       RUNTIME_PROVIDER: container
       # volume-subpath is part of the isolation contract and requires API 1.45.
       DOCKER_API_VERSION: "1.45"
-      RUNTIME_BROKER_SOCKET: /run/commitgate/runtime-broker.sock
+      RUNTIME_BROKER_SOCKET: /run/commitgate/broker/runtime-broker.sock
       TRANSITION_AUTHORITY: worker
       COMMITGATE_ENABLED: "false"
       COMMITGATE_EXCHANGE_ROOT: /var/lib/commitgate/exchange
@@ -109,6 +133,7 @@ services:
       COMMITGATE_TRUSTED_CHECKS_DIR: /app/eval/trusted-checks
       COMMITGATE_TRUSTED_CHECKS_VOLUME_ROOT: /var/lib/commitgate/trusted-checks
       COMMITGATE_TRUSTED_CHECKS_VOLUME: ${COMMITGATE_STACK_ID:-commitgate}-trusted-checks
+      COMMITGATE_SOURCE_REVISION: ${COMMITGATE_SOURCE_REVISION:?Set COMMITGATE_SOURCE_REVISION to the frozen 40-hex source commit}
       CONTAINER_RUNTIME_IMAGE: volc-agent-runtime:local
       CONTAINER_USER: "10001:20000"
       CONTAINER_AGENT_NETWORK: ${COMMITGATE_STACK_ID:-commitgate}-agent-relay
@@ -120,13 +145,15 @@ services:
       MODEL_RELAY_URL: http://model-relay:3100/v1
       MODEL_RELAY_ADMIN_URL: http://model-relay:3100/v1
       MODEL_RELAY_TOKEN_FILE: /run/secrets/relay_token
+      BROKER_ATTESTATION_KEY_FILE: /run/secrets/broker_attestation_key
     secrets:
       - relay_token
+      - broker_attestation_key
     volumes:
       - exchange:/var/lib/commitgate/exchange
       - sessions:/var/lib/commitgate/sessions
       - trusted-checks:/var/lib/commitgate/trusted-checks
-      - sockets:/run/commitgate
+      - broker-socket:/run/commitgate/broker
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - agent-relay
@@ -192,7 +219,7 @@ services:
         NODE_IMAGE: ${CONTAINER_RUNTIME_BASE_IMAGE:-node:22-bookworm-slim}
     image: volc-agent-launchpad:authority-v2
     user: "1000:1000"
-    group_add: ["20000"]
+    group_add: ["20000", "20001", "20002"]
     depends_on:
       volume-init:
         condition: service_completed_successfully
@@ -212,9 +239,9 @@ services:
       CODEX_HOME: /tmp/codex-home
       COMMITGATE_ENABLED: "true"
       TRANSITION_AUTHORITY: worker
-      TRANSITION_WORKER_SOCKET: /run/commitgate/transition-worker.sock
+      TRANSITION_WORKER_SOCKET: /run/commitgate/transition/transition-worker.sock
       RUNTIME_PROVIDER: broker
-      RUNTIME_BROKER_SOCKET: /run/commitgate/runtime-broker.sock
+      RUNTIME_BROKER_SOCKET: /run/commitgate/broker/runtime-broker.sock
       CONTAINER_RUNTIME_IMAGE: volc-agent-runtime:local
       CONTAINER_AGENT_NETWORK: ${COMMITGATE_STACK_ID:-commitgate}-agent-relay
       COMMITGATE_EXCHANGE_ROOT: /unmounted/exchange
@@ -227,7 +254,7 @@ services:
       MODEL_RELAY_URL: http://model-relay:3100/v1
       MODEL_RELAY_ADMIN_URL: http://model-relay:3100/v1
       MODEL_RELAY_TOKEN_FILE: /run/secrets/relay_token
-      COMMITGATE_SOURCE_REVISION: ${COMMITGATE_SOURCE_REVISION:-unverified}
+      COMMITGATE_SOURCE_REVISION: ${COMMITGATE_SOURCE_REVISION:?Set COMMITGATE_SOURCE_REVISION to the frozen 40-hex source commit}
     secrets:
       - app_auth_token
       - relay_token
@@ -236,7 +263,8 @@ services:
     volumes:
       - authority:/authority:ro
       - control:/control:ro
-      - sockets:/run/commitgate:ro
+      - transition-socket:/run/commitgate/transition:ro
+      - broker-socket:/run/commitgate/broker:ro
       - api-data:/app/data
     read_only: true
     tmpfs:
@@ -268,12 +296,25 @@ volumes:
     name: ${COMMITGATE_STACK_ID:-commitgate}-control
   exchange:
     name: ${COMMITGATE_STACK_ID:-commitgate}-exchange
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      # Single-Agent-serial is a fixed product boundary. This shared ephemeral
+      # exchange cap therefore provides a kernel byte/inode ceiling for the
+      # active candidate and verifier export, including ignored path segments.
+      # The local driver can unmount this tmpfs after volume-init exits and
+      # remount it for Worker/Broker. Bind ownership in the mount options so a
+      # remount cannot silently restore root:root and make exchange unwritable.
+      o: size=${COMMITGATE_EXCHANGE_BYTES:-536870912},nr_inodes=${COMMITGATE_EXCHANGE_INODES:-100000},mode=0770,uid=10001,gid=20000
   sessions:
     name: ${COMMITGATE_STACK_ID:-commitgate}-sessions
   trusted-checks:
     name: ${COMMITGATE_STACK_ID:-commitgate}-trusted-checks
-  sockets:
-    name: ${COMMITGATE_STACK_ID:-commitgate}-sockets
+  transition-socket:
+    name: ${COMMITGATE_STACK_ID:-commitgate}-transition-socket
+  broker-socket:
+    name: ${COMMITGATE_STACK_ID:-commitgate}-broker-socket
   api-data:
     name: ${COMMITGATE_STACK_ID:-commitgate}-api-data
 
@@ -284,3 +325,5 @@ secrets:
     file: ./.demo-state/secrets/relay_token
   app_auth_token:
     file: ./.demo-state/secrets/app_auth_token
+  broker_attestation_key:
+    file: ./.demo-state/secrets/broker_attestation_key

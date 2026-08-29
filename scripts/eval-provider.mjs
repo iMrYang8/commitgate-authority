@@ -53,9 +53,7 @@ if (!configured) {
       provider === "ark"
         ? "MODEL_API_KEY/MODEL_ID or compatible ARK_API_KEY/ARK_MODEL are not configured"
         : "MODEL_API_KEY and MODEL_ID are not configured for OpenRouter",
-    officialProviderE2E: "unverified",
-    alternateProviderVerified: false,
-    competitionVerified: false,
+    providerE2EVerified: "unverified",
   };
   await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
   console.log(`unverified: ${provider} provider credentials are not configured; report: ${reportPath}`);

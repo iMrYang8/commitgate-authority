@@ -1206,6 +1206,17 @@ textarea:focus {
   letter-spacing: 0.08em;
 }
 
+.gate-decision-reason {
+  margin: -2px 0 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 189, 89, 0.28);
+  border-radius: 9px;
+  background: rgba(255, 189, 89, 0.08);
+  color: #f4d39c;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
 .gate-session,
 .version-head {
   border-radius: 999px;
@@ -1386,6 +1397,83 @@ textarea:focus {
   font-size: 0.68rem;
 }
 
+.effect-proof {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(220px, 0.9fr);
+  gap: 14px;
+  align-items: center;
+  margin: 14px 0 10px;
+  padding: 16px;
+  border: 1px solid rgba(126, 150, 190, 0.24);
+  border-radius: 16px;
+  background: rgba(12, 22, 43, 0.58);
+}
+
+.effect-proof > div:not(.effect-proof-verdict) {
+  display: grid;
+  gap: 4px;
+}
+
+.effect-proof code,
+.effect-proof-divider,
+.effect-proof-verdict span {
+  color: #aebdd4;
+}
+
+.effect-proof-divider {
+  font-size: 22px;
+}
+
+.effect-proof-verdict {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  text-align: right;
+}
+
+.effect-proof-verdict span {
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+}
+
+.effect-proof-valid .effect-proof-verdict strong { color: #65e2ad; }
+
+.effect-proof-invalid {
+  border-color: rgba(255, 107, 124, 0.62);
+  background: rgba(116, 26, 40, 0.24);
+}
+
+.effect-proof-invalid .effect-proof-verdict strong { color: #ff8a98; }
+
+.effect-proof .effect-proof-chain {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(126, 150, 190, 0.2);
+  overflow-x: auto;
+}
+
+.effect-proof-chain span {
+  display: grid;
+  gap: 3px;
+  min-width: 125px;
+}
+
+.effect-proof-chain small {
+  color: #91a3be;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.effect-proof-chain b {
+  color: #65e2ad;
+}
+
+.effect-proof-invalid .effect-proof-chain b { color: #ff8a98; }
+
 .gate-hashes span,
 .check {
   border: 1px solid rgba(126, 150, 190, 0.18);
@@ -1509,6 +1597,17 @@ textarea:focus {
 
   .gate-flow-arrow {
     display: none;
+  }
+
+  .effect-proof {
+    grid-template-columns: 1fr;
+  }
+
+  .effect-proof-divider { display: none; }
+
+  .effect-proof-verdict {
+    justify-items: start;
+    text-align: left;
   }
 }
 

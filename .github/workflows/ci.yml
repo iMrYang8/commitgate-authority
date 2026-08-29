@@ -22,5 +22,5 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run check:secrets
-      - run: npm run check:public-copy
-      - run: npm run check:diagram
+      - run: node scripts/check-public-copy.mjs
+      - run: python3 scripts/check-drawio.py

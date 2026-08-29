@@ -53,6 +53,21 @@ export interface ModelProviderIdentity {
   resolvedModel: string | null;
 }
 
+export interface EffectDispositionProof {
+  candidateChanged: boolean;
+  candidateObservation: "changed" | "unchanged" | "unobserved";
+  admissionBaseHash: string;
+  authoritativeBeforeHash: string;
+  authoritativeAfterHash: string;
+  authoritativeChanged: boolean;
+  sealedProposalHash: string | null;
+  verifierInputHash: string | null;
+  promotionSourceHash: string | null;
+  finalAuthoritativeHash: string;
+  invariant: "PROMOTED_EXACT_PROPOSAL" | "NO_PERSISTENT_EFFECT";
+  invariantSatisfied: boolean;
+}
+
 export interface CommitGateSummary {
   transactionStatus?: GateTransactionStatus;
   decision: GateDecision;
@@ -85,6 +100,8 @@ export interface CommitGateSummary {
   lifecycle?: Array<{ sequence: number; name: GateLifecycleEventName }>;
   /** Present for Worker-authority results so the product DB can project, never derive, HEAD. */
   finalView?: StateViewRef;
+  /** Derived from authoritative hashes; never accepted as an authorization input. */
+  effectProof?: EffectDispositionProof;
 }
 
 export type WorkspaceVersionKind = "INITIAL" | "AGENT_COMMIT" | "ROLLBACK";

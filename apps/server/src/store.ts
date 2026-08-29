@@ -106,7 +106,12 @@ function migrateDatabase(raw: unknown): Database {
       ...(message as Database["messages"][number]),
       authority,
       viewId: message.viewId ?? (authority === "AUTHORITATIVE" ? agentViews.get(message.agentId) ?? null : null),
-      proposalId: message.proposalId ?? run?.proposalId ?? null,
+      // A Proposal is produced by an Agent run, never by the user's input.
+      // Keeping INPUT unbound also makes restart projection idempotent after a
+      // terminal Run acquires its proposalId.
+      proposalId:
+        message.proposalId ??
+        (message.role === "assistant" ? run?.proposalId ?? null : null),
     };
   });
   return { version: 3, agents, messages, runs, versions, snapshots };

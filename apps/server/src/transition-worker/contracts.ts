@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  signedBrokerRuntimeTeardownSchema,
+  signedBrokerVerifierAttestationSchema,
+} from "../runtime-broker/contracts.js";
 
 const identifier = z
   .string()
@@ -69,12 +73,38 @@ const prepareRunParams = z
   .object({
     agentId: identifier,
     transitionId: identifier,
+    runId: identifier,
+    runLeaseId: identifier,
     candidateVolumeId: identifier,
     expectedViewId: digest,
     expectedWorkspaceHash: digest,
     baseGeneration: z.number().int().nonnegative(),
+    /**
+     * Runtime binding used by the Broker restart handshake. Production
+     * callers always supply it; optionality is retained only for reading the
+     * pre-handshake development/test contract.
+     */
+    sessionEpoch: z.number().int().nonnegative().optional(),
   })
-  .strict();
+  .strict()
+  .refine((value) => value.transitionId === value.runId, {
+    message: "The Agent run must own its transition",
+    path: ["runId"],
+  });
+
+const cancelRunParams = z
+  .object({
+    agentId: identifier,
+    transitionId: identifier,
+    runId: identifier,
+    runLeaseId: identifier,
+    expectedViewId: digest,
+  })
+  .strict()
+  .refine((value) => value.transitionId === value.runId, {
+    message: "The cancellation must bind the owning transition",
+    path: ["runId"],
+  });
 
 const exportProposalParams = z
   .object({
@@ -91,10 +121,37 @@ const disposeRunParams = z
     transitionId: identifier,
     receiptId: identifier,
     decision: decision.exclude(["COMMITTED"]),
-    finalView: stateViewSchema,
+    /**
+     * New callers fence the current authoritative HEAD and request exactly one
+     * fresh session epoch.  The Worker, not the caller, constructs the final
+     * non-commit StateView.
+     */
+    expectedViewId: digest.optional(),
+    nextSessionEpoch: z.number().int().nonnegative().optional(),
+    /**
+     * Read-only migration bridge for pre-proof-closure clients.  When present
+     * it must equal the StateView independently derived by the Worker.
+     */
+    finalView: stateViewSchema.optional(),
     reasonCodes: z.array(z.string().min(1).max(128)).max(64),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    const hasExpectedView = value.expectedViewId !== undefined;
+    const hasNextEpoch = value.nextSessionEpoch !== undefined;
+    if (hasExpectedView !== hasNextEpoch) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "expectedViewId and nextSessionEpoch must be supplied together",
+      });
+    }
+    if (!hasExpectedView && value.finalView === undefined) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A fenced session request or legacy finalView is required",
+      });
+    }
+  });
 
 const platformStateParams = z
   .object({
@@ -126,8 +183,72 @@ const sealProposalParams = z
     sourceVolumeId: identifier,
     baseViewId: digest,
     expectedArtifactHash: digest.optional(),
+    runtimeTeardownDigest: digest.optional(),
   })
   .strict();
+
+const runtimeTeardownAttestationSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    runId: identifier,
+    agentId: identifier,
+    runLeaseId: identifier,
+    sessionEpoch: z.number().int().nonnegative(),
+    scope: z.enum(["AGENT", "ALL"]),
+    containerExited: z.literal(true),
+    containerRemoved: z.literal(true),
+    mountsReleased: z.literal(true),
+    source: z.enum(["runtime-attestation", "broker-reconciliation"]),
+  })
+  .strict();
+
+const recordRuntimeTeardownParams = z
+  .object({
+    agentId: identifier,
+    transitionId: identifier,
+    attestation: z.union([
+      runtimeTeardownAttestationSchema,
+      signedBrokerRuntimeTeardownSchema,
+    ]),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      value.transitionId !== value.attestation.runId ||
+      value.agentId !== value.attestation.agentId
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Runtime teardown attestation must bind the owning transition and Agent",
+        path: ["attestation"],
+      });
+    }
+  });
+
+const evaluationContextSchema = z.object({
+  schemaVersion: z.literal(1),
+  runId: identifier,
+  agentId: identifier,
+  proposalId: identifier,
+  baseView: stateViewSchema,
+  manifestSchemaVersion: z.number().int().positive(),
+  policyHash: digest,
+  checkBundleHash: digest,
+  checkSpecHash: digest,
+  verifierImageDigest: z.string().min(1).max(512),
+  verifierConfigHash: digest,
+  resourcePolicyHash: z.string().min(1).max(512),
+  sourceRevision: z.string().min(1).max(256),
+}).strict();
+
+const recordedCheckSchema = z.object({
+  id: identifier,
+  status: z.enum(["PASS", "FAIL", "ERROR", "SKIPPED"]),
+  exitCode: z.number().int().nullable(),
+  durationMs: z.number().int().nonnegative(),
+  outputHash: digest,
+  timedOut: z.boolean(),
+}).strict();
 
 const recordEvidenceParams = z
   .object({
@@ -136,8 +257,32 @@ const recordEvidenceParams = z
     proposalId: identifier,
     evaluationContextHash: digest,
     evidenceDigest: digest,
+    evaluationContext: evaluationContextSchema.optional(),
+    verifierInputHash: digest.optional(),
+    checkResultsHash: digest.optional(),
+    coverage: z.enum(["complete", "partial", "unavailable"]).optional(),
+    requiredChecksPassed: z.boolean().optional(),
+    checks: z.array(recordedCheckSchema).min(1).max(32).optional(),
+    brokerAttestation: signedBrokerVerifierAttestationSchema.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    const completeFields = [
+      value.evaluationContext,
+      value.verifierInputHash,
+      value.checkResultsHash,
+      value.coverage,
+      value.requiredChecksPassed,
+      value.checks,
+    ];
+    const supplied = completeFields.filter((item) => item !== undefined).length;
+    if (supplied !== 0 && supplied !== completeFields.length) {
+      context.addIssue({
+        code: "custom",
+        message: "Complete typed evidence fields must be supplied together",
+      });
+    }
+  });
 
 const issuePermitParams = z
   .object({
@@ -170,7 +315,9 @@ const promotionParams = z
     proposalId: identifier,
     expectedViewId: digest,
     expectedWorkspaceHash: digest,
-    nextView: stateViewSchema,
+    // Compatibility-only assertion. The Worker derives the authoritative
+    // next View from its current HEAD and the sealed proposal bytes.
+    nextView: stateViewSchema.optional(),
     versionId: identifier,
     receiptId: identifier,
   })
@@ -185,7 +332,9 @@ const rollbackParams = z
     targetVersionId: identifier,
     expectedViewId: digest,
     expectedWorkspaceHash: digest,
-    nextView: stateViewSchema,
+    // Compatibility-only assertion. The Worker derives rollback state from
+    // the Worker-owned snapshot and advances the session epoch itself.
+    nextView: stateViewSchema.optional(),
     versionId: identifier,
     receiptId: identifier,
   })
@@ -201,6 +350,13 @@ const repairParams = z
   })
   .strict();
 
+const getReceiptProofParams = z
+  .object({
+    agentId: identifier,
+    receiptId: identifier,
+  })
+  .strict();
+
 export const rpcRequestSchema = z.discriminatedUnion("method", [
   z.object({ id: identifier, method: z.literal("health"), params: z.object({}).strict() }).strict(),
   z
@@ -208,6 +364,13 @@ export const rpcRequestSchema = z.discriminatedUnion("method", [
       id: identifier,
       method: z.literal("getProjection"),
       params: z.object({ agentId: identifier }).strict(),
+    })
+    .strict(),
+  z
+    .object({
+      id: identifier,
+      method: z.literal("getReceiptProof"),
+      params: getReceiptProofParams,
     })
     .strict(),
   z
@@ -232,6 +395,16 @@ export const rpcRequestSchema = z.discriminatedUnion("method", [
     .strict(),
   z
     .object({ id: identifier, method: z.literal("prepareRun"), params: prepareRunParams })
+    .strict(),
+  z
+    .object({
+      id: identifier,
+      method: z.literal("recordRuntimeTeardown"),
+      params: recordRuntimeTeardownParams,
+    })
+    .strict(),
+  z
+    .object({ id: identifier, method: z.literal("cancelRun"), params: cancelRunParams })
     .strict(),
   z
     .object({ id: identifier, method: z.literal("exportProposal"), params: exportProposalParams })
@@ -275,6 +448,12 @@ export type PrepareParams = z.infer<typeof prepareParams>;
 export type InitializeAgentParams = z.infer<typeof initializeAgentParams>;
 export type AdoptLegacyStateParams = z.infer<typeof adoptLegacyStateParams>;
 export type PrepareRunParams = z.infer<typeof prepareRunParams>;
+export type RecordRuntimeTeardownParams = z.infer<typeof recordRuntimeTeardownParams>;
+export type RuntimeTeardownRecord = z.infer<typeof runtimeTeardownAttestationSchema>;
+export type CancelRunParams = z.infer<typeof cancelRunParams>;
+export interface CancelRunResult {
+  state: "CANCELLED" | "TOO_LATE" | "ALREADY_TERMINAL";
+}
 export type ExportProposalParams = z.infer<typeof exportProposalParams>;
 export type DisposeRunParams = z.infer<typeof disposeRunParams>;
 export type PlatformStateParams = z.infer<typeof platformStateParams>;
@@ -286,6 +465,7 @@ export type AttemptPermitConsumptionParams = z.infer<typeof attemptPermitConsump
 export type ApplyPromotionParams = z.infer<typeof promotionParams>;
 export type ApplyRollbackParams = z.infer<typeof rollbackParams>;
 export type RepairParams = z.infer<typeof repairParams>;
+export type GetReceiptProofParams = z.infer<typeof getReceiptProofParams>;
 
 export interface WorkerRpcSuccess {
   id: string;

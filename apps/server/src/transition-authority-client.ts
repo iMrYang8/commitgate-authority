@@ -1,10 +1,13 @@
 import type { StateViewRef } from "./types.js";
+import type { AuthorityReceiptProofBundle } from "./research/receipt-proof.js";
 import type {
   AdoptLegacyStateParams,
   AttemptPermitConsumptionParams,
   ApplyPromotionParams,
   ApplyRollbackParams,
   ArchiveAgentParams,
+  CancelRunParams,
+  CancelRunResult,
   DisposeRunParams,
   ExportProposalParams,
   InitializeAgentParams,
@@ -13,6 +16,7 @@ import type {
   PrepareParams,
   PrepareRunParams,
   RecordEvidenceParams,
+  RecordRuntimeTeardownParams,
   SealProposalParams,
   WorkerRpcRequestInput,
 } from "./transition-worker/contracts.js";
@@ -55,6 +59,8 @@ export interface TransitionAuthorityClient {
   initializeAgent(input: InitializeAgentParams): Promise<WorkerProjection>;
   adoptLegacyState(input: AdoptLegacyStateParams): Promise<WorkerProjection>;
   prepareRun(input: PrepareRunParams): Promise<PreparedRunRef>;
+  recordRuntimeTeardown(input: RecordRuntimeTeardownParams): Promise<WorkerProjection>;
+  cancelRun(input: CancelRunParams): Promise<CancelRunResult>;
   prepare(input: PrepareParams): Promise<WorkerProjection>;
   sealProposal(input: SealProposalParams): Promise<WorkerProjection>;
   exportProposal(input: ExportProposalParams): Promise<VerifierWorkspaceRef>;
@@ -67,6 +73,7 @@ export interface TransitionAuthorityClient {
   regeneratePlatformState(input: PlatformStateParams): Promise<WorkerProjection>;
   archiveAgent(input: ArchiveAgentParams): Promise<WorkerProjection>;
   getProjection(agentId: string): Promise<WorkerProjection>;
+  getReceiptProof(agentId: string, receiptId: string): Promise<AuthorityReceiptProofBundle>;
   recover(agentId: string): Promise<WorkerProjection>;
 }
 
@@ -84,6 +91,9 @@ export class WorkerTransitionAuthorityClient implements TransitionAuthorityClien
       this.timeoutMs,
     );
     if (health.status !== "ok") throw new Error("AUTHORITY_UNAVAILABLE");
+    if (!/^[a-f0-9]{24}$/.test(health.signingKeyId)) {
+      throw new Error("AUTHORITY_SIGNING_KEY_ID_INVALID");
+    }
     return { ...health, authority: "transition-worker" };
   }
 
@@ -97,6 +107,14 @@ export class WorkerTransitionAuthorityClient implements TransitionAuthorityClien
 
   prepareRun(input: PrepareRunParams) {
     return this.request<PreparedRunRef>({ method: "prepareRun", params: input });
+  }
+
+  recordRuntimeTeardown(input: RecordRuntimeTeardownParams) {
+    return this.request<WorkerProjection>({ method: "recordRuntimeTeardown", params: input });
+  }
+
+  cancelRun(input: CancelRunParams) {
+    return this.request<CancelRunResult>({ method: "cancelRun", params: input });
   }
 
   prepare(input: PrepareParams) {
@@ -146,6 +164,13 @@ export class WorkerTransitionAuthorityClient implements TransitionAuthorityClien
   getProjection(agentId: string) {
     return this.rpc.request<WorkerProjection>(
       { method: "getProjection", params: { agentId } },
+      this.timeoutMs,
+    );
+  }
+
+  getReceiptProof(agentId: string, receiptId: string) {
+    return this.rpc.request<AuthorityReceiptProofBundle>(
+      { method: "getReceiptProof", params: { agentId, receiptId } },
       this.timeoutMs,
     );
   }

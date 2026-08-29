@@ -295,6 +295,7 @@ describe("Docker verifier isolation", () => {
           imageDigest: "sha256:image-digest",
         }),
         spawnProcess: fakeSpawn,
+        inspectContainerRemoved: async () => true,
       },
     );
     const environment = await runner.describeExecutionEnvironment("bound-run");
@@ -320,6 +321,17 @@ describe("Docker verifier isolation", () => {
         }),
       ),
     ).resolves.toMatchObject([{ id: "contract", status: "PASS" }]);
+    await expect(runner.attestCommitGateTeardown("bound-run")).resolves.toEqual({
+      containerExited: true,
+      containerRemoved: true,
+      mountsReleased: true,
+    });
+    await expect(runner.attestCommitGateTeardown("bound-run", {
+      runId: "bound-run",
+      agentId: "agent",
+      runLeaseId: "forged-lease",
+      sessionEpoch: 0,
+    })).rejects.toThrow("BROKER_VERIFIER_TEARDOWN_BINDING_MISMATCH");
 
     expect(invocations).toHaveLength(1);
     expect(invocations[0]?.join(" ")).toContain(
@@ -334,6 +346,71 @@ describe("Docker verifier isolation", () => {
     );
     const laterEnvironment = await runner.describeExecutionEnvironment("later-run");
     expect(laterEnvironment.checkBundleHash).not.toBe(environment.checkBundleHash);
+  });
+
+  it("classifies a signal-range container exit as infrastructure ERROR, not policy FAIL", async () => {
+    const root = await tempRoot();
+    const source = path.join(root, "source");
+    const store = path.join(root, "sealed-store");
+    await mkdir(source);
+    await writeFile(path.join(source, "check.mjs"), "setInterval(() => undefined, 1000);\n");
+    const fakeSpawn = (() => {
+      const child = new EventEmitter() as EventEmitter & {
+        stdout: PassThrough;
+        stderr: PassThrough;
+        kill: () => boolean;
+      };
+      child.stdout = new PassThrough();
+      child.stderr = new PassThrough();
+      child.kill = () => true;
+      queueMicrotask(() => child.emit("close", 137));
+      return child;
+    }) as unknown as typeof spawn;
+    const runner = new DockerVerifierRunner(
+      {
+        ...verifierConfig,
+        trustedChecksPath: source,
+        trustedCheckStorePath: store,
+      },
+      {
+        inspectImage: async () => ({
+          imageId: "sha256:image-id",
+          imageDigest: "sha256:image-digest",
+        }),
+        spawnProcess: fakeSpawn,
+        inspectContainerRemoved: async () => true,
+      },
+    );
+
+    await expect(
+      runner.run(
+        input({
+          runId: "externally-killed-verifier",
+          trustedChecksPath: source,
+          checks: [{
+            id: "contract",
+            runner: "node",
+            entrypoint: "check.mjs",
+            args: [],
+            timeoutMs: 10_000,
+            scratchBytes: 1_048_576,
+          }],
+        }),
+      ),
+    ).resolves.toMatchObject([{
+      id: "contract",
+      status: "ERROR",
+      exitCode: 137,
+      timedOut: false,
+      output: expect.stringContaining("[VERIFIER_CONTAINER_UNEXPECTED_EXIT:137]"),
+    }]);
+    await expect(
+      runner.attestCommitGateTeardown("externally-killed-verifier"),
+    ).resolves.toEqual({
+      containerExited: true,
+      containerRemoved: true,
+      mountsReleased: true,
+    });
   });
 
   it("rejects a context hash that does not name the run's sealed bundle", async () => {

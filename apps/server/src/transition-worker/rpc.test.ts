@@ -7,6 +7,9 @@ import { TransitionWorkerRpcClient, startTransitionWorkerRpc } from "./rpc.js";
 import { TransitionWorker, type TransitionWorkerConfig } from "./worker.js";
 import { createServer, type Server, type Socket } from "node:net";
 import { rpcRequestSchema } from "./contracts.js";
+import { WorkerTransitionAuthorityClient } from "../transition-authority-client.js";
+import { verifyAuthorityReceiptProof } from "../research/receipt-proof.js";
+import { makeTreeWritable } from "./filesystem.js";
 
 const roots: string[] = [];
 const servers: Server[] = [];
@@ -18,7 +21,10 @@ afterEach(async () => {
   // cannot turn a client timeout assertion into an afterEach timeout.
   for (const socket of acceptedSockets.splice(0)) socket.destroy();
   await Promise.all(servers.splice(0).map((server) => new Promise<void>((resolve) => server.close(() => resolve()))));
-  await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
+  await Promise.all(roots.splice(0).map(async (root) => {
+    await makeTreeWritable(root).catch(() => undefined);
+    await rm(root, { recursive: true, force: true });
+  }));
 });
 
 describe("transition-worker Unix RPC", () => {
@@ -52,11 +58,17 @@ describe("transition-worker Unix RPC", () => {
     }
     servers.push(server);
     const client = new TransitionWorkerRpcClient(config.socketPath);
-    const health = await client.request<{ status: string; mode: string }>({
+    const health = await client.request<{
+      status: string;
+      mode: string;
+      protocolVersion: number;
+      signingKeyId: string;
+    }>({
       method: "health",
       params: {},
     });
     expect(health).toMatchObject({ status: "ok", mode: "authority-v2", protocolVersion: 2 });
+    expect(health.signingKeyId).toMatch(/^[a-f0-9]{24}$/);
     expect((await lstat(config.socketPath)).mode & 0o777).toBe(0o660);
   });
 
@@ -75,11 +87,122 @@ describe("transition-worker Unix RPC", () => {
     }).success).toBe(false);
 
     expect(rpcRequestSchema.safeParse({
+      id: "request-receipt-proof",
+      method: "getReceiptProof",
+      params: { agentId: "agent", receiptId: "receipt-1" },
+    }).success).toBe(true);
+    expect(rpcRequestSchema.safeParse({
+      id: "request-receipt-proof-path",
+      method: "getReceiptProof",
+      params: { agentId: "agent", receiptId: "receipt-1", path: "/host/control" },
+    }).success).toBe(false);
+
+    expect(rpcRequestSchema.safeParse({
       id: "request-2",
       method: "getProjection",
       params: { agentId: "agent", path: "/host/workspace" },
     }).success).toBe(false);
+
+    expect(rpcRequestSchema.safeParse({
+      id: "request-cancel",
+      method: "cancelRun",
+      params: {
+        agentId: "agent",
+        transitionId: "run",
+        runId: "run",
+        runLeaseId: "lease",
+        expectedViewId: "c".repeat(64),
+      },
+    }).success).toBe(true);
+    expect(rpcRequestSchema.safeParse({
+      id: "request-cancel-mismatch",
+      method: "cancelRun",
+      params: {
+        agentId: "agent",
+        transitionId: "run",
+        runId: "other-run",
+        runLeaseId: "lease",
+        expectedViewId: "c".repeat(64),
+      },
+    }).success).toBe(false);
   });
+
+  it("keeps 21 receipt projections below the RPC cap and reconstructs one v3 proof on demand", async (context) => {
+    const socketTempRoot = process.platform === "darwin" ? "/private/tmp" : tmpdir();
+    const root = await mkdtemp(path.join(socketTempRoot, "commitgate-rpc-proof-"));
+    roots.push(root);
+    const config: TransitionWorkerConfig = {
+      workspaceRoot: path.join(root, "workspaces"),
+      controlRoot: path.join(root, "control"),
+      inboxRoot: path.join(root, "inbox"),
+      socketPath: path.join(root, "run", "worker.sock"),
+      sourceRevision: "a".repeat(40),
+    };
+    await Promise.all([
+      mkdir(config.workspaceRoot),
+      mkdir(config.controlRoot),
+      mkdir(config.inboxRoot),
+    ]);
+    let server: Server;
+    try {
+      server = await startTransitionWorkerRpc(new TransitionWorker(config));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EPERM") {
+        context.skip();
+        return;
+      }
+      throw error;
+    }
+    servers.push(server);
+    const authority = new WorkerTransitionAuthorityClient(config.socketPath, 20_000);
+    let projection = await authority.initializeAgent({
+      agentId: "proof-agent",
+      operationId: "proof-initialize",
+      headVersionId: "proof-initial-version",
+      generation: 0,
+      sessionEpoch: 0,
+      agentConfigVersion: 1,
+      policyVersion: 1,
+      name: "Projection proof",
+      instructions: "# Projection proof\n",
+    });
+    const initial = projection.versions[0]!;
+    for (let index = 1; index <= 21; index += 1) {
+      const head = projection.head!;
+      const receiptId = `rollback-${index}`;
+      await authority.prepare({
+        agentId: "proof-agent",
+        transitionId: receiptId,
+        kind: "ROLLBACK",
+        expectedViewId: head.view.viewId,
+        expectedWorkspaceHash: head.workspaceHash,
+        baseGeneration: head.view.generation,
+      });
+      projection = await authority.applyRollback({
+        agentId: "proof-agent",
+        transitionId: receiptId,
+        rollbackPermitId: `rollback-permit-${index}`,
+        targetSnapshotId: initial.snapshotId,
+        targetVersionId: initial.versionId,
+        expectedViewId: head.view.viewId,
+        expectedWorkspaceHash: head.workspaceHash,
+        versionId: `rollback-version-${index}`,
+        receiptId,
+      });
+    }
+    expect(Buffer.byteLength(JSON.stringify(projection), "utf8")).toBeLessThan(1_048_576);
+    expect(Object.values(projection.receiptProofs)).toHaveLength(21);
+    expect(
+      Object.values(projection.receiptProofs).every(
+        (entry) => entry.bundle.schemaVersion === 2 && !("eventChain" in entry.bundle),
+      ),
+    ).toBe(true);
+    const proof = await authority.getReceiptProof("proof-agent", "rollback-21");
+    expect(Buffer.byteLength(JSON.stringify(proof), "utf8")).toBeLessThan(1_048_576);
+    expect(proof.schemaVersion).toBe(3);
+    expect(proof.eventChain?.at(-1)?.eventId).toBe(proof.terminalEvent.eventId);
+    expect(verifyAuthorityReceiptProof(proof)).toEqual({ valid: true, reason: null });
+  }, 20_000);
 
   it("fails closed when a worker accepts a request but never responds", async (context) => {
     const socketTempRoot = process.platform === "darwin" ? "/private/tmp" : tmpdir();

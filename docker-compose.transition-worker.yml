@@ -1,6 +1,6 @@
-# Experimental P1 permission topology. This file is intentionally separate
-# from docker-compose.yml: the default P0 server is not silently presented as
-# transition-worker integrated. Start only with --profile p1-experimental.
+# Legacy Worker-only compatibility profile. The supported production topology
+# is the unified docker-compose.yml with separate Worker and Broker RPC socket
+# volumes. This profile is not release evidence and has no Runtime Broker.
 services:
   transition-worker:
     profiles: ["p1-experimental"]
@@ -10,14 +10,15 @@ services:
       args:
         NODE_IMAGE: ${CONTAINER_RUNTIME_BASE_IMAGE:-node:22-bookworm-slim}
     image: commitgate-transition-worker:experimental
-    user: "10001:10001"
+    user: "10001:20000"
+    group_add: ["20001"]
     environment:
       COMMITGATE_P1_TRANSITION_WORKER: experimental
     volumes:
       - p1-authoritative:/var/lib/commitgate/workspaces
       - p1-control:/var/lib/commitgate/control
       - p1-inbox:/var/lib/commitgate/inbox
-      - p1-socket:/run/commitgate
+      - p1-socket:/run/commitgate/transition
     read_only: true
     tmpfs:
       - /tmp:size=32m,noexec,nosuid,nodev
@@ -37,7 +38,7 @@ services:
     image: volc-agent-launchpad:p1-experimental
     depends_on:
       - transition-worker
-    group_add: ["10001"]
+    group_add: ["20001"]
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
@@ -47,14 +48,14 @@ services:
       AGENT_WORKSPACE_ROOT: /app/workspaces
       COMMITGATE_CONTROL_ROOT: /app/commitgate-control
       COMMITGATE_P1_TRANSITION_WORKER: experimental
-      TRANSITION_WORKER_SOCKET: /run/commitgate/transition-worker.sock
+      TRANSITION_WORKER_SOCKET: /run/commitgate/transition/transition-worker.sock
     ports:
       - "${P1_PUBLIC_PORT:-3001}:3000"
     volumes:
       # API sees both authority volumes read-only; only the worker has RW.
       - p1-authoritative:/app/workspaces:ro
       - p1-control:/app/commitgate-control:ro
-      - p1-socket:/run/commitgate
+      - p1-socket:/run/commitgate/transition:ro
       - p1-api-data:/app/data
       - p1-codex-home:/app/codex-home
     security_opt:

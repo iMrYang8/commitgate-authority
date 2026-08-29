@@ -10,6 +10,10 @@ import type { AgentService } from "./agent-service.js";
 
 const agentIdParams = z.object({ id: z.string().uuid() });
 const runIdParams = z.object({ id: z.string().uuid() });
+const agentReceiptProofParams = z.object({
+  agentId: z.string().uuid(),
+  receiptId: z.string().regex(/^[A-Za-z0-9_.-]{1,128}$/),
+});
 const createAgentBody = z.object({
   name: z.string().trim().min(1).max(80),
   description: z.string().max(500).optional(),
@@ -162,6 +166,13 @@ export async function createApp(
     };
   });
 
+  app.get("/api/agents/:agentId/commitgate/proofs/:receiptId", async (request) => {
+    const { agentId, receiptId } = agentReceiptProofParams.parse(request.params);
+    return {
+      proof: await service.getCommitGateProofByReceipt(agentId, receiptId),
+    };
+  });
+
   app.post("/api/agents/:id/rollbacks", async (request, reply) => {
     const { id } = agentIdParams.parse(request.params);
     const body = rollbackBody.parse(request.body);
@@ -190,6 +201,11 @@ export async function createApp(
   app.get("/api/runs/:id/commitgate", async (request) => {
     const { id } = runIdParams.parse(request.params);
     return { receipt: await service.getCommitGateReceipt(id) };
+  });
+
+  app.get("/api/runs/:id/commitgate/proof", async (request) => {
+    const { id } = runIdParams.parse(request.params);
+    return { proof: await service.getCommitGateProof(id) };
   });
 
   app.post("/api/runs/:id/commitgate/promotion-attempts", async (request, reply) => {

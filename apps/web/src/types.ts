@@ -8,6 +8,21 @@ export type MessageAuthority =
   | "REJECTED"
   | "SUPERSEDED";
 
+export interface EffectDispositionProof {
+  candidateChanged: boolean;
+  candidateObservation: "changed" | "unchanged" | "unobserved";
+  admissionBaseHash: string;
+  authoritativeBeforeHash: string;
+  authoritativeAfterHash: string;
+  authoritativeChanged: boolean;
+  sealedProposalHash: string | null;
+  verifierInputHash: string | null;
+  promotionSourceHash: string | null;
+  finalAuthoritativeHash: string;
+  invariant: "PROMOTED_EXACT_PROPOSAL" | "NO_PERSISTENT_EFFECT";
+  invariantSatisfied: boolean;
+}
+
 export interface StateViewRef {
   schemaVersion: number;
   viewId: string;
@@ -79,6 +94,7 @@ export interface CommitGateSummary {
       | "SESSION_RESET"
       | "RUN_ABORTED";
   }>;
+  effectProof?: EffectDispositionProof;
 }
 
 export interface GateReceipt {
@@ -126,10 +142,11 @@ export interface GateReceipt {
   evidenceDigest?: string | null;
   permitId?: string | null;
   permitState?: "ISSUED" | "CONSUMING" | "CONSUMED" | "REVOKED" | null;
-  artifactRetention?: "destroyed" | "pending" | "sealed";
+  artifactRetention?: "destroyed" | "pending" | "sealed" | "version_snapshot" | "deferred";
   evidenceRetention?: "metadata-only" | "full";
   provider?: ProviderIdentity | null;
   transactionStatus?: "PENDING_PROMOTION" | "PENDING_DISPOSITION" | "TERMINAL";
+  effectProof?: EffectDispositionProof;
 }
 
 export interface WorkspaceVersion {
@@ -231,7 +248,7 @@ export interface SystemInfo {
   arkModel: string | null;
   codexAvailable: boolean;
   codexSandboxMode: string;
-  runtimeProvider: "local-process" | "container";
+  runtimeProvider: "local-process" | "container" | "broker";
   containerEngine: string | null;
   runtime: string;
   commitGateEnabled: boolean;
@@ -245,6 +262,9 @@ export interface SystemInfo {
   modelId?: string | null;
   modelWireApi?: string;
   modelAccessMode?: string;
-  alternateProviderVerified?: boolean;
-  officialProviderE2E?: "verified" | "failed" | "unverified" | string;
+  transitionAuthority?: "worker" | "in-process";
+  authorityWriteIsolation?: "os-enforced" | "in-process";
+  authorityManifestSchemaVersion?: number | null;
+  authorityFilesystemProfile?: "linux-strong" | "portable-development" | null;
+  authorityReceiptSigningKeyId?: string | null;
 }
