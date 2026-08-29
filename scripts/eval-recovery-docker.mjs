@@ -13,7 +13,12 @@ const execFileAsync = promisify(execFile);
 const root = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const engine = process.env.CONTAINER_ENGINE || "docker";
 const suffix = `${process.pid}-${Date.now()}`;
-const image = `commitgate-recovery-worker:${suffix}`;
+const explicitWorkerImage = process.env.COMMITGATE_TRANSITION_WORKER_IMAGE?.trim();
+// The canonical evaluator builds the same product image used by the release
+// topology.  A freeze run may provide an already inspected immutable image and
+// skip the rebuild.  Either way, executionIdentity and the exercised recovery
+// Worker now refer to the same digest as every other image-bound report.
+const image = explicitWorkerImage || "commitgate-transition-worker:local";
 const apiImage = `commitgate-recovery-api:${suffix}`;
 const driver = path.join(root, "scripts", "recovery-docker-driver.mjs");
 const maxBuffer = 32 * 1024 * 1024;
@@ -64,7 +69,16 @@ async function waitForReady(container, timeoutMs = 20_000) {
     const result = await command([
       "exec", container, "node", "/app/recovery-docker-driver.mjs", "health",
     ], { timeout: 5_000 });
-    if (result.status === 0) return true;
+    const health = result.status === 0 ? tryParseLastJson(result.stdout) : null;
+    // Docker Desktop can transiently report a successful `docker exec` with
+    // no captured stdout immediately after a container restart.  Exit status
+    // alone is therefore not a readiness proof: require the typed Worker
+    // health payload before issuing an inspection RPC.
+    if (
+      health?.status === "ok" &&
+      health?.authority === "transition-worker" &&
+      /^[a-f0-9]{24}$/.test(health.signingKeyId ?? "")
+    ) return true;
     last = `${result.stdout}${result.stderr}`;
     const state = await waitForState(container, ["exited", "dead"], 50);
     if (state) throw new Error(`worker exited before readiness: ${last}`);
@@ -104,14 +118,51 @@ async function waitForLogMarker(container, marker, timeoutMs = 30_000) {
   throw new Error(`marker timeout ${marker}: ${output}`);
 }
 
-function parseLastJson(output) {
+function tryParseLastJson(output) {
   const lines = output.trim().split(/\r?\n/).filter(Boolean);
   for (const line of lines.reverse()) {
     try {
       return JSON.parse(line);
     } catch {}
   }
+  return null;
+}
+
+function parseLastJson(output) {
+  const parsed = tryParseLastJson(output);
+  if (parsed !== null) return parsed;
   throw new Error("RECOVERY_INSPECTION_JSON_MISSING");
+}
+
+async function inspectScenarioState(container, transitionId, timeoutMs = 20_000) {
+  const deadline = Date.now() + timeoutMs;
+  let lastOutput = "";
+  while (Date.now() < deadline) {
+    const inspected = await command([
+      "exec", container, "node", "/app/recovery-docker-driver.mjs",
+      "inspect", transitionId,
+    ], { timeout: 30_000 });
+    if (inspected.status !== 0) {
+      // A real driver/RPC failure is evidence, not a retryable capture race.
+      throw new Error(inspected.stderr || inspected.stdout);
+    }
+    const parsed = tryParseLastJson(inspected.stdout);
+    if (parsed !== null) return parsed;
+
+    // Retry only the observed Docker CLI anomaly: exit 0 with an empty or
+    // malformed capture while the restarted Worker is still running.
+    lastOutput = `${inspected.stdout}${inspected.stderr}`;
+    const stopped = await waitForState(container, ["exited", "dead"], 50);
+    if (stopped) {
+      throw new Error(
+        `RECOVERY_INSPECTION_CONTAINER_EXITED:${stopped.status}:${stopped.exitCode}`,
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  throw new Error(
+    `RECOVERY_INSPECTION_JSON_MISSING:${lastOutput.slice(-512)}`,
+  );
 }
 
 const scenarios = [
@@ -347,12 +398,7 @@ async function evaluateScenario(scenario) {
     if (restart.status !== 0) throw new Error(restart.stderr || restart.stdout);
     await waitForReady(container);
 
-    const inspected = await command([
-      "exec", container, "node", "/app/recovery-docker-driver.mjs",
-      "inspect", scenario.transitionId,
-    ], { timeout: 30_000 });
-    if (inspected.status !== 0) throw new Error(inspected.stderr || inspected.stdout);
-    const state = parseLastJson(inspected.stdout);
+    const state = await inspectScenarioState(container, scenario.transitionId);
     const pointEvent = state.events.find(
       (event) => event.type === scenario.point && event.transitionId === scenario.transitionId,
     );
@@ -688,11 +734,18 @@ async function evaluateApiProjectionScenario() {
 try {
   const available = await command(["info", "--format", "{{.ServerVersion}}"], { timeout: 15_000 });
   if (available.status !== 0) throw new Error(available.stderr || available.stdout || "container engine unavailable");
-  const built = await command([
-    "build", "-f", "Dockerfile.transition-worker", "-t", image, ".",
-  ], { timeout: 10 * 60_000 });
-  if (built.status !== 0) throw new Error(built.stderr || built.stdout || "worker image build failed");
+  if (!explicitWorkerImage) {
+    const built = await command([
+      "build", "-f", "Dockerfile.transition-worker", "-t", image, ".",
+    ], { timeout: 10 * 60_000 });
+    if (built.status !== 0) {
+      throw new Error(built.stderr || built.stdout || "worker image build failed");
+    }
+  }
   const identity = await command(["image", "inspect", "--format", "{{.Id}}", image]);
+  if (identity.status !== 0) {
+    throw new Error(identity.stderr || identity.stdout || "worker image unavailable");
+  }
   imageIdentity = identity.status === 0 ? identity.stdout.trim() : null;
   workerImageBuilt = true;
 
@@ -780,6 +833,10 @@ const report = {
     imageId: imageIdentity,
     imageDigest: imageIdentity,
   },
+  transitionWorkerImageBuild: {
+    performed: !explicitWorkerImage,
+    source: explicitWorkerImage ? "caller-frozen-image" : "current-source-product-build",
+  },
   apiEvaluatorImage: {
     reference: apiImage,
     imageId: apiImageIdentity,
@@ -851,7 +908,8 @@ await mkdir(evidenceRoot, { recursive: true });
 const reportPath = path.join(evidenceRoot, "docker-recovery-report.json");
 await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 await command(["image", "rm", "--force", apiImage], { timeout: 60_000 });
-await command(["image", "rm", "--force", image], { timeout: 60_000 });
+// Keep the product Worker image available so later evidence commands inspect
+// the exact digest exercised by this recovery matrix.
 console.log(`${status}: Docker process recovery ${verified}/${results.length}`);
 console.log(`report: ${reportPath}`);
 if (status === "failed") process.exitCode = 1;

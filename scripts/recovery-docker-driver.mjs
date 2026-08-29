@@ -34,7 +34,11 @@ const workspaceRoot = process.env.TRANSITION_WORKER_WORKSPACE_ROOT ?? "/var/lib/
 const controlRoot = process.env.TRANSITION_WORKER_CONTROL_ROOT ?? "/var/lib/commitgate/control";
 const exchangeRoot = process.env.TRANSITION_WORKER_INBOX_ROOT ?? "/var/lib/commitgate/exchange";
 const apiDataFile = process.env.API_DATA_FILE ?? "/app/data/launchpad.json";
-const client = new WorkerTransitionAuthorityClient(socketPath, 10_000);
+const rpcTimeoutMs = Number(process.env.RECOVERY_RPC_TIMEOUT_MS ?? "30000");
+if (!Number.isFinite(rpcTimeoutMs) || rpcTimeoutMs < 10_000 || rpcTimeoutMs > 120_000) {
+  throw new Error("RECOVERY_RPC_TIMEOUT_MS_INVALID");
+}
+const client = new WorkerTransitionAuthorityClient(socketPath, rpcTimeoutMs);
 const agentId = process.env.RECOVERY_AGENT_ID ?? "recovery-agent";
 const sourceRevision = process.env.COMMITGATE_SOURCE_REVISION ?? "";
 if (!/^[a-f0-9]{40}$/.test(sourceRevision)) {

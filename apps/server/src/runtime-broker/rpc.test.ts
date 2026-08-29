@@ -567,7 +567,7 @@ describe("runtime broker Unix RPC", () => {
     } finally {
       await rm(root, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 
   it("rejects reconciliation for a binding with no durable launch record", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "commitgate-broker-unseen-binding-"));

@@ -624,3 +624,39 @@ test("real Provider evaluator binds its frozen source revision into its isolated
     /path\.join\(root,\s*"eval",\s*"real-report\.json"\)/s,
   );
 });
+
+test("Docker recovery evaluator exercises the frozen product Worker image", async () => {
+  const evaluator = await readFile(
+    path.join(import.meta.dirname, "eval-recovery-docker.mjs"),
+    "utf8",
+  );
+  assert.match(
+    evaluator,
+    /process\.env\.COMMITGATE_TRANSITION_WORKER_IMAGE\?\.trim\(\)/,
+  );
+  assert.match(
+    evaluator,
+    /explicitWorkerImage\s*\|\|\s*"commitgate-transition-worker:local"/,
+  );
+  assert.match(evaluator, /source:\s*explicitWorkerImage\s*\?\s*"caller-frozen-image"/);
+  assert.match(evaluator, /health\?\.status\s*===\s*"ok"/);
+  assert.match(evaluator, /health\?\.authority\s*===\s*"transition-worker"/);
+  assert.match(evaluator, /async function inspectScenarioState/);
+  assert.match(
+    evaluator,
+    /if \(inspected\.status !== 0\)[\s\S]*throw new Error\(inspected\.stderr \|\| inspected\.stdout\)/,
+  );
+  assert.match(evaluator, /const parsed = tryParseLastJson\(inspected\.stdout\)/);
+  assert.match(evaluator, /waitForState\(container, \["exited", "dead"\], 50\)/);
+  assert.doesNotMatch(
+    evaluator,
+    /command\(\["image",\s*"rm",\s*"--force",\s*image\]/,
+  );
+
+  const driver = await readFile(
+    path.join(import.meta.dirname, "recovery-docker-driver.mjs"),
+    "utf8",
+  );
+  assert.match(driver, /RECOVERY_RPC_TIMEOUT_MS\s*\?\?\s*"30000"/);
+  assert.match(driver, /WorkerTransitionAuthorityClient\(socketPath,\s*rpcTimeoutMs\)/);
+});
