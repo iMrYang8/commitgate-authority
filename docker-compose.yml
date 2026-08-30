@@ -261,7 +261,8 @@ services:
       MODEL_RELAY_TOKEN_FILE: /run/secrets/relay_token
       COMMITGATE_SOURCE_REVISION: ${COMMITGATE_SOURCE_REVISION:?Set COMMITGATE_SOURCE_REVISION to the frozen 40-hex source commit}
     secrets:
-      - app_auth_token
+      - source: app_auth_token_api
+        target: app_auth_token
       - source: relay_token_api
         target: relay_token
     ports:
@@ -333,7 +334,7 @@ secrets:
     file: ./.demo-state/secrets/relay_token_broker
   relay_token_api:
     file: ./.demo-state/secrets/relay_token_api
-  app_auth_token:
-    file: ./.demo-state/secrets/app_auth_token
+  app_auth_token_api:
+    file: ./.demo-state/secrets/app_auth_token_api
   broker_attestation_key:
     file: ./.demo-state/secrets/broker_attestation_key

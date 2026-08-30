@@ -70,7 +70,8 @@ Agent 和 Verifier 不获得上游 key。Relay 环境只记录
 为兼容原生 Linux 上 file-backed secret 保留宿主 UID 的语义，Launcher 会用
 一次性、无网络的 BusyBox helper 将每个 `0600` secret 设为对应容器 UID。
 共享的 Relay capability 会生成内容相同但 owner 不同的 Relay/Broker/API
-三份只读副本；Provider key 仍只有 Relay 的副本，不会复制给其他服务。
+三份只读副本；API auth token 也分为 Launcher 自读副本与 API UID
+副本。Provider key 仍只有 Relay 的副本，不会复制给其他服务。
 
 Launcher 还为每次启动生成独立的 `broker_attestation_key`，同样以 `0600`
 secret file 只挂载给 Runtime Broker 与 Transition Worker。Broker 用该 key
