@@ -8,7 +8,11 @@ import {
   normalizeCandidateResourceLimits,
   type CandidateResourceLimits,
 } from "../commitgate/resource-budget.js";
-import { classifyPath, defaultCommitGatePolicy } from "../commitgate/policy.js";
+import {
+  classifyPath,
+  defaultCommitGatePolicy,
+  DEFAULT_IGNORED_EPHEMERAL_NAMES,
+} from "../commitgate/policy.js";
 import type {
   CommitGatePolicy,
   ManifestEntry,
@@ -72,6 +76,49 @@ export interface WorkerManifestOptions {
   requireSingleFilesystem?: boolean;
   /** Deterministic test hook; production uses performance.now(). */
   monotonicNow?: () => number;
+}
+
+/**
+ * Docker creates a missing tmpfs mount target as root before mounting it.  A
+ * later manifest walk would therefore reject the engine-created directory as
+ * foreign-owned even though the Agent itself ran as the normalized workspace
+ * user.  Materialize the fixed root-level targets while the Worker still owns
+ * the candidate so Docker only covers existing, normalized empty directories.
+ *
+ * These paths remain ignored ephemeral state: they are charged to resource
+ * usage by buildWorkerManifest, but never enter the authoritative entry hash.
+ */
+export async function prepareRuntimeIgnoredMountpoints(root: string): Promise<void> {
+  const absoluteRoot = path.resolve(root);
+  const rootStat = await lstat(absoluteRoot, { bigint: true });
+  if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) {
+    throw new Error("AUTHORITATIVE_ROOT_NOT_DIRECTORY");
+  }
+
+  for (const relative of DEFAULT_IGNORED_EPHEMERAL_NAMES) {
+    const target = path.join(absoluteRoot, relative);
+    try {
+      await mkdir(target, { mode: 0o700 });
+      // mkdir(2)'s mode is umask-filtered; normalize it explicitly.
+      await chmod(target, 0o700);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+    }
+
+    const targetStat = await lstat(target, { bigint: true });
+    if (!targetStat.isDirectory() || targetStat.isSymbolicLink()) {
+      throw new Error(`RUNTIME_IGNORED_MOUNTPOINT_NOT_DIRECTORY:${relative}`);
+    }
+    if (targetStat.uid !== rootStat.uid || targetStat.gid !== rootStat.gid) {
+      throw new Error(`RUNTIME_IGNORED_MOUNTPOINT_OWNERSHIP_MISMATCH:${relative}`);
+    }
+    if (Number(targetStat.mode & 0o777n) !== 0o700) {
+      throw new Error(`RUNTIME_IGNORED_MOUNTPOINT_MODE_MISMATCH:${relative}`);
+    }
+    if ((await readdir(target)).length !== 0) {
+      throw new Error(`RUNTIME_IGNORED_MOUNTPOINT_NOT_EMPTY:${relative}`);
+    }
+  }
 }
 
 export interface WorkerFilesystemSupportMatrix {

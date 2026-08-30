@@ -438,6 +438,9 @@ describe("WorkerCommitGateRunner", () => {
     expect(rejectedTerminal.receipt.reasonCodes).toContain(
       "POLICY_MANIFEST_SYMLINK_FILE",
     );
+    expect(rejectedTerminal.receipt.reasonCodes).toContain(
+      "POLICY_MANIFEST_PATH:agent-link",
+    );
     expect((await rejected.worker.projection("agent")).head?.workspaceHash)
       .toBe(rejected.initialized.head?.workspaceHash);
 

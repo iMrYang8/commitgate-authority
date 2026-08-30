@@ -4,6 +4,7 @@ import { chmod, mkdir, readFile, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import type { AppConfig } from "./config.js";
+import { DEFAULT_IGNORED_EPHEMERAL_NAMES } from "./commitgate/policy.js";
 import { buildCodexArgs, parseCodexEventLine } from "./codex-runner.js";
 import { RunCancelledError } from "./errors.js";
 import {
@@ -31,13 +32,7 @@ const execFileAsync = promisify(execFile);
  * audit; a hard aggregate quota for every /workspace write requires the P1
  * per-run volume/filesystem boundary rather than a host bind mount.
  */
-export const BOUNDED_ROOT_IGNORED_PATHS = [
-  ".git",
-  ".codex",
-  "node_modules",
-  "dist",
-  "coverage",
-] as const;
+export const BOUNDED_ROOT_IGNORED_PATHS = DEFAULT_IGNORED_EPHEMERAL_NAMES;
 
 interface ActiveContainer {
   child: ChildProcess;

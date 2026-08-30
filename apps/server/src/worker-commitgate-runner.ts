@@ -82,6 +82,16 @@ const STATE_CONFLICT_CODES = new Set([
 const isManifestPolicyFault = (code: string): boolean =>
   code.startsWith("POLICY_MANIFEST_");
 
+const manifestPolicyPathReason = (error: unknown): string | null => {
+  if (!(error instanceof Error)) return null;
+  const marker = "; path=";
+  const offset = error.message.indexOf(marker);
+  if (offset < 0) return null;
+  const path = error.message.slice(offset + marker.length);
+  if (!/^[A-Za-z0-9._/:-]{1,80}$/.test(path)) return null;
+  return `POLICY_MANIFEST_PATH:${path}`;
+};
+
 /**
  * Only transport failures can make the result of an authority mutation
  * ambiguous.  A typed Worker fault is already a definitive negative outcome
@@ -551,6 +561,9 @@ export class WorkerCommitGateRunner implements AgentRunner {
           code === "RUN_CANCELLED";
         const conflict = STATE_CONFLICT_CODES.has(code);
         const manifestPolicyViolation = isManifestPolicyFault(code);
+        const manifestPathReason = manifestPolicyViolation
+          ? manifestPolicyPathReason(error)
+          : null;
         let runtimeRecoveryCode: string | null = null;
         try {
           await this.reconcileAndRecordRuntimeTeardown(evidenceRequest, "ALL");
@@ -576,7 +589,11 @@ export class WorkerCommitGateRunner implements AgentRunner {
             : !cancelled && manifestPolicyViolation
               ? "agent_wrong"
               : "infra_errored",
-          [cancelled ? "RUN_CANCELLED" : code, ...(runtimeRecoveryCode ? [runtimeRecoveryCode] : [])],
+          [
+            cancelled ? "RUN_CANCELLED" : code,
+            ...(manifestPathReason ? [manifestPathReason] : []),
+            ...(runtimeRecoveryCode ? [runtimeRecoveryCode] : []),
+          ],
           observedChecks,
           proposalId,
           proposalHash,

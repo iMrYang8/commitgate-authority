@@ -48,6 +48,7 @@ import {
   copyClosedTree,
   makeTreeReadonly,
   makeTreeWritable,
+  prepareRuntimeIgnoredMountpoints,
 } from "./filesystem.js";
 import type { WorkerManifest, WorkerManifestOptions } from "./filesystem.js";
 import {
@@ -291,6 +292,20 @@ function candidateManifestPolicyCode(error: unknown): string | null {
   if (!(error instanceof Error)) return null;
   const code = error.message.split(":", 1)[0] ?? "";
   return CANDIDATE_MANIFEST_POLICY_CODES.has(code) ? code : null;
+}
+
+function candidateManifestPolicyPath(error: unknown, code: string): string | null {
+  if (!(error instanceof Error)) return null;
+  const prefix = `${code}:`;
+  if (!error.message.startsWith(prefix)) return null;
+  const bounded = error.message
+    .slice(prefix.length)
+    // A receipt may retain path/type metadata, never arbitrary control bytes or
+    // candidate contents. Preserve useful POSIX path punctuation and redact the
+    // rest into a fixed, bounded diagnostic token.
+    .replace(/[^A-Za-z0-9._/:-]/g, "_")
+    .slice(0, 80);
+  return bounded.length > 0 ? bounded : null;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -827,6 +842,14 @@ export class TransitionWorker {
           "Candidate does not match the authoritative base at admission",
         );
       }
+      await prepareRuntimeIgnoredMountpoints(candidate);
+      const preparedCandidate = await this.buildManifest(candidate);
+      if (preparedCandidate.hash !== copied.hash) {
+        throw new WorkerFault(
+          "CANDIDATE_STATE_MISMATCH",
+          "Runtime ignored mountpoint preparation changed authoritative candidate state",
+        );
+      }
       await this.log.append({
         agentId: input.agentId,
         transitionId: input.transitionId,
@@ -851,7 +874,7 @@ export class TransitionWorker {
         relativeSubpath: candidateVolumeId,
         baseView: projection.head?.view ?? null,
         baseWorkspaceHash: input.expectedWorkspaceHash,
-        candidateHash: copied.hash,
+        candidateHash: preparedCandidate.hash,
       };
     });
   }
@@ -1589,9 +1612,12 @@ export class TransitionWorker {
       } catch (error) {
         const policyCode = candidateManifestPolicyCode(error);
         if (policyCode) {
+          const policyPath = candidateManifestPolicyPath(error, policyCode);
           throw new WorkerFault(
             `POLICY_MANIFEST_${policyCode}`,
-            `Candidate manifest rejected by ${policyCode}`,
+            `Candidate manifest rejected by ${policyCode}${
+              policyPath ? `; path=${policyPath}` : ""
+            }`,
           );
         }
         // Missing inspection tooling, inaccessible storage and other I/O

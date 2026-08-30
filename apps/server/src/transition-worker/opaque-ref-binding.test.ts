@@ -1,8 +1,9 @@
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { mkdtemp } from "node:fs/promises";
 import { afterEach, describe, expect, it } from "vitest";
+import { DEFAULT_IGNORED_EPHEMERAL_NAMES } from "../commitgate/policy.js";
 import { buildWorkerManifest, makeTreeWritable } from "./filesystem.js";
 import { TransitionWorker, type TransitionWorkerConfig } from "./worker.js";
 
@@ -98,6 +99,27 @@ describe("TransitionWorker opaque exchange-ref binding", () => {
       candidateVolumeId: "candidate-run-shared",
       relativeSubpath: "candidate-run-shared",
     });
+    const candidate = path.join(config.inboxRoot, prepared.relativeSubpath);
+    const candidateMetadata = await lstat(candidate, { bigint: true });
+    for (const relative of DEFAULT_IGNORED_EPHEMERAL_NAMES) {
+      const target = path.join(candidate, relative);
+      const metadata = await lstat(target, { bigint: true });
+      expect(metadata.isDirectory()).toBe(true);
+      expect(metadata.isSymbolicLink()).toBe(false);
+      expect(metadata.uid).toBe(candidateMetadata.uid);
+      expect(metadata.gid).toBe(candidateMetadata.gid);
+      expect(Number(metadata.mode & 0o777n)).toBe(0o700);
+      expect(await readdir(target)).toEqual([]);
+    }
+    const preparedManifest = await buildWorkerManifest(candidate);
+    expect(preparedManifest.hash).toBe(prepared.candidateHash);
+    expect(preparedManifest.resourceUsage.ignoredEntries)
+      .toBe(DEFAULT_IGNORED_EPHEMERAL_NAMES.length);
+    expect(preparedManifest.entries.some((entry) =>
+      DEFAULT_IGNORED_EPHEMERAL_NAMES.includes(
+        entry.path as (typeof DEFAULT_IGNORED_EPHEMERAL_NAMES)[number],
+      )
+    )).toBe(false);
 
     await expect(worker.prepareRun({
       agentId: "agent-b",
