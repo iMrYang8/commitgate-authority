@@ -1,8 +1,8 @@
 # Current Evidence Snapshot
 
-- Source revision: `ec5802407473eefd0be6bd17afc39de106024093`
-- Source tree hash: `83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5`
-- Files: 34
+- Source revision: `6888c53c73321f1cd5297cef6d796109ba5e2de2`
+- Source tree hash: `130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2`
+- Files: 37
 
 This is a sanitized, project-generated evidence snapshot. It is not an organizer score or external audit.
 Runtime commands regenerate their working reports under `eval/`; they do not overwrite this snapshot.

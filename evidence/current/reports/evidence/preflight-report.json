@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "kind": "demo-preflight",
-  "generatedAt": "2026-08-30T13:18:33.136Z",
+  "generatedAt": "2026-08-30T14:01:54.357Z",
   "status": "verified",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"

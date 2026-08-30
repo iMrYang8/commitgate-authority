@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "kind": "commitgate-linux-gate-overhead",
-  "generatedAt": "2026-08-30T13:05:40.367Z",
+  "generatedAt": "2026-08-30T13:46:05.009Z",
   "status": "verified",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"
@@ -30,8 +30,8 @@
     },
     "workerImage": {
       "reference": "commitgate-transition-worker:local",
-      "imageId": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
-      "imageDigest": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
       "status": "verified",
       "reason": null
     },
@@ -61,6 +61,8 @@
       "build",
       "-f",
       "Dockerfile.transition-worker",
+      "--label",
+      "com.docker.compose.image.builder=classic",
       "-t",
       "commitgate-transition-worker:local",
       "."
@@ -68,7 +70,7 @@
     "exitCode": 0,
     "signal": null,
     "timedOut": false,
-    "durationMs": 35760,
+    "durationMs": 49995,
     "stderr": ""
   },
   "command": {
@@ -95,7 +97,7 @@
     "timedOut": false,
     "timeoutMs": 1200000
   },
-  "durationMs": 69028,
+  "durationMs": 121294,
   "benchmark": {
     "schemaVersion": 1,
     "filesystemProfile": "linux-strong",
@@ -120,28 +122,28 @@
         "iterations": 30,
         "phases": {
           "sealMs": {
-            "p50Ms": 152.329,
-            "p95Ms": 167.014
+            "p50Ms": 245.951,
+            "p95Ms": 293.873
           },
           "exportMs": {
-            "p50Ms": 94.598,
-            "p95Ms": 144.885
+            "p50Ms": 141.958,
+            "p95Ms": 173.192
           },
           "deterministicProbeMs": {
-            "p50Ms": 20.518,
-            "p95Ms": 37.022
+            "p50Ms": 31.542,
+            "p95Ms": 42.067
           },
           "permitMs": {
-            "p50Ms": 15.692,
-            "p95Ms": 22.392
+            "p50Ms": 20.08,
+            "p95Ms": 30.82
           },
           "promotionMs": {
-            "p50Ms": 229.594,
-            "p95Ms": 269.467
+            "p50Ms": 359.602,
+            "p95Ms": 426.9
           },
           "totalGateMs": {
-            "p50Ms": 510.553,
-            "p95Ms": 631.603
+            "p50Ms": 808.882,
+            "p95Ms": 919.316
           }
         }
       },
@@ -150,28 +152,28 @@
         "iterations": 30,
         "phases": {
           "sealMs": {
-            "p50Ms": 155.234,
-            "p95Ms": 233.548
+            "p50Ms": 312.727,
+            "p95Ms": 407.826
           },
           "exportMs": {
-            "p50Ms": 94.952,
-            "p95Ms": 147.025
+            "p50Ms": 177.734,
+            "p95Ms": 217.803
           },
           "deterministicProbeMs": {
-            "p50Ms": 21.183,
-            "p95Ms": 33.258
+            "p50Ms": 41.588,
+            "p95Ms": 56.817
           },
           "permitMs": {
-            "p50Ms": 15.492,
-            "p95Ms": 21.936
+            "p50Ms": 24.511,
+            "p95Ms": 43.425
           },
           "promotionMs": {
-            "p50Ms": 233.654,
-            "p95Ms": 301.203
+            "p50Ms": 448.412,
+            "p95Ms": 628.394
           },
           "totalGateMs": {
-            "p50Ms": 526.668,
-            "p95Ms": 710.163
+            "p50Ms": 1030.016,
+            "p95Ms": 1284.156
           }
         }
       },
@@ -180,28 +182,28 @@
         "iterations": 30,
         "phases": {
           "sealMs": {
-            "p50Ms": 204.791,
-            "p95Ms": 253.044
+            "p50Ms": 402.726,
+            "p95Ms": 517.584
           },
           "exportMs": {
-            "p50Ms": 132.975,
-            "p95Ms": 143.866
+            "p50Ms": 261.896,
+            "p95Ms": 308.065
           },
           "deterministicProbeMs": {
-            "p50Ms": 30.189,
-            "p95Ms": 32.679
+            "p50Ms": 60.34,
+            "p95Ms": 85.054
           },
           "permitMs": {
-            "p50Ms": 15.411,
-            "p95Ms": 23.827
+            "p50Ms": 25.105,
+            "p95Ms": 29.146
           },
           "promotionMs": {
-            "p50Ms": 309.069,
-            "p95Ms": 367.989
+            "p50Ms": 589.076,
+            "p95Ms": 698.766
           },
           "totalGateMs": {
-            "p50Ms": 699.41,
-            "p95Ms": 802.497
+            "p50Ms": 1378.313,
+            "p95Ms": 1538.567
           }
         }
       }

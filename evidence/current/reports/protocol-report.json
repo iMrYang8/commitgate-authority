@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
   "kind": "commitgate-protocol-evaluation",
-  "generatedAt": "2026-08-30T13:01:03.967Z",
+  "generatedAt": "2026-08-30T13:38:43.162Z",
   "status": "verified",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"
@@ -16,31 +16,31 @@
     "containerEngine": "docker",
     "runtimeImage": {
       "reference": "volc-agent-runtime:local",
-      "imageId": null,
-      "imageDigest": null,
-      "status": "unverified",
-      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
     },
     "verifierImage": {
       "reference": "volc-agent-runtime:local",
-      "imageId": null,
-      "imageDigest": null,
-      "status": "unverified",
-      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
     },
     "workerImage": {
       "reference": "commitgate-transition-worker:local",
-      "imageId": null,
-      "imageDigest": null,
-      "status": "unverified",
-      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "status": "verified",
+      "reason": null
     },
     "brokerImage": {
       "reference": "commitgate-runtime-broker:local",
-      "imageId": null,
-      "imageDigest": null,
-      "status": "unverified",
-      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
     },
     "provider": {
       "providerId": "not-applicable",
@@ -53,7 +53,7 @@
       "credentialsRecorded": false
     }
   },
-  "durationMs": 3810,
+  "durationMs": 5123,
   "command": {
     "executable": "npm",
     "arguments": [
@@ -405,8 +405,8 @@
     {
       "schemaVersion": 1,
       "recordId": "view-generation-aba-fence",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -428,14 +428,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "sealed-proposal-single-source",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -457,14 +457,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "one-shot-promotion-permit",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -486,14 +486,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "permit-evidence-completeness",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -515,14 +515,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "transaction-capability-replay",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -544,14 +544,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "one-shot-rollback-permit",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -573,14 +573,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "rollback-import-toctou",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -602,14 +602,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "evaluation-context-binding",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -631,14 +631,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "manifest-v2-link-rejection",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -660,14 +660,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "manifest-v2-path-collision",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -689,14 +689,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "database-v3-migration",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -718,14 +718,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "sealed-commit",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -747,14 +747,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "view-cas-conflict",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -776,14 +776,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "terminal-decision-semantics",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -805,14 +805,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "append-only-rollback",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -834,14 +834,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "message-authority-fence",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -863,14 +863,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "worker-product-commit",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -892,14 +892,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "worker-product-noncommit",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -921,14 +921,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "worker-cas-conflict-decision",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -950,14 +950,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "worker-cancellation-fence",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -979,14 +979,14 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     },
     {
       "schemaVersion": 1,
       "recordId": "explicit-non-effect-proof",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -1008,8 +1008,8 @@
       "decision": null,
       "exitStatus": 0,
       "surface": "protocol",
-      "runtimeImageDigest": null,
-      "verifierImageDigest": null
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
     }
   ],
   "parseError": null,

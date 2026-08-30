@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "kind": "docker-process-recovery-evaluation",
-  "generatedAt": "2026-08-30T13:03:12.186Z",
+  "generatedAt": "2026-08-30T13:41:41.269Z",
   "status": "verified",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"
@@ -14,17 +14,17 @@
   "containerEngine": "docker",
   "transitionWorkerImage": {
     "reference": "commitgate-transition-worker:local",
-    "imageId": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
-    "imageDigest": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a"
+    "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+    "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02"
   },
   "transitionWorkerImageBuild": {
     "performed": true,
     "source": "current-source-product-build"
   },
   "apiEvaluatorImage": {
-    "reference": "commitgate-recovery-api:22604-1788094896522",
-    "imageId": "sha256:0abbf841fb0ee94f966e7f3e9b99fa689a0d7c97358166781d10659c9cbb5c1e",
-    "imageDigest": "sha256:0abbf841fb0ee94f966e7f3e9b99fa689a0d7c97358166781d10659c9cbb5c1e"
+    "reference": "commitgate-recovery-api:50974-1788097173552",
+    "imageId": "sha256:a9ff079cb72f6ab467cc5524d814e3358f72b61d241bb299874cdf20510692d6",
+    "imageDigest": "sha256:a9ff079cb72f6ab467cc5524d814e3358f72b61d241bb299874cdf20510692d6"
   },
   "executionIdentity": {
     "schemaVersion": 2,
@@ -45,8 +45,8 @@
     },
     "workerImage": {
       "reference": "commitgate-transition-worker:local",
-      "imageId": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
-      "imageDigest": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
       "status": "verified",
       "reason": null
     },
@@ -69,14 +69,14 @@
     },
     "transitionWorkerImage": {
       "reference": "commitgate-transition-worker:local",
-      "imageId": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
-      "imageDigest": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
       "status": "verified"
     },
     "apiEvaluatorImage": {
-      "reference": "commitgate-recovery-api:22604-1788094896522",
-      "imageId": "sha256:0abbf841fb0ee94f966e7f3e9b99fa689a0d7c97358166781d10659c9cbb5c1e",
-      "imageDigest": "sha256:0abbf841fb0ee94f966e7f3e9b99fa689a0d7c97358166781d10659c9cbb5c1e",
+      "reference": "commitgate-recovery-api:50974-1788097173552",
+      "imageId": "sha256:a9ff079cb72f6ab467cc5524d814e3358f72b61d241bb299874cdf20510692d6",
+      "imageDigest": "sha256:a9ff079cb72f6ab467cc5524d814e3358f72b61d241bb299874cdf20510692d6",
       "status": "verified"
     }
   },
@@ -139,21 +139,21 @@
           "schemaVersion": 3,
           "valid": true,
           "reason": null,
-          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "expectedSourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "signingKeyId": "2f3246876c3022d1ead0f2eb",
-          "signingKeyAnchor": "2f3246876c3022d1ead0f2eb",
+          "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "expectedSourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "signingKeyId": "a7018c61ce71365eb655308f",
+          "signingKeyAnchor": "a7018c61ce71365eb655308f",
           "trustAnchorMatches": true,
           "fullEventChain": true,
           "terminalEventBound": true
         },
         "preCrashSigningKey": {
-          "keyId": "2f3246876c3022d1ead0f2eb",
-          "publicKeySha256": "2c69bb8cb9803c6bad8252d566e585cafdee6dd65a3b7ae220400054acc6df98"
+          "keyId": "a7018c61ce71365eb655308f",
+          "publicKeySha256": "c05129748bf0d3d1c7f7c164a76c54565c746364add4e4eb46d373f72586259c"
         },
         "versions": 1,
         "lastEventSequence": 6,
-        "lastEventDigest": "17fee65d1d2521a8a8e9a7c816d3bff6621d4e5b88b6f6722124c4f211714726",
+        "lastEventDigest": "aacc19d6cfdfb16e54a2a9f29139ab2710160eefdf1b40be5702bae73908b058",
         "cleanup": {
           "candidatePresent": false,
           "stagingPresent": false,
@@ -161,7 +161,7 @@
           "proposalPresent": false
         }
       },
-      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"TRANSITION_PREPARED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-prepared\",\"sequence\":3,\"eventDigest\":\"442bd6f3b2c7b85d5fcff2e9d30a15a9ec1fcd14cefd444b878829ad7e3b1c1f\"}",
+      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"TRANSITION_PREPARED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-prepared\",\"sequence\":3,\"eventDigest\":\"283bf263236c4f8951b972398fa172365c7d696e19e22a7a7f0eb83ce526108f\"}",
       "triggerStatus": 0,
       "triggerError": ""
     },
@@ -210,21 +210,21 @@
           "schemaVersion": 3,
           "valid": true,
           "reason": null,
-          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "expectedSourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "signingKeyId": "349181876188fed401c9f28c",
-          "signingKeyAnchor": "349181876188fed401c9f28c",
+          "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "expectedSourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "signingKeyId": "02fc9ecfff67375b9cc08ca8",
+          "signingKeyAnchor": "02fc9ecfff67375b9cc08ca8",
           "trustAnchorMatches": true,
           "fullEventChain": true,
           "terminalEventBound": true
         },
         "preCrashSigningKey": {
-          "keyId": "349181876188fed401c9f28c",
-          "publicKeySha256": "5c31e5e28522537d190aba25c5ab7248f5ef8541f03c6f77e771144fbf46dfcb"
+          "keyId": "02fc9ecfff67375b9cc08ca8",
+          "publicKeySha256": "ce6636ea006371f305df4427e682664ddc8d89a39fd60f79851b469dffc0d68b"
         },
         "versions": 1,
         "lastEventSequence": 9,
-        "lastEventDigest": "329073375136511e12636b11853a769d4033217d71a930dd327199e81d2e5c23",
+        "lastEventDigest": "e5b5f586217c420a2871fb6f1b0f495e4ef4641881d17052cc7d6691b9c5a300",
         "cleanup": {
           "candidatePresent": false,
           "stagingPresent": false,
@@ -232,7 +232,7 @@
           "proposalPresent": false
         }
       },
-      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"PROPOSAL_SEALED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-sealed\",\"sequence\":6,\"eventDigest\":\"80a12a0d46009dd51a39335e93a57d95bcca892d79a5580c650ae6bde79a3b5d\"}",
+      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"PROPOSAL_SEALED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-sealed\",\"sequence\":6,\"eventDigest\":\"ba42b6270b678082f50c500a7408046a1a8da7218a83551ffa0036bccc12e4ac\"}",
       "triggerStatus": 0,
       "triggerError": ""
     },
@@ -281,21 +281,21 @@
           "schemaVersion": 3,
           "valid": true,
           "reason": null,
-          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "expectedSourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "signingKeyId": "a9f6d1cb0f408129a495e9d1",
-          "signingKeyAnchor": "a9f6d1cb0f408129a495e9d1",
+          "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "expectedSourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "signingKeyId": "721a432e0a136b8897c49e25",
+          "signingKeyAnchor": "721a432e0a136b8897c49e25",
           "trustAnchorMatches": true,
           "fullEventChain": true,
           "terminalEventBound": true
         },
         "preCrashSigningKey": {
-          "keyId": "a9f6d1cb0f408129a495e9d1",
-          "publicKeySha256": "56bca3992e827cd3d35adf0d1e7a97b98c4b2cc4ed16091608a8b55c8ba47733"
+          "keyId": "721a432e0a136b8897c49e25",
+          "publicKeySha256": "f8ed49fbc4ba1a3c14666cd17a44414567b7ab7a902089c6b9c7443fd8b862cd"
         },
         "versions": 1,
         "lastEventSequence": 11,
-        "lastEventDigest": "6742113bc09a6f036449c5f55bf5cc4a94ecafeb6c9c3409f1d845da0a5e3a97",
+        "lastEventDigest": "3d1e5f90d306811cc4894cbe8351e9d336738f4aa2a8d0d79f9dfb734c8ade5e",
         "cleanup": {
           "candidatePresent": false,
           "stagingPresent": false,
@@ -303,7 +303,7 @@
           "proposalPresent": false
         }
       },
-      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"EVIDENCE_RECORDED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-evidenced\",\"sequence\":8,\"eventDigest\":\"714a2d94ef72ac7309db438573e3318b109c90ce61d177e0efa9cd58a939e061\"}",
+      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"EVIDENCE_RECORDED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-evidenced\",\"sequence\":8,\"eventDigest\":\"fe3c92aa6d1506b6699549d4e4f94d332cf03de39d7cc8a8c476b61fc20cd799\"}",
       "triggerStatus": 0,
       "triggerError": ""
     },
@@ -352,21 +352,21 @@
           "schemaVersion": 3,
           "valid": true,
           "reason": null,
-          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "expectedSourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "signingKeyId": "4480bd92ce367c53e7cb6973",
-          "signingKeyAnchor": "4480bd92ce367c53e7cb6973",
+          "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "expectedSourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "signingKeyId": "99004f820b0f1324a97efdf5",
+          "signingKeyAnchor": "99004f820b0f1324a97efdf5",
           "trustAnchorMatches": true,
           "fullEventChain": true,
           "terminalEventBound": true
         },
         "preCrashSigningKey": {
-          "keyId": "4480bd92ce367c53e7cb6973",
-          "publicKeySha256": "8b1108883e0ffa92f5b4d2ccc800ee3e1438f874c0c66723eff659f9447d787b"
+          "keyId": "99004f820b0f1324a97efdf5",
+          "publicKeySha256": "ec96a566cb44151c87924f282b8a1e11316d80c19a1a13560baea348eeb7aa8c"
         },
         "versions": 1,
         "lastEventSequence": 12,
-        "lastEventDigest": "f08434e818f20db9a97e2c9d5b049fbf201fc2463006ad2aec57696abebcfc1e",
+        "lastEventDigest": "d15bf5813b784ff2c49e1c9a5600b2cd0e7acb628f61e3666a99f0ccf93f179d",
         "cleanup": {
           "candidatePresent": false,
           "stagingPresent": false,
@@ -374,7 +374,7 @@
           "proposalPresent": false
         }
       },
-      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"PERMIT_ISSUED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-permit-issued\",\"sequence\":9,\"eventDigest\":\"4fcb775ceaa8c24f81c29f60e7d754dbff70232422db367915a383f3232d5cb7\"}",
+      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"PERMIT_ISSUED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-permit-issued\",\"sequence\":9,\"eventDigest\":\"830997f6c2d6c78c5c82e66b5f3513f474685022defeb1cfb9e653acc134e7df\"}",
       "triggerStatus": 0,
       "triggerError": ""
     },
@@ -423,21 +423,21 @@
           "schemaVersion": 3,
           "valid": true,
           "reason": null,
-          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "expectedSourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "signingKeyId": "2ac3eb9cc5afb6f4ad349b39",
-          "signingKeyAnchor": "2ac3eb9cc5afb6f4ad349b39",
+          "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "expectedSourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "signingKeyId": "75000ea70fc2c1ff87b5cd18",
+          "signingKeyAnchor": "75000ea70fc2c1ff87b5cd18",
           "trustAnchorMatches": true,
           "fullEventChain": true,
           "terminalEventBound": true
         },
         "preCrashSigningKey": {
-          "keyId": "2ac3eb9cc5afb6f4ad349b39",
-          "publicKeySha256": "ba6946488675b0327dff1df76cd6ddb052e7b1f1ac403ca3b60d85e1793bbdad"
+          "keyId": "75000ea70fc2c1ff87b5cd18",
+          "publicKeySha256": "288df29203dcda8c3a9da3b25f48e1d2cc2714e26cb0099763e2fb7a70967edd"
         },
         "versions": 1,
         "lastEventSequence": 13,
-        "lastEventDigest": "c008530725980ba91944d11b9463c2f58b3b5aead4b5dc24555e64143eaedefe",
+        "lastEventDigest": "dcecbdb09f5b256f135bb6c0b06156538b4805f0f004824eb46082e267b9f6d5",
         "cleanup": {
           "candidatePresent": false,
           "stagingPresent": false,
@@ -445,7 +445,7 @@
           "proposalPresent": false
         }
       },
-      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"PERMIT_CONSUMING\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-permit-consuming\",\"sequence\":10,\"eventDigest\":\"947394f0706c3923cc43c3a063a812eb73b682992155ed22c56f7b983e14f246\"}",
+      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"PERMIT_CONSUMING\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-permit-consuming\",\"sequence\":10,\"eventDigest\":\"9054a15b42eb982555adf6136eb3b2393c70c723e1e93188d373d08630b9e848\"}",
       "triggerStatus": 0,
       "triggerError": ""
     },
@@ -494,21 +494,21 @@
           "schemaVersion": 3,
           "valid": true,
           "reason": null,
-          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "expectedSourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "signingKeyId": "17b3e62fc8e987edf8b3dcad",
-          "signingKeyAnchor": "17b3e62fc8e987edf8b3dcad",
+          "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "expectedSourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "signingKeyId": "644240edbb639dfba11f5938",
+          "signingKeyAnchor": "644240edbb639dfba11f5938",
           "trustAnchorMatches": true,
           "fullEventChain": true,
           "terminalEventBound": true
         },
         "preCrashSigningKey": {
-          "keyId": "17b3e62fc8e987edf8b3dcad",
-          "publicKeySha256": "042d1b99d101a417069bab25e7a2989cc447b19434db52da999c1c11b4abddd4"
+          "keyId": "644240edbb639dfba11f5938",
+          "publicKeySha256": "6b414d716a88eff566e1813163a978d9636df7745ff18ae1a6409026505fedcf"
         },
         "versions": 1,
         "lastEventSequence": 14,
-        "lastEventDigest": "48060875d15539ae7b22f65d0b291a738a52330fdccfe4460bfaf5d88226c260",
+        "lastEventDigest": "0692e03e009f329b261d2f470b30f5785e70a157d7fd096982956524e5a672c1",
         "cleanup": {
           "candidatePresent": false,
           "stagingPresent": false,
@@ -516,7 +516,7 @@
           "proposalPresent": false
         }
       },
-      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"BACKUP_CREATED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-backup-created\",\"sequence\":11,\"eventDigest\":\"0605b88d84a4bc8cc80c53a9b6f52e55cba2fd85a4fde1be254166efd0449af1\"}",
+      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"BACKUP_CREATED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-backup-created\",\"sequence\":11,\"eventDigest\":\"6b8217d1a7ac5bbaade648f120321cc98fc89444cbbf93f4dbb07150005b4827\"}",
       "triggerStatus": 0,
       "triggerError": ""
     },
@@ -565,21 +565,21 @@
           "schemaVersion": 3,
           "valid": true,
           "reason": null,
-          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "expectedSourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "signingKeyId": "87a8c3c218c88569a31b4c62",
-          "signingKeyAnchor": "87a8c3c218c88569a31b4c62",
+          "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "expectedSourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "signingKeyId": "d01839b145d5d74aff841c2d",
+          "signingKeyAnchor": "d01839b145d5d74aff841c2d",
           "trustAnchorMatches": true,
           "fullEventChain": true,
           "terminalEventBound": true
         },
         "preCrashSigningKey": {
-          "keyId": "87a8c3c218c88569a31b4c62",
-          "publicKeySha256": "7e9dc644e567078f66ad7aa840b4911fad616a5a2efb8a268e9260d123ff4af8"
+          "keyId": "d01839b145d5d74aff841c2d",
+          "publicKeySha256": "42cd1172dd98c34ec632fa36f3b174bf12e0c6b04481f6ac4149787de6bb0b16"
         },
         "versions": 2,
         "lastEventSequence": 15,
-        "lastEventDigest": "ba609c65c4fc720d6cbb2adebfbfbac0fda070faf1cfc14d06acea1cbf8ab1b6",
+        "lastEventDigest": "2d0fda80139658b794591fbc5ec8b48013ae8cc53db2b394bb4cf6472441387f",
         "cleanup": {
           "candidatePresent": false,
           "stagingPresent": false,
@@ -587,7 +587,7 @@
           "proposalPresent": false
         }
       },
-      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"WORKSPACE_APPLIED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-workspace-applied\",\"sequence\":12,\"eventDigest\":\"0d56c1750c5198729c36c747ff3caedb434bb301fa16f3377599907a82aa96d1\"}",
+      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"WORKSPACE_APPLIED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-workspace-applied\",\"sequence\":12,\"eventDigest\":\"1f20b45358efd5ed2adf6d734db60e63594c3057c198235e510a8a5d96a6e7d4\"}",
       "triggerStatus": 0,
       "triggerError": ""
     },
@@ -636,21 +636,21 @@
           "schemaVersion": 3,
           "valid": true,
           "reason": null,
-          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "expectedSourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "signingKeyId": "e47227fdffbb6a3f500c959f",
-          "signingKeyAnchor": "e47227fdffbb6a3f500c959f",
+          "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "expectedSourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "signingKeyId": "2e08146e4852bf2c9593253b",
+          "signingKeyAnchor": "2e08146e4852bf2c9593253b",
           "trustAnchorMatches": true,
           "fullEventChain": true,
           "terminalEventBound": true
         },
         "preCrashSigningKey": {
-          "keyId": "e47227fdffbb6a3f500c959f",
-          "publicKeySha256": "1b3d823752ae293cc68bcc092c982371e2f1e6ed838fd7ae680623672217cc56"
+          "keyId": "2e08146e4852bf2c9593253b",
+          "publicKeySha256": "142d5b2e412be8ec5c98f4951ace1f2cc322bc968b7cc72055c0ee3c69526228"
         },
         "versions": 3,
         "lastEventSequence": 26,
-        "lastEventDigest": "7938b42c277de31b4b805ba77aaa3be2b7e7ba1cb5e569a2d9157d9df0f5a440",
+        "lastEventDigest": "5fe36be990d8731f932aa3a69ad58405b39c3275aaf90658b0ab4da5e151159e",
         "cleanup": {
           "candidatePresent": false,
           "stagingPresent": false,
@@ -658,7 +658,7 @@
           "proposalPresent": false
         }
       },
-      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"ROLLBACK_APPLIED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"rollback-1\",\"sequence\":23,\"eventDigest\":\"c064c3087267ec278b963ad0f48888336156add49553028d05aa712e1dc43da7\"}",
+      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"ROLLBACK_APPLIED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"rollback-1\",\"sequence\":23,\"eventDigest\":\"0a530e9c9a838b82f50c12374f9a0cfcb1d8b3c55d9041190ad43b8d7143f8ee\"}",
       "triggerStatus": 0,
       "triggerError": ""
     },
@@ -707,21 +707,21 @@
           "schemaVersion": 3,
           "valid": true,
           "reason": null,
-          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "expectedSourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "signingKeyId": "d1e4d2853014769114711365",
-          "signingKeyAnchor": "d1e4d2853014769114711365",
+          "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "expectedSourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "signingKeyId": "6272f45361e630cefbc145ae",
+          "signingKeyAnchor": "6272f45361e630cefbc145ae",
           "trustAnchorMatches": true,
           "fullEventChain": true,
           "terminalEventBound": true
         },
         "preCrashSigningKey": {
-          "keyId": "d1e4d2853014769114711365",
-          "publicKeySha256": "f2d666f271da99a87dcf4fb26e4683e07e1bed39e19901532749a104fb543ae5"
+          "keyId": "6272f45361e630cefbc145ae",
+          "publicKeySha256": "0601cfdb71e51655c16a52638cfd2e875d920da3b5c2939b2eaba5e29ad249ed"
         },
         "versions": 2,
         "lastEventSequence": 15,
-        "lastEventDigest": "739f2fcdb5508e597a5771adca0da7078c02153a5ba57c5932f6cad6f068521d",
+        "lastEventDigest": "c71457f07a6e6206fff98c82591ce953704e0b40e17f744737e18cc24a36be81",
         "cleanup": {
           "candidatePresent": false,
           "stagingPresent": false,
@@ -729,7 +729,7 @@
           "proposalPresent": false
         }
       },
-      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"TRANSITION_ACKNOWLEDGED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-ack\",\"sequence\":13,\"eventDigest\":\"fc0dbda04308f04f4c000ae8281b8deb84746919585ddb27e621069e0107a0f8\"}",
+      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"TRANSITION_ACKNOWLEDGED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"run-ack\",\"sequence\":13,\"eventDigest\":\"0533e338c4fa4373f2a25228eee9ec7ca12eaa62ffb6c07591bb970f82114643\"}",
       "triggerStatus": 0,
       "triggerError": ""
     },
@@ -778,21 +778,21 @@
           "schemaVersion": 3,
           "valid": true,
           "reason": null,
-          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "expectedSourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "signingKeyId": "c3c115a33411e2e5a42982ab",
-          "signingKeyAnchor": "c3c115a33411e2e5a42982ab",
+          "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "expectedSourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "signingKeyId": "5e6e36d6ea0349dacb3be2d8",
+          "signingKeyAnchor": "5e6e36d6ea0349dacb3be2d8",
           "trustAnchorMatches": true,
           "fullEventChain": true,
           "terminalEventBound": true
         },
         "preCrashSigningKey": {
-          "keyId": "c3c115a33411e2e5a42982ab",
-          "publicKeySha256": "d85c25cb0a9dc561ee47e760e1d693bb2f4cf5aa16dcd94a1344288441260ee1"
+          "keyId": "5e6e36d6ea0349dacb3be2d8",
+          "publicKeySha256": "87f0ad65ff36fddabed909af4c989f365188038c2bfc5dbab28511a962e871c4"
         },
         "versions": 3,
         "lastEventSequence": 26,
-        "lastEventDigest": "64d23a6c3a1d5ea30abe6830ad6b5dbe5ae32b57a7318d83c445c7b058295476",
+        "lastEventDigest": "2b32975516113d0eccf5fb3b20e6d811873ea64646a99ed869d82345894a47cf",
         "cleanup": {
           "candidatePresent": false,
           "stagingPresent": false,
@@ -800,7 +800,7 @@
           "proposalPresent": false
         }
       },
-      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"TRANSITION_ACKNOWLEDGED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"rollback-1\",\"sequence\":24,\"eventDigest\":\"1619607a24622e834d62039704441f0c2996dd91e9b5366d1cc01d59111a02f4\"}",
+      "faultLog": "{\"kind\":\"commitgate-worker-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"TRANSITION_ACKNOWLEDGED\",\"agentId\":\"recovery-agent\",\"transitionId\":\"rollback-1\",\"sequence\":24,\"eventDigest\":\"c882e4455bb5898e7ce9a30bdc621136b00cbb8b63793a80809017b6b1a1a755\"}",
       "triggerStatus": 0,
       "triggerError": ""
     },
@@ -830,14 +830,14 @@
         "versions": 2,
         "permitState": "CONSUMED",
         "lastEventSequence": 15,
-        "lastEventDigest": "9e3fdfb906adee7bbe13dc3abeee5315b0063ff379efbc86200da1166b52ae11",
-        "databaseDigest": "ef3aa46de5751008ffafec4ae9fb898b44959df67535b46487093ef45fd2fce5",
-        "repeatedDatabaseDigest": "ef3aa46de5751008ffafec4ae9fb898b44959df67535b46487093ef45fd2fce5",
-        "proofDigest": "60f11393f36c332c91d2d315426dced8f0c2254e0b5cef7ead65999d084351ad",
+        "lastEventDigest": "a06d5187b6778960ca120d7681bde9a7f0e3897557231632f8d1ea2693b7975b",
+        "databaseDigest": "54e876bd08ff6f3ff9506385a6557a6a7e52ee0f724c600848c8b2fa72aa949a",
+        "repeatedDatabaseDigest": "54e876bd08ff6f3ff9506385a6557a6a7e52ee0f724c600848c8b2fa72aa949a",
+        "proofDigest": "f712b388766b2f07adb56a7a16796ac1a6447cb80ed32f06cf6b628f10003e7c",
         "sessionEpoch": 0,
         "messageAuthority": "AUTHORITATIVE"
       },
-      "faultLog": "{\"kind\":\"commitgate-api-projection-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"API_PROJECTION_PENDING\",\"source\":\"startup-recovery\",\"agentId\":\"api-projection-agent\",\"runId\":\"api-projection-run\",\"decision\":\"COMMITTED\",\"viewId\":\"ab96be2c2e12df3963ffc1f19e9e5783d88515bb355ab1f9ec1dd42698ff726f\",\"generation\":2,\"projectionDigest\":\"ef8711ea2cf9c35098a6246aef6662e322fa54caf0a475ebce71861dac780884\"}"
+      "faultLog": "{\"kind\":\"commitgate-api-projection-fault-injection\",\"action\":\"AWAIT_EXTERNAL_SIGKILL\",\"point\":\"API_PROJECTION_PENDING\",\"source\":\"startup-recovery\",\"agentId\":\"api-projection-agent\",\"runId\":\"api-projection-run\",\"decision\":\"COMMITTED\",\"viewId\":\"ab96be2c2e12df3963ffc1f19e9e5783d88515bb355ab1f9ec1dd42698ff726f\",\"generation\":2,\"projectionDigest\":\"6d39d653eb17d72ea80bd43974d45b8c93bfb8a2a9bdb150ca5bb328d042a593\"}"
     }
   ],
   "crossReportCoverage": [
@@ -854,8 +854,8 @@
     {
       "schemaVersion": 1,
       "recordId": "docker-recovery:prepared-recovers-aborted",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": "run-prepared",
       "provider": null,
       "model": null,
@@ -873,7 +873,7 @@
       "policyHash": null,
       "checkSpecHash": null,
       "eventSequence": 6,
-      "eventDigest": "17fee65d1d2521a8a8e9a7c816d3bff6621d4e5b88b6f6722124c4f211714726",
+      "eventDigest": "aacc19d6cfdfb16e54a2a9f29139ab2710160eefdf1b40be5702bae73908b058",
       "decision": null,
       "exitStatus": 0,
       "surface": "recovery",
@@ -883,8 +883,8 @@
     {
       "schemaVersion": 1,
       "recordId": "docker-recovery:sealed-recovers-aborted",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": "run-sealed",
       "provider": null,
       "model": null,
@@ -902,7 +902,7 @@
       "policyHash": null,
       "checkSpecHash": null,
       "eventSequence": 9,
-      "eventDigest": "329073375136511e12636b11853a769d4033217d71a930dd327199e81d2e5c23",
+      "eventDigest": "e5b5f586217c420a2871fb6f1b0f495e4ef4641881d17052cc7d6691b9c5a300",
       "decision": null,
       "exitStatus": 0,
       "surface": "recovery",
@@ -912,8 +912,8 @@
     {
       "schemaVersion": 1,
       "recordId": "docker-recovery:evidenced-recovers-aborted",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": "run-evidenced",
       "provider": null,
       "model": null,
@@ -931,7 +931,7 @@
       "policyHash": null,
       "checkSpecHash": null,
       "eventSequence": 11,
-      "eventDigest": "6742113bc09a6f036449c5f55bf5cc4a94ecafeb6c9c3409f1d845da0a5e3a97",
+      "eventDigest": "3d1e5f90d306811cc4894cbe8351e9d336738f4aa2a8d0d79f9dfb734c8ade5e",
       "decision": null,
       "exitStatus": 0,
       "surface": "recovery",
@@ -941,8 +941,8 @@
     {
       "schemaVersion": 1,
       "recordId": "docker-recovery:permit-issued-recovers-aborted",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": "run-permit-issued",
       "provider": null,
       "model": null,
@@ -960,7 +960,7 @@
       "policyHash": null,
       "checkSpecHash": null,
       "eventSequence": 12,
-      "eventDigest": "f08434e818f20db9a97e2c9d5b049fbf201fc2463006ad2aec57696abebcfc1e",
+      "eventDigest": "d15bf5813b784ff2c49e1c9a5600b2cd0e7acb628f61e3666a99f0ccf93f179d",
       "decision": null,
       "exitStatus": 0,
       "surface": "recovery",
@@ -970,8 +970,8 @@
     {
       "schemaVersion": 1,
       "recordId": "docker-recovery:permit-consuming-rolls-back",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": "run-permit-consuming",
       "provider": null,
       "model": null,
@@ -989,7 +989,7 @@
       "policyHash": null,
       "checkSpecHash": null,
       "eventSequence": 13,
-      "eventDigest": "c008530725980ba91944d11b9463c2f58b3b5aead4b5dc24555e64143eaedefe",
+      "eventDigest": "dcecbdb09f5b256f135bb6c0b06156538b4805f0f004824eb46082e267b9f6d5",
       "decision": null,
       "exitStatus": 0,
       "surface": "recovery",
@@ -999,8 +999,8 @@
     {
       "schemaVersion": 1,
       "recordId": "docker-recovery:backup-created-rolls-back",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": "run-backup-created",
       "provider": null,
       "model": null,
@@ -1018,7 +1018,7 @@
       "policyHash": null,
       "checkSpecHash": null,
       "eventSequence": 14,
-      "eventDigest": "48060875d15539ae7b22f65d0b291a738a52330fdccfe4460bfaf5d88226c260",
+      "eventDigest": "0692e03e009f329b261d2f470b30f5785e70a157d7fd096982956524e5a672c1",
       "decision": null,
       "exitStatus": 0,
       "surface": "recovery",
@@ -1028,8 +1028,8 @@
     {
       "schemaVersion": 1,
       "recordId": "docker-recovery:workspace-applied-recovers-forward",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": "run-workspace-applied",
       "provider": null,
       "model": null,
@@ -1047,7 +1047,7 @@
       "policyHash": null,
       "checkSpecHash": null,
       "eventSequence": 15,
-      "eventDigest": "ba609c65c4fc720d6cbb2adebfbfbac0fda070faf1cfc14d06acea1cbf8ab1b6",
+      "eventDigest": "2d0fda80139658b794591fbc5ec8b48013ae8cc53db2b394bb4cf6472441387f",
       "decision": null,
       "exitStatus": 0,
       "surface": "recovery",
@@ -1057,8 +1057,8 @@
     {
       "schemaVersion": 1,
       "recordId": "docker-recovery:rollback-applied-recovers-forward",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": "rollback-1",
       "provider": null,
       "model": null,
@@ -1076,7 +1076,7 @@
       "policyHash": null,
       "checkSpecHash": null,
       "eventSequence": 26,
-      "eventDigest": "7938b42c277de31b4b805ba77aaa3be2b7e7ba1cb5e569a2d9157d9df0f5a440",
+      "eventDigest": "5fe36be990d8731f932aa3a69ad58405b39c3275aaf90658b0ab4da5e151159e",
       "decision": null,
       "exitStatus": 0,
       "surface": "recovery",
@@ -1086,8 +1086,8 @@
     {
       "schemaVersion": 1,
       "recordId": "docker-recovery:ack-durable-and-cleaned",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": "run-ack",
       "provider": null,
       "model": null,
@@ -1105,7 +1105,7 @@
       "policyHash": null,
       "checkSpecHash": null,
       "eventSequence": 15,
-      "eventDigest": "739f2fcdb5508e597a5771adca0da7078c02153a5ba57c5932f6cad6f068521d",
+      "eventDigest": "c71457f07a6e6206fff98c82591ce953704e0b40e17f744737e18cc24a36be81",
       "decision": null,
       "exitStatus": 0,
       "surface": "recovery",
@@ -1115,8 +1115,8 @@
     {
       "schemaVersion": 1,
       "recordId": "docker-recovery:rollback-ack-durable-and-cleaned",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": "rollback-1",
       "provider": null,
       "model": null,
@@ -1134,7 +1134,7 @@
       "policyHash": null,
       "checkSpecHash": null,
       "eventSequence": 26,
-      "eventDigest": "64d23a6c3a1d5ea30abe6830ad6b5dbe5ae32b57a7318d83c445c7b058295476",
+      "eventDigest": "2b32975516113d0eccf5fb3b20e6d811873ea64646a99ed869d82345894a47cf",
       "decision": null,
       "exitStatus": 0,
       "surface": "recovery",
@@ -1144,8 +1144,8 @@
     {
       "schemaVersion": 1,
       "recordId": "docker-recovery:api-projection-pending",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": "api-projection-run",
       "provider": null,
       "model": null,
@@ -1163,7 +1163,7 @@
       "policyHash": null,
       "checkSpecHash": null,
       "eventSequence": 15,
-      "eventDigest": "9e3fdfb906adee7bbe13dc3abeee5315b0063ff379efbc86200da1166b52ae11",
+      "eventDigest": "a06d5187b6778960ca120d7681bde9a7f0e3897557231632f8d1ea2693b7975b",
       "decision": null,
       "exitStatus": 0,
       "surface": "recovery",

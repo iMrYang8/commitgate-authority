@@ -1,0 +1,326 @@
+{
+  "schemaVersion": 3,
+  "kind": "commitgate-evidence-checklist",
+  "generatedAt": "2026-08-30T13:35:55.304Z",
+  "status": "unverified",
+  "organizerScore": null,
+  "providerE2EVerified": "verified",
+  "providerId": "ark",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "totals": {
+    "verified": 14,
+    "failed": 0,
+    "unverified": 13
+  },
+  "sections": [
+    {
+      "id": "behavior",
+      "label": "End-to-end middleware behavior",
+      "items": [
+        {
+          "id": "provider-browser",
+          "label": "Real Provider browser path",
+          "status": "verified",
+          "evidence": [
+            "eval/provider-<provider>-report.json",
+            "eval/browser-clean-clone-report.json"
+          ]
+        },
+        {
+          "id": "commit",
+          "label": "Sealed proposal and one-shot commit",
+          "status": "unverified",
+          "evidence": [
+            "eval/protocol-report.json"
+          ]
+        },
+        {
+          "id": "quarantine",
+          "label": "Protected-path rejection",
+          "status": "unverified",
+          "evidence": [
+            "eval/protocol-report.json",
+            "eval/adversarial-report.json"
+          ]
+        },
+        {
+          "id": "session",
+          "label": "View and session continuation fence",
+          "status": "unverified",
+          "evidence": [
+            "eval/protocol-report.json",
+            "eval/adversarial-report.json"
+          ]
+        },
+        {
+          "id": "rollback",
+          "label": "Append-only rollback and recovery",
+          "status": "unverified",
+          "evidence": [
+            "eval/protocol-report.json",
+            "eval/recovery-report.json"
+          ]
+        },
+        {
+          "id": "regression",
+          "label": "Starter behavior and build regression",
+          "status": "verified",
+          "evidence": [
+            "eval/evidence/check-report.json"
+          ]
+        }
+      ],
+      "status": "unverified"
+    },
+    {
+      "id": "design",
+      "label": "Technical design and integration",
+      "items": [
+        {
+          "id": "protocol",
+          "label": "State-view, proposal, evidence and permit protocol",
+          "status": "unverified",
+          "evidence": [
+            "eval/protocol-report.json"
+          ]
+        },
+        {
+          "id": "authority",
+          "label": "Persistent write authority audit",
+          "status": "unverified",
+          "evidence": [
+            "eval/authority-report.json"
+          ]
+        },
+        {
+          "id": "p1",
+          "label": "Worker and Broker product wiring",
+          "status": "verified",
+          "evidence": [
+            "eval/evidence/p1-product-report.json"
+          ]
+        },
+        {
+          "id": "topology",
+          "label": "Live least-authority topology",
+          "status": "verified",
+          "evidence": [
+            "eval/evidence/topology-report.json"
+          ]
+        }
+      ],
+      "status": "unverified"
+    },
+    {
+      "id": "robustness",
+      "label": "Verification and robustness",
+      "items": [
+        {
+          "id": "automated",
+          "label": "Protocol, adversarial and recovery suites",
+          "status": "unverified",
+          "evidence": [
+            "eval/protocol-report.json",
+            "eval/adversarial-report.json",
+            "eval/recovery-report.json"
+          ]
+        },
+        {
+          "id": "container",
+          "label": "Credential-free verifier container",
+          "status": "verified",
+          "evidence": [
+            "eval/container-report.json"
+          ]
+        },
+        {
+          "id": "broker-restart",
+          "label": "Broker SIGKILL orphan reconciliation",
+          "status": "verified",
+          "evidence": [
+            "eval/container-report.json"
+          ]
+        },
+        {
+          "id": "filesystem",
+          "label": "Linux filesystem contract",
+          "status": "unverified",
+          "evidence": [
+            "eval/evidence/linux-filesystem-report.json"
+          ]
+        },
+        {
+          "id": "docker-recovery",
+          "label": "Docker process kill/restart matrix",
+          "status": "unverified",
+          "evidence": [
+            "eval/evidence/docker-recovery-report.json"
+          ]
+        },
+        {
+          "id": "invariants",
+          "label": "Machine-readable non-effect and safety invariants",
+          "status": "verified",
+          "evidence": [
+            "eval/evidence/invariants-report.json"
+          ]
+        },
+        {
+          "id": "receipt-proof",
+          "label": "Offline receipt and event binding verification",
+          "status": "verified",
+          "evidence": [
+            "eval/evidence/receipt-verification-report.json"
+          ]
+        },
+        {
+          "id": "performance",
+          "label": "Linux Worker protocol microbenchmark p50/p95 disclosure",
+          "status": "unverified",
+          "evidence": [
+            "eval/evidence/performance-report.json"
+          ]
+        },
+        {
+          "id": "bypass",
+          "label": "Candidate and environment bypass protection",
+          "status": "unverified",
+          "evidence": [
+            "eval/adversarial-report.json"
+          ]
+        },
+        {
+          "id": "secrets",
+          "label": "Secret scanning and redaction",
+          "status": "unverified",
+          "evidence": [
+            "eval/evidence/secret-report.json",
+            "eval/adversarial-report.json"
+          ]
+        }
+      ],
+      "status": "unverified"
+    },
+    {
+      "id": "demo",
+      "label": "Demo and reproducibility",
+      "items": [
+        {
+          "id": "one-command",
+          "label": "One-command product smoke test",
+          "status": "verified",
+          "evidence": [
+            "eval/evidence/demo-smoke-report.json"
+          ]
+        },
+        {
+          "id": "browser",
+          "label": "Clean-clone browser replay",
+          "status": "verified",
+          "evidence": [
+            "eval/browser-clean-clone-report.json"
+          ]
+        },
+        {
+          "id": "documentation",
+          "label": "Revision-bound documentation review",
+          "status": "verified",
+          "evidence": [
+            "eval/evidence/documentation-review.json"
+          ]
+        },
+        {
+          "id": "architecture",
+          "label": "Editable architecture artifact integrity",
+          "status": "verified",
+          "evidence": [
+            "eval/evidence/architecture-report.json"
+          ]
+        },
+        {
+          "id": "clean-replay",
+          "label": "Read-only clean-worktree replay",
+          "status": "verified",
+          "evidence": [
+            "eval/independent-audit-report.json"
+          ]
+        },
+        {
+          "id": "source-delivery",
+          "label": "Reviewer-accessible source or hash-bound archive",
+          "status": "verified",
+          "evidence": [
+            "eval/evidence/source-delivery-report.json"
+          ]
+        },
+        {
+          "id": "video",
+          "label": "Narrated three-minute video",
+          "status": "unverified",
+          "evidence": [
+            "eval/evidence/demo-video-report.json"
+          ]
+        }
+      ],
+      "status": "unverified"
+    }
+  ],
+  "legacyInputCompatibility": {
+    "acceptedReadOnlyFields": [
+      "officialProviderE2E",
+      "alternateProviderVerified",
+      "competitionVerified"
+    ],
+    "affectsScoring": false
+  },
+  "claimBoundary": "This checklist indexes revision-bound verified, failed, and unverified evidence. It assigns no organizer score and gives no preference to a model Provider."
+}

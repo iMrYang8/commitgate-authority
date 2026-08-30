@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
   "kind": "runtime-topology-audit",
-  "generatedAt": "2026-08-30T13:19:09.730Z",
+  "generatedAt": "2026-08-30T14:02:18.439Z",
   "status": "verified",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"
@@ -152,7 +152,7 @@
   ],
   "inspections": {
     "api": {
-      "id": "21c0fdf087eda21acc022a04a048e6b3c9c110be0131012c4d38ef707e70f0f7",
+      "id": "226fb2ac05ac3ea17094d83d9d0ec58438acd3d5e4ba0d4126a1a2a405eadb7f",
       "user": "1000:1000",
       "readOnlyRootfs": true,
       "capDrop": [
@@ -194,6 +194,20 @@
       "mounts": [
         {
           "type": "volume",
+          "name": "commitgate-policy-v2-api-data",
+          "source": "/var/lib/docker/volumes/commitgate-policy-v2-api-data/_data",
+          "destination": "/app/data",
+          "rw": true
+        },
+        {
+          "type": "volume",
+          "name": "commitgate-policy-v2-authority",
+          "source": "/var/lib/docker/volumes/commitgate-policy-v2-authority/_data",
+          "destination": "/authority",
+          "rw": false
+        },
+        {
+          "type": "volume",
           "name": "commitgate-policy-v2-control",
           "source": "/var/lib/docker/volumes/commitgate-policy-v2-control/_data",
           "destination": "/control",
@@ -214,20 +228,6 @@
           "rw": false
         },
         {
-          "type": "volume",
-          "name": "commitgate-policy-v2-api-data",
-          "source": "/var/lib/docker/volumes/commitgate-policy-v2-api-data/_data",
-          "destination": "/app/data",
-          "rw": true
-        },
-        {
-          "type": "bind",
-          "name": null,
-          "source": "<REPO_ROOT>/.demo-state/secrets/app_auth_token_api",
-          "destination": "/run/secrets/app_auth_token",
-          "rw": false
-        },
-        {
           "type": "bind",
           "name": null,
           "source": "<REPO_ROOT>/.demo-state/secrets/relay_token_api",
@@ -235,10 +235,10 @@
           "rw": false
         },
         {
-          "type": "volume",
-          "name": "commitgate-policy-v2-authority",
-          "source": "/var/lib/docker/volumes/commitgate-policy-v2-authority/_data",
-          "destination": "/authority",
+          "type": "bind",
+          "name": null,
+          "source": "<REPO_ROOT>/.demo-state/secrets/app_auth_token_api",
+          "destination": "/run/secrets/app_auth_token",
           "rw": false
         }
       ],
@@ -247,7 +247,7 @@
       ]
     },
     "transition-worker": {
-      "id": "fec95aaf693790d747f12b95f7d8f1a93682f39dfde4452d6361b76b3d1f5b98",
+      "id": "d97b7757f2acaed61146faaf5c6b4641eeea5a048108e87dad19ef8cd946d391",
       "user": "10001:20000",
       "readOnlyRootfs": true,
       "capDrop": [
@@ -276,6 +276,20 @@
       "mounts": [
         {
           "type": "volume",
+          "name": "commitgate-policy-v2-authority",
+          "source": "/var/lib/docker/volumes/commitgate-policy-v2-authority/_data",
+          "destination": "/var/lib/commitgate/workspaces",
+          "rw": true
+        },
+        {
+          "type": "volume",
+          "name": "commitgate-policy-v2-control",
+          "source": "/var/lib/docker/volumes/commitgate-policy-v2-control/_data",
+          "destination": "/var/lib/commitgate/control",
+          "rw": true
+        },
+        {
+          "type": "volume",
           "name": "commitgate-policy-v2-exchange",
           "source": "/var/lib/docker/volumes/commitgate-policy-v2-exchange/_data",
           "destination": "/var/lib/commitgate/exchange",
@@ -291,30 +305,16 @@
         {
           "type": "bind",
           "name": null,
-          "source": "<REPO_ROOT>/.demo-state/workspaces",
-          "destination": "/legacy/workspaces",
-          "rw": false
-        },
-        {
-          "type": "volume",
-          "name": "commitgate-policy-v2-authority",
-          "source": "/var/lib/docker/volumes/commitgate-policy-v2-authority/_data",
-          "destination": "/var/lib/commitgate/workspaces",
-          "rw": true
-        },
-        {
-          "type": "bind",
-          "name": null,
           "source": "<REPO_ROOT>/.demo-state/secrets/broker_attestation_key",
           "destination": "/run/secrets/broker_attestation_key",
           "rw": false
         },
         {
-          "type": "volume",
-          "name": "commitgate-policy-v2-control",
-          "source": "/var/lib/docker/volumes/commitgate-policy-v2-control/_data",
-          "destination": "/var/lib/commitgate/control",
-          "rw": true
+          "type": "bind",
+          "name": null,
+          "source": "<REPO_ROOT>/.demo-state/workspaces",
+          "destination": "/legacy/workspaces",
+          "rw": false
         }
       ],
       "networks": [
@@ -322,7 +322,7 @@
       ]
     },
     "runtime-broker": {
-      "id": "b28303d58aec6bc2c83903c1d98653a4e36cfcc43c4cf9a6f3ef554ee4d50415",
+      "id": "73e82b4a7463db801a35cc748fced4b34c946a82f7543e3b33bf5684a319a418",
       "user": "10001:20002",
       "readOnlyRootfs": true,
       "capDrop": [
@@ -364,20 +364,6 @@
       ],
       "mounts": [
         {
-          "type": "bind",
-          "name": null,
-          "source": "<REPO_ROOT>/.demo-state/secrets/relay_token_broker",
-          "destination": "/run/secrets/relay_token",
-          "rw": false
-        },
-        {
-          "type": "bind",
-          "name": null,
-          "source": "<REPO_ROOT>/.demo-state/secrets/broker_attestation_key",
-          "destination": "/run/secrets/broker_attestation_key",
-          "rw": false
-        },
-        {
           "type": "volume",
           "name": "commitgate-policy-v2-exchange",
           "source": "/var/lib/docker/volumes/commitgate-policy-v2-exchange/_data",
@@ -411,6 +397,20 @@
           "source": "/var/run/docker.sock",
           "destination": "/var/run/docker.sock",
           "rw": true
+        },
+        {
+          "type": "bind",
+          "name": null,
+          "source": "<REPO_ROOT>/.demo-state/secrets/relay_token_broker",
+          "destination": "/run/secrets/relay_token",
+          "rw": false
+        },
+        {
+          "type": "bind",
+          "name": null,
+          "source": "<REPO_ROOT>/.demo-state/secrets/broker_attestation_key",
+          "destination": "/run/secrets/broker_attestation_key",
+          "rw": false
         }
       ],
       "networks": [
@@ -418,7 +418,7 @@
       ]
     },
     "model-relay": {
-      "id": "11782fa1111ead732e96325471c7faa3fbfc7f12930f75e77031ceec5c46bbb5",
+      "id": "0b872d1326ef59d64692e06122a37686fbaa2a55e098068cd90488166c2e17ac",
       "user": "10002:10002",
       "readOnlyRootfs": true,
       "capDrop": [
@@ -446,15 +446,15 @@
         {
           "type": "bind",
           "name": null,
-          "source": "<REPO_ROOT>/.demo-state/secrets/model_api_key",
-          "destination": "/run/secrets/model_api_key",
+          "source": "<REPO_ROOT>/.demo-state/secrets/relay_token_relay",
+          "destination": "/run/secrets/relay_token",
           "rw": false
         },
         {
           "type": "bind",
           "name": null,
-          "source": "<REPO_ROOT>/.demo-state/secrets/relay_token_relay",
-          "destination": "/run/secrets/relay_token",
+          "source": "<REPO_ROOT>/.demo-state/secrets/model_api_key",
+          "destination": "/run/secrets/model_api_key",
           "rw": false
         }
       ],
@@ -468,8 +468,8 @@
     {
       "schemaVersion": 1,
       "recordId": "authority-v2-compose",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -497,8 +497,8 @@
     {
       "schemaVersion": 1,
       "recordId": "api-authority-control-read-only",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -526,8 +526,8 @@
     {
       "schemaVersion": 1,
       "recordId": "api-authority-write-denied-live",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -555,8 +555,8 @@
     {
       "schemaVersion": 1,
       "recordId": "api-control-write-denied-live",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -584,8 +584,8 @@
     {
       "schemaVersion": 1,
       "recordId": "api-receipt-private-key-read-denied-live",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -613,8 +613,8 @@
     {
       "schemaVersion": 1,
       "recordId": "worker-exclusive-authority-rw",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -642,8 +642,8 @@
     {
       "schemaVersion": 1,
       "recordId": "worker-linux-strong-manifest-v2",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -671,8 +671,8 @@
     {
       "schemaVersion": 1,
       "recordId": "worker-broker-agent-artifact-identity-aligned",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -700,8 +700,8 @@
     {
       "schemaVersion": 1,
       "recordId": "docker-socket-only-broker",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -729,8 +729,8 @@
     {
       "schemaVersion": 1,
       "recordId": "provider-key-only-relay",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -758,8 +758,8 @@
     {
       "schemaVersion": 1,
       "recordId": "broker-attestation-key-only-worker-and-broker",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -787,8 +787,8 @@
     {
       "schemaVersion": 1,
       "recordId": "relay-no-workspace",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -816,8 +816,8 @@
     {
       "schemaVersion": 1,
       "recordId": "broker-no-authority",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -845,8 +845,8 @@
     {
       "schemaVersion": 1,
       "recordId": "exchange-volume-owner-aligned",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -874,8 +874,8 @@
     {
       "schemaVersion": 1,
       "recordId": "exchange-volume-kernel-bounded",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -903,8 +903,8 @@
     {
       "schemaVersion": 1,
       "recordId": "rpc-socket-volumes-separated",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -932,8 +932,8 @@
     {
       "schemaVersion": 1,
       "recordId": "broker-cannot-connect-transition-worker-socket",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -961,8 +961,8 @@
     {
       "schemaVersion": 1,
       "recordId": "api-connects-transition-worker-socket",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -990,8 +990,8 @@
     {
       "schemaVersion": 1,
       "recordId": "api-connects-runtime-broker-socket",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,

@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "kind": "p1-product-authority-evaluation",
-  "generatedAt": "2026-08-30T13:19:07.473Z",
+  "generatedAt": "2026-08-30T14:02:15.882Z",
   "status": "verified",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"
@@ -92,15 +92,15 @@
     {
       "id": "broker-worker-tests",
       "status": "verified",
-      "detail": "\n> @launchpad/server@1.0.0 test\n> vitest run src/runtime-broker/rpc.test.ts src/transition-worker/worker.test.ts src/transition-worker/worker-policy.test.ts src/topology-compose.test.ts\n\n\n RUN  v4.1.10 <REPO_ROOT>/apps/server\n\n\n Test Files  4 passed (4)\n      Tests  46 passed (46)\n   Start at  21:19:01\n   Duration  5.96s (transform 779ms, setup 0ms, import 1.10s, tests 8.05s, environment 0ms)\n\n"
+      "detail": "\n> @launchpad/server@1.0.0 test\n> vitest run src/runtime-broker/rpc.test.ts src/transition-worker/worker.test.ts src/transition-worker/worker-policy.test.ts src/topology-compose.test.ts\n\n\n RUN  v4.1.10 <REPO_ROOT>/apps/server\n\n\n Test Files  4 passed (4)\n      Tests  46 passed (46)\n   Start at  22:02:07\n   Duration  7.73s (transform 838ms, setup 0ms, import 1.17s, tests 10.08s, environment 0ms)\n\n"
     }
   ],
   "evaluationRecords": [
     {
       "schemaVersion": 1,
       "recordId": "production-runtime-broker-required",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -128,8 +128,8 @@
     {
       "schemaVersion": 1,
       "recordId": "api-runner-uses-broker-client",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -157,8 +157,8 @@
     {
       "schemaVersion": 1,
       "recordId": "broker-path-confinement",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -186,8 +186,8 @@
     {
       "schemaVersion": 1,
       "recordId": "transition-worker-append-only-engine",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -215,8 +215,8 @@
     {
       "schemaVersion": 1,
       "recordId": "transition-worker-default-authority",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -244,8 +244,8 @@
     {
       "schemaVersion": 1,
       "recordId": "api-authoritative-volume-read-only",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -273,8 +273,8 @@
     {
       "schemaVersion": 1,
       "recordId": "broker-worker-rpc-tcb-separated",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
@@ -302,8 +302,8 @@
     {
       "schemaVersion": 1,
       "recordId": "broker-worker-tests",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,

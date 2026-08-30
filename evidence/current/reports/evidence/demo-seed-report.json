@@ -1,22 +1,22 @@
 {
   "schemaVersion": 1,
   "kind": "demo-seed",
-  "generatedAt": "2026-08-30T13:18:33.873Z",
+  "generatedAt": "2026-08-30T14:01:55.645Z",
   "status": "verified",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"
   },
   "offlineFixture": "eval/demo-fixture",
   "live": {
-    "agentId": "30658472-5400-4744-b2c6-8b8885ca483e",
+    "agentId": "9e1230d4-49da-451f-8cb1-68a8a67f8296",
     "workspaceRef": {
       "authority": "transition-worker",
-      "agentId": "30658472-5400-4744-b2c6-8b8885ca483e"
+      "agentId": "9e1230d4-49da-451f-8cb1-68a8a67f8296"
     },
     "controlPath": null,
     "policySource": "transition-worker"

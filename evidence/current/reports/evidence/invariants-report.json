@@ -1,12 +1,12 @@
 {
   "schemaVersion": 3,
   "kind": "commitgate-invariant-evaluation",
-  "generatedAt": "2026-08-30T13:14:52.314Z",
+  "generatedAt": "2026-08-30T14:02:28.830Z",
   "status": "verified",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"
@@ -162,7 +162,7 @@
           "id": "browser-protected-quarantined",
           "expectedOutcome": "QUARANTINED",
           "observedOutcome": "QUARANTINED",
-          "runId": "a4269259-2721-468e-a157-8d98e1c890d0",
+          "runId": "64d5b399-fbb2-4179-a391-48c71341678e",
           "evidenceMode": "raw-hash",
           "rawHashesObserved": true,
           "authoritativeBeforeHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
@@ -178,7 +178,7 @@
           "id": "browser-provider-or-verifier-aborted",
           "expectedOutcome": "ABORTED",
           "observedOutcome": "ABORTED",
-          "runId": "d11cbb23-d125-44d9-844f-034bbcfc362f",
+          "runId": "789addac-b936-41b8-a56d-e7c6b800beca",
           "evidenceMode": "raw-hash",
           "rawHashesObserved": true,
           "authoritativeBeforeHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
@@ -510,37 +510,37 @@
       "evidence": [
         {
           "id": "offline-terminal-receipt-proof:positive-commit",
-          "receiptId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
-          "signingKeyId": "689028738aab9fc0057c770e",
-          "terminalEventDigest": "212add01595c88d0cd57ce690298f384580a4d387b342dea46c2c575ae70949b",
+          "receiptId": "52c9629c-cc40-41b4-87a4-fee6dfff18aa",
+          "signingKeyId": "ec0f3d958b007b2498eda362",
+          "terminalEventDigest": "7172dc77f29fc7f54eb16b8e35ab96b59a44a08556c84b6249d0c7934493a0ef",
           "status": "verified"
         },
         {
           "id": "offline-terminal-receipt-proof:protected-path-quarantine",
-          "receiptId": "a4269259-2721-468e-a157-8d98e1c890d0",
-          "signingKeyId": "689028738aab9fc0057c770e",
-          "terminalEventDigest": "99539cf44f6d22fb0f8640253036c97b6f1721a2155986280bd1d6b329b1fe2d",
+          "receiptId": "64d5b399-fbb2-4179-a391-48c71341678e",
+          "signingKeyId": "ec0f3d958b007b2498eda362",
+          "terminalEventDigest": "cf8b20957ff6af6e7c94c814a725e1c8c3060ac32c0af3cbd342ea38c59b5e21",
           "status": "verified"
         },
         {
           "id": "offline-terminal-receipt-proof:provider-or-verifier-abort",
-          "receiptId": "d11cbb23-d125-44d9-844f-034bbcfc362f",
-          "signingKeyId": "689028738aab9fc0057c770e",
-          "terminalEventDigest": "bdd110576a8971837dd20fb9dc6ca0ff584d247ad74baa04ffb813fb571186a5",
+          "receiptId": "789addac-b936-41b8-a56d-e7c6b800beca",
+          "signingKeyId": "ec0f3d958b007b2498eda362",
+          "terminalEventDigest": "9e2626c8e08ab160c26c55df49b4d3d340aeeca110ed81d7451c616167f21d63",
           "status": "verified"
         },
         {
           "id": "offline-terminal-receipt-proof:fresh-follow-up-commit",
-          "receiptId": "5ba72469-17ec-4cee-9f72-5e7e164b3483",
-          "signingKeyId": "689028738aab9fc0057c770e",
-          "terminalEventDigest": "cd6db7c7642b8fcc0e9516fbd5d4023ab4b076c00811eab4574095b65ee80abc",
+          "receiptId": "b408ff16-c82e-43ff-b958-428d28412b1c",
+          "signingKeyId": "ec0f3d958b007b2498eda362",
+          "terminalEventDigest": "57cac1fa62db10b714f75c83f1e651289372d143a9ea088172bd85f8e3ef2701",
           "status": "verified"
         },
         {
           "id": "offline-terminal-receipt-proof:manual-rollback",
-          "receiptId": "rollback-12dbe377-58e4-40b0-9da5-f825dc4c6bbd",
-          "signingKeyId": "689028738aab9fc0057c770e",
-          "terminalEventDigest": "6e6ca05bf072a385932e5205608a200b72b57afa3b5856ceb592aaa47fc96f77",
+          "receiptId": "rollback-35606d1a-f55d-4ac1-a140-16a6dd6c83cd",
+          "signingKeyId": "ec0f3d958b007b2498eda362",
+          "terminalEventDigest": "757d904cd826b91df8b9eed35c425cb7c28a688fa80823eac3dfef3308dd15b3",
           "status": "verified"
         }
       ]

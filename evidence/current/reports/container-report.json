@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
   "kind": "container-verifier-evaluation",
-  "generatedAt": "2026-08-30T13:01:34.892Z",
+  "generatedAt": "2026-08-30T13:39:31.146Z",
   "status": "verified",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"
@@ -78,7 +78,7 @@
     "id": "isolated-contract",
     "status": "PASS",
     "exitCode": 0,
-    "durationMs": 374,
+    "durationMs": 482,
     "output": "isolated-contract: PASS\n",
     "timedOut": false
   },
@@ -86,7 +86,7 @@
     "id": "isolated-contract",
     "status": "FAIL",
     "exitCode": 1,
-    "durationMs": 358,
+    "durationMs": 460,
     "output": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'tampered\\n'\n- 'ok\\n'\n\n    at file:///checks/isolated-contract.mjs:13:8 {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: 'tampered\\n',\n  expected: 'ok\\n',\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v22.23.2\n",
     "timedOut": false
   },
@@ -156,8 +156,8 @@
   },
   "brokerCancellation": {
     "fixtureImage": {
-      "reference": "commitgate-container-cancel-eval:21828",
-      "imageId": "sha256:3c30ce1f859d3097c4d88f05a1292d28738b3a80f3e277e3fc45d03e402ef12b"
+      "reference": "commitgate-container-cancel-eval:50166",
+      "imageId": "sha256:9de5a3a9971b02ccd2b51d98ddc8248543354ddfe0614759ff45fd86a920f6f4"
     },
     "evidenceBoundary": {
       "agentBinding": "agentId+runId+runLeaseId+sessionEpoch",
@@ -168,8 +168,8 @@
     "agent": {
       "runId": "cancel-agent-run",
       "agentId": "cancel-agent",
-      "containerName": "launchpad-cancel-21828-cancel-agent",
-      "containerId": "d185d33eec2ee49a716afd79f0540c24fc94b1ffe43f70e6a98c427684407a5a",
+      "containerName": "launchpad-cancel-50166-cancel-agent",
+      "containerId": "d3381fb35864d3288c758f1d863dedfc12921a2502fb4acfea796acdab322067",
       "containerObservedRunning": true,
       "wrongBindingRejected": true,
       "cancelAccepted": true,
@@ -188,8 +188,8 @@
     "verifier": {
       "runId": "cancel-verifier-run",
       "agentId": "cancel-verifier-agent",
-      "containerName": "commitgate-verify-cancel-21828-cancel-verifier-agent-cancel-verifier-run-wait-for-cancel",
-      "containerId": "3ca9f829d1d3432a9648bec4e6153dbe0519d455ddb22d7dd7d74d7c7d526dea",
+      "containerName": "commitgate-verify-cancel-50166-cancel-verifier-agent-cancel-verifier-run-wait-for-cancel",
+      "containerId": "ad190c4aa458d7dde85709ed984ab5c34d5f5077ae30d2db7710b129d3130292",
       "containerObservedRunning": true,
       "wrongBindingRejected": true,
       "cancelAccepted": true,
@@ -211,8 +211,8 @@
       "workload": "agent",
       "runId": "kill-agent-run",
       "agentId": "kill-agent",
-      "containerName": "launchpad-cancel-21828-kill-agent",
-      "containerId": "f97ba7bc17721b4b524e49c0e745f4c7b75c0e75570faec670cc4bc4d35aa05b",
+      "containerName": "launchpad-cancel-50166-kill-agent",
+      "containerId": "ecdea8f69732528f2f4305518627a338477911e8e06073268924712768430786",
       "containerObservedRunning": true,
       "killSignal": "KILL",
       "killAccepted": true,
@@ -238,8 +238,8 @@
       "workload": "verifier",
       "runId": "kill-verifier-run",
       "agentId": "kill-verifier-agent",
-      "containerName": "commitgate-verify-cancel-21828-kill-verifier-agent-kill-verifier-run-wait-for-cancel",
-      "containerId": "24f12c33ae559f2a69f27493c5948766abd07e25eb2ae67026fcd6332ecf8710",
+      "containerName": "commitgate-verify-cancel-50166-kill-verifier-agent-kill-verifier-run-wait-for-cancel",
+      "containerId": "aeb9a2cbbd852e170ba163cba9baee273086ef398b6fcf80675e17b8b149453c",
       "containerObservedRunning": true,
       "killSignal": "KILL",
       "killAccepted": true,
@@ -269,23 +269,23 @@
       "runLeaseId": "restart-orphan-lease",
       "sessionEpoch": 11,
       "scope": "ALL",
-      "containerName": "launchpad-cancel-21828-restart-orphan-agent",
-      "containerId": "d7bfe550922aa736ffedc896d81be1adf949bf1ebc7fff43e283e50563e5b521",
+      "containerName": "launchpad-cancel-50166-restart-orphan-agent",
+      "containerId": "093cb049f880bb4ed1c7d6caea9b25b2aa36be650ee5ce66540b51469ef4d2d6",
       "broker": {
         "launchMode": "separate-node-process",
-        "firstPid": 22295,
+        "firstPid": 50631,
         "firstReady": true,
         "killSignal": "SIGKILL",
         "killAccepted": true,
         "firstExitCode": null,
         "firstExitSignal": "SIGKILL",
-        "restartedPid": 22387,
+        "restartedPid": 50730,
         "restartedReady": true
       },
       "exactBinding": {
         "labels": {
           "io.commitgate.runtime": "agent-runtime",
-          "io.commitgate.instance-id": "cancel-21828",
+          "io.commitgate.instance-id": "cancel-50166",
           "io.commitgate.agent-id": "restart-orphan-agent",
           "io.commitgate.run-id": "restart-orphan-run",
           "io.commitgate.run-lease-id": "restart-orphan-lease",
@@ -299,7 +299,7 @@
           "--filter",
           "label=io.commitgate.runtime=agent-runtime",
           "--filter",
-          "label=io.commitgate.instance-id=cancel-21828",
+          "label=io.commitgate.instance-id=cancel-50166",
           "--filter",
           "label=io.commitgate.agent-id=restart-orphan-agent",
           "--filter",
@@ -310,7 +310,7 @@
           "label=io.commitgate.session-epoch=11"
         ],
         "matchingContainerIdsBeforeReconcile": [
-          "d7bfe550922a"
+          "093cb049f880"
         ],
         "wrongLeaseQueryContainerIds": [],
         "exactLabelsObserved": true
@@ -331,7 +331,7 @@
           "--filter",
           "label=io.commitgate.runtime=agent-runtime",
           "--filter",
-          "label=io.commitgate.instance-id=cancel-21828",
+          "label=io.commitgate.instance-id=cancel-50166",
           "--filter",
           "label=io.commitgate.agent-id=restart-orphan-agent",
           "--filter",
@@ -364,7 +364,7 @@
         }
       },
       "error": null,
-      "brokerLogTail": "{\"ready\":true,\"socket\":\"/var/folders/qm/mv9b1b7j18jg8m3kjn599dq40000gn/T/cg-broker-restart-21828.sock\"}\n{\"ready\":true,\"socket\":\"/var/folders/qm/mv9b1b7j18jg8m3kjn599dq40000gn/T/cg-broker-restart-21828.sock\"}\n",
+      "brokerLogTail": "{\"ready\":true,\"socket\":\"/var/folders/qm/mv9b1b7j18jg8m3kjn599dq40000gn/T/cg-broker-restart-50166.sock\"}\n{\"ready\":true,\"socket\":\"/var/folders/qm/mv9b1b7j18jg8m3kjn599dq40000gn/T/cg-broker-restart-50166.sock\"}\n",
       "status": "verified"
     }
   },
@@ -410,9 +410,9 @@
       "--tmpfs",
       "/scratch:rw,nosuid,nodev,size=67108864,nr_inodes=4096",
       "--mount",
-      "type=bind,src=<REPO>/eval/.container-21828/candidate,dst=/proposal,readonly",
+      "type=bind,src=<REPO>/eval/.container-50166/candidate,dst=/proposal,readonly",
       "--mount",
-      "type=bind,src=<REPO>/eval/.container-21828/checks,dst=/checks,readonly",
+      "type=bind,src=<REPO>/eval/.container-50166/checks,dst=/checks,readonly",
       "--workdir",
       "/proposal",
       "--entrypoint",

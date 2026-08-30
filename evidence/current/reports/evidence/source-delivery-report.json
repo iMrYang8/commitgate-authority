@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "kind": "reviewer-source-delivery-audit",
+  "generatedAt": "2026-08-30T13:35:44.888Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "localMirror": {
+    "path": "../commitgate-github",
+    "status": "verified",
+    "checks": [
+      {
+        "id": "source-freeze-identifiable",
+        "status": "verified",
+        "detail": {
+          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+          "headRevision": "ec5802407473eefd0be6bd17afc39de106024093"
+        }
+      },
+      {
+        "id": "source-surface-clean",
+        "status": "verified",
+        "detail": {
+          "workingTreeCleanAtCapture": true,
+          "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+          "sourceFileCount": 233
+        }
+      },
+      {
+        "id": "mirror-git-checkout",
+        "status": "verified",
+        "detail": null
+      },
+      {
+        "id": "mirror-worktree-clean",
+        "status": "verified",
+        "detail": true
+      },
+      {
+        "id": "mirror-main-branch",
+        "status": "verified",
+        "detail": "main"
+      },
+      {
+        "id": "mirror-origin-bound",
+        "status": "verified",
+        "detail": "https://github.com/iMrYang8/commitgate-authority.git"
+      },
+      {
+        "id": "source-product-bytes-bound",
+        "status": "verified",
+        "detail": {
+          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+          "mirrorRevision": "0acb043b6bd0f3865961f26201d7f0b9939de064",
+          "sourceProductHash": "05772a0095bd4271e7755350de0bfaff20a327c0344d316c9919f45ef5249122",
+          "mirrorProductHash": "05772a0095bd4271e7755350de0bfaff20a327c0344d316c9919f45ef5249122",
+          "comparedFiles": 209,
+          "missingPaths": [],
+          "allowedMirrorOnlyAuditPaths": [
+            "scripts/check-drawio.py",
+            "scripts/check-public-copy.mjs",
+            "scripts/render-drawio-preview.py"
+          ],
+          "unauthorizedMirrorProductPaths": []
+        }
+      },
+      {
+        "id": "sanitized-copy-scans",
+        "status": "verified",
+        "detail": {
+          "status": "verified",
+          "publicVocabulary": {
+            "exitCode": 0,
+            "summary": "Public-copy vocabulary check passed (274 tracked files)."
+          },
+          "secretScan": {
+            "exitCode": 0,
+            "summary": "verified: 0 secret finding(s)"
+          }
+        }
+      }
+    ]
+  },
+  "repositoryDelivery": {
+    "repository": "iMrYang8/commitgate-authority",
+    "status": "verified",
+    "checks": [
+      {
+        "id": "remote-public-repository",
+        "status": "verified",
+        "detail": {
+          "nameWithOwner": "iMrYang8/commitgate-authority",
+          "isPrivate": false,
+          "url": "https://github.com/iMrYang8/commitgate-authority",
+          "defaultBranch": "main"
+        }
+      },
+      {
+        "id": "remote-main-matches-local-mirror",
+        "status": "verified",
+        "detail": {
+          "remoteRevision": "0acb043b6bd0f3865961f26201d7f0b9939de064",
+          "mirrorRevision": "0acb043b6bd0f3865961f26201d7f0b9939de064"
+        }
+      },
+      {
+        "id": "remote-ci-passed-for-main",
+        "status": "verified",
+        "detail": {
+          "status": "completed",
+          "conclusion": "success",
+          "headSha": "0acb043b6bd0f3865961f26201d7f0b9939de064",
+          "url": "https://github.com/iMrYang8/commitgate-authority/actions/runs/33314100760"
+        }
+      },
+      {
+        "id": "anonymous-public-read-access",
+        "status": "verified",
+        "detail": {
+          "remote": "https://github.com/imryang8/commitgate-authority.git",
+          "anonymousMain": "0acb043b6bd0f3865961f26201d7f0b9939de064",
+          "remoteRevision": "0acb043b6bd0f3865961f26201d7f0b9939de064",
+          "credentialHelperDisabled": true
+        }
+      }
+    ],
+    "queryErrorRecorded": false,
+    "credentialsRecorded": false
+  },
+  "archiveDelivery": {
+    "status": "verified",
+    "artifact": {
+      "path": "commitgate-authority-source-0acb043.tar.gz",
+      "bytes": 1391292,
+      "sha256": "cc1cc060dedcb0ab49ed5165c033ee70ba72bd34fe6dbac1f4afc890162e2132",
+      "sha256File": "commitgate-authority-source-0acb043.tar.gz.sha256",
+      "recordedSha256": "cc1cc060dedcb0ab49ed5165c033ee70ba72bd34fe6dbac1f4afc890162e2132",
+      "generatedFromMirrorHeadSha256": "cc1cc060dedcb0ab49ed5165c033ee70ba72bd34fe6dbac1f4afc890162e2132",
+      "filenameBound": true
+    }
+  },
+  "claimBoundary": "Verified requires an exact source-to-sanitized-product byte binding plus anonymous read access to the public repository at the matching successful-CI revision, or a byte-for-byte git archive with a matching SHA-256 companion file. Repository metadata alone is not anonymous access; archive existence alone is not provenance."
+}

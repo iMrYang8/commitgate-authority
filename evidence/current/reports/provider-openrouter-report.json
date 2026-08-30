@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
   "kind": "real-provider-evaluation",
-  "generatedAt": "2026-08-30T13:09:54.722Z",
+  "generatedAt": "2026-08-30T13:52:15.628Z",
   "status": "verified",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"
@@ -57,7 +57,7 @@
     "providerId": "openrouter",
     "gateway": "https://openrouter.ai/api/v1",
     "requestedModel": "openrouter/auto",
-    "resolvedModel": "deepseek/deepseek-v4-flash-0731",
+    "resolvedModel": "google/gemini-3.7-flash",
     "credentialsRecorded": false
   },
   "provenance": {
@@ -78,23 +78,23 @@
     {
       "id": "real-positive-commit",
       "status": "verified",
-      "runId": "c6fdaf94-ed93-4570-bef6-ff83cc2ca384",
-      "baseViewId": "d03b1a9768f24e02f48ea3959b3292dfc5ec7c5e7976fe649bce90cff4ef59b5",
-      "nextViewId": "965b53d8a1a4d9a147f48afca14d739f838318f9c79350fe428693add4fa87ab",
+      "runId": "0d264049-d721-4ac0-a1ce-6bdeb97ecc02",
+      "baseViewId": "e274c9681c8a30949fe344b97fd09b1fb9b3e09fcfc3214c574616d8e76e377b",
+      "nextViewId": "428dba090a5fb5f22e6fa51a2e5034eacfd059c79bb2bd609f90ea6e2c3f11f9",
       "baseGeneration": 1,
       "nextGeneration": 2,
-      "proposalId": "p-678c1b80acfe4dc0d01ff3d3ebf6701e282140805ea065e55a8a16f7f93ea6f5",
+      "proposalId": "p-69f7150f8b62a9bbe26297f7c4aced89138c3aece3359558cff4227720845594",
       "proposalHash": "b4e5e3a576157a7cedf6ded02199ba3b6d2558f564fd6f12d206453011ec4de5",
-      "evaluationContextHash": "d9e8e52a720eb1de4580741a9f5f4e0f2872be9a800f38f4e8283615a5ca57f6",
-      "evidenceDigest": "03a9d760598b6a82b7f9e10125974fdec917d7bf43e6594faa798e1673fbd809",
-      "permitId": "k-7810a6d1-ce3e-4a1c-826b-99c202c252dd",
+      "evaluationContextHash": "abd95922ed7dc37408aead53bef24fc183dda996705413339f3cd1cf0994b141",
+      "evidenceDigest": "b48e22369752bc63d571466e649be444c1117f4dbe3b53ee5a5b60bb8872a16f",
+      "permitId": "k-f390ddd1-41f1-4328-ad00-1b2d061878f9",
       "permitState": "CONSUMED",
       "decision": "COMMITTED",
       "provider": {
         "providerId": "openrouter",
         "gateway": "http://model-relay:3100/v1",
         "requestedModel": "openrouter/auto",
-        "resolvedModel": "deepseek/deepseek-v4-flash-0731"
+        "resolvedModel": "google/gemini-3.7-flash"
       },
       "reason": null,
       "checks": [
@@ -102,7 +102,7 @@
           "id": "workspace-contract",
           "status": "PASS",
           "exitCode": 0,
-          "durationMs": 297,
+          "durationMs": 496,
           "output": "workspace-contract: PASS\n",
           "timedOut": false
         }
@@ -115,18 +115,18 @@
         "providerId": "openrouter",
         "gateway": "http://model-relay:3100/v1",
         "requestedModel": "openrouter/auto",
-        "resolvedModel": "deepseek/deepseek-v4-flash-0731"
+        "resolvedModel": "google/gemini-3.7-flash"
       }
     },
     {
       "id": "real-protected-quarantine",
       "status": "verified",
-      "runId": "11633647-2ce4-480b-a03e-4f441d59dcc5",
-      "baseViewId": "965b53d8a1a4d9a147f48afca14d739f838318f9c79350fe428693add4fa87ab",
-      "nextViewId": "6db4104e910aee1ef63ef00d9e01a0b40d333800e3bef12e6f32305db05e75eb",
+      "runId": "dec0464a-272d-43eb-9697-33264dc5548d",
+      "baseViewId": "428dba090a5fb5f22e6fa51a2e5034eacfd059c79bb2bd609f90ea6e2c3f11f9",
+      "nextViewId": "96c1e7015b23a5567876fe1840b213a1ae91af04698694e3983c1793f3c3f90c",
       "baseGeneration": 2,
       "nextGeneration": 2,
-      "proposalId": "p-a42ca94165a975c65ddb23b14af76601c49c115a6928a00f79ebbf064952ff8f",
+      "proposalId": "p-e65a488accd50c00d46f6c3647dd0bbe564c1cf01e15e9a56d9f603fb9ec527e",
       "proposalHash": "ee5c7270b41fbb912b47025ae381795bec9ffec8d40c146d242b49d300950945",
       "evaluationContextHash": null,
       "evidenceDigest": null,
@@ -137,7 +137,7 @@
         "providerId": "openrouter",
         "gateway": "http://model-relay:3100/v1",
         "requestedModel": "openrouter/auto",
-        "resolvedModel": "deepseek/deepseek-v4-flash-0731"
+        "resolvedModel": "google/gemini-3.7-flash"
       },
       "artifactRetention": "destroyed",
       "rejectedMarkerAbsentFromPersistent": true,
@@ -148,16 +148,16 @@
     {
       "id": "fresh-session-follow-up",
       "status": "verified",
-      "runId": "3ae71a1b-0767-41d4-88ac-80b20e09e8aa",
-      "baseViewId": "6db4104e910aee1ef63ef00d9e01a0b40d333800e3bef12e6f32305db05e75eb",
-      "nextViewId": "6b7bb55b133c3ab9626d04ad2949654c561a5a02923855c63fad20bcd68a2918",
+      "runId": "51cc41a9-6484-48f0-b20e-bc548da1823e",
+      "baseViewId": "96c1e7015b23a5567876fe1840b213a1ae91af04698694e3983c1793f3c3f90c",
+      "nextViewId": "1a5a355798aee19a1c9bf035faf343d00dda89e2aef6dfa17f5d84215484226c",
       "baseGeneration": 2,
       "nextGeneration": 3,
-      "proposalId": "p-74fa2caef3658a6214ad941545f34ccbcd3b55186a97976936ba07f1ec685eb3",
+      "proposalId": "p-f087e65cdfccaab28e01dd17f07af286cad429df93ee75f01cf874015913981e",
       "proposalHash": "b4e5e3a576157a7cedf6ded02199ba3b6d2558f564fd6f12d206453011ec4de5",
-      "evaluationContextHash": "39c6d034eba2bb417905cee5f3c3c7c42dac1e4e74efa80573d9db7f0252fc7c",
-      "evidenceDigest": "4f74ac5241eaef8ee69c2da2028e5ad629b59378bd962b12c20990d9e1105e77",
-      "permitId": "k-49138ab5-1171-4276-89e4-bc3c913cf412",
+      "evaluationContextHash": "c2fd9df6fc36644f0c4bc459bf8106baef975be5a99ae9cdd4ea02e1695e57b1",
+      "evidenceDigest": "7ecdbd55f94bc47ccd9e33487a7a9bde7698c18ac2728c6682592deac85867d0",
+      "permitId": "k-471a77f2-1525-4b7f-9c14-f3172d1ec413",
       "permitState": "CONSUMED",
       "decision": "COMMITTED",
       "provider": {
@@ -171,7 +171,7 @@
       "id": "manual-history-rollback",
       "status": "verified",
       "versionKind": "ROLLBACK",
-      "nextViewId": "2e83720fd33ea64822bc77bb3d49117361d50125acdd8a44db9075835e961014",
+      "nextViewId": "653d3adb3407e228070799a56daa8be6bd58b8e723d69768374c502f9d1c5a79",
       "nextGeneration": 4
     }
   ]

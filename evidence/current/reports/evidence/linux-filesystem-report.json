@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "kind": "linux-filesystem-closure",
-  "generatedAt": "2026-08-30T13:03:55.432Z",
+  "generatedAt": "2026-08-30T13:43:13.562Z",
   "status": "verified",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"
@@ -30,8 +30,8 @@
     },
     "workerImage": {
       "reference": "commitgate-transition-worker:local",
-      "imageId": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
-      "imageDigest": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
       "status": "verified",
       "reason": null
     },
@@ -61,13 +61,13 @@
     "runtime-broker/rpc.test.ts",
     "commitgate/manifest.test.ts"
   ],
-  "output": "\n> @launchpad/server@1.0.0 test\n> vitest run --run src/transition-worker/filesystem.test.ts src/transition-worker/rpc.test.ts src/runtime-broker/rpc.test.ts src/commitgate/manifest.test.ts\n\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.10 \u001b[39m\u001b[90m/app/apps/server\u001b[39m\n\n \u001b[32m✓\u001b[39m src/commitgate/manifest.test.ts \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 45\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/transition-worker/filesystem.test.ts \u001b[2m(\u001b[22m\u001b[2m18 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 100\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/runtime-broker/rpc.test.ts \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 2797\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m fails closed when a bound orphan survives force removal \u001b[33m 2644\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/transition-worker/rpc.test.ts \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 11829\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m keeps 21 receipt projections below the RPC cap and reconstructs one v3 proof on demand \u001b[33m 11768\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m4 passed\u001b[39m\u001b[22m\u001b[90m (4)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m40 passed\u001b[39m\u001b[22m\u001b[90m (40)\u001b[39m\n\u001b[2m   Start at \u001b[22m 13:03:41\n\u001b[2m   Duration \u001b[22m 12.45s\u001b[2m (transform 597ms, setup 0ms, import 843ms, tests 14.77s, environment 0ms)\u001b[22m\n\n",
+  "output": "\n> @launchpad/server@1.0.0 test\n> vitest run --run src/transition-worker/filesystem.test.ts src/transition-worker/rpc.test.ts src/runtime-broker/rpc.test.ts src/commitgate/manifest.test.ts\n\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.10 \u001b[39m\u001b[90m/app/apps/server\u001b[39m\n\n \u001b[32m✓\u001b[39m src/transition-worker/filesystem.test.ts \u001b[2m(\u001b[22m\u001b[2m18 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 173\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/commitgate/manifest.test.ts \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 61\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/runtime-broker/rpc.test.ts \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 3021\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m fails closed when a bound orphan survives force removal \u001b[33m 2789\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/transition-worker/rpc.test.ts \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 17642\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m keeps 21 receipt projections below the RPC cap and reconstructs one v3 proof on demand \u001b[33m 17570\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m4 passed\u001b[39m\u001b[22m\u001b[90m (4)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m40 passed\u001b[39m\u001b[22m\u001b[90m (40)\u001b[39m\n\u001b[2m   Start at \u001b[22m 13:42:52\n\u001b[2m   Duration \u001b[22m 18.41s\u001b[2m (transform 1.04s, setup 0ms, import 1.47s, tests 20.90s, environment 0ms)\u001b[22m\n\n",
   "evaluationRecords": [
     {
       "schemaVersion": 1,
       "recordId": "linux-filesystem-closure",
-      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
-      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "revision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+      "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
       "runId": null,
       "provider": "not-applicable",
       "model": null,
