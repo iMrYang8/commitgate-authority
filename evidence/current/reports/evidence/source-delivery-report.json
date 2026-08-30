@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "kind": "reviewer-source-delivery-audit",
-  "generatedAt": "2026-08-30T13:35:44.888Z",
+  "generatedAt": "2026-08-30T14:13:38.190Z",
   "status": "verified",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"
@@ -61,8 +61,8 @@
         "id": "source-freeze-identifiable",
         "status": "verified",
         "detail": {
-          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "headRevision": "ec5802407473eefd0be6bd17afc39de106024093"
+          "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2"
         }
       },
       {
@@ -70,7 +70,7 @@
         "status": "verified",
         "detail": {
           "workingTreeCleanAtCapture": true,
-          "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+          "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
           "sourceFileCount": 233
         }
       },
@@ -98,10 +98,10 @@
         "id": "source-product-bytes-bound",
         "status": "verified",
         "detail": {
-          "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-          "mirrorRevision": "0acb043b6bd0f3865961f26201d7f0b9939de064",
-          "sourceProductHash": "05772a0095bd4271e7755350de0bfaff20a327c0344d316c9919f45ef5249122",
-          "mirrorProductHash": "05772a0095bd4271e7755350de0bfaff20a327c0344d316c9919f45ef5249122",
+          "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+          "mirrorRevision": "bddb2f9adf7957af3636ce9f39fe61c0b48a92aa",
+          "sourceProductHash": "60faff2fd1dea8801c98e546501f18f93c8c0a60b816370c6f2e7aab196d8223",
+          "mirrorProductHash": "60faff2fd1dea8801c98e546501f18f93c8c0a60b816370c6f2e7aab196d8223",
           "comparedFiles": 209,
           "missingPaths": [],
           "allowedMirrorOnlyAuditPaths": [
@@ -119,7 +119,7 @@
           "status": "verified",
           "publicVocabulary": {
             "exitCode": 0,
-            "summary": "Public-copy vocabulary check passed (274 tracked files)."
+            "summary": "Public-copy vocabulary check passed (277 tracked files)."
           },
           "secretScan": {
             "exitCode": 0,
@@ -147,8 +147,8 @@
         "id": "remote-main-matches-local-mirror",
         "status": "verified",
         "detail": {
-          "remoteRevision": "0acb043b6bd0f3865961f26201d7f0b9939de064",
-          "mirrorRevision": "0acb043b6bd0f3865961f26201d7f0b9939de064"
+          "remoteRevision": "bddb2f9adf7957af3636ce9f39fe61c0b48a92aa",
+          "mirrorRevision": "bddb2f9adf7957af3636ce9f39fe61c0b48a92aa"
         }
       },
       {
@@ -157,8 +157,8 @@
         "detail": {
           "status": "completed",
           "conclusion": "success",
-          "headSha": "0acb043b6bd0f3865961f26201d7f0b9939de064",
-          "url": "https://github.com/iMrYang8/commitgate-authority/actions/runs/33314100760"
+          "headSha": "bddb2f9adf7957af3636ce9f39fe61c0b48a92aa",
+          "url": "https://github.com/iMrYang8/commitgate-authority/actions/runs/33316133460"
         }
       },
       {
@@ -166,8 +166,8 @@
         "status": "verified",
         "detail": {
           "remote": "https://github.com/imryang8/commitgate-authority.git",
-          "anonymousMain": "0acb043b6bd0f3865961f26201d7f0b9939de064",
-          "remoteRevision": "0acb043b6bd0f3865961f26201d7f0b9939de064",
+          "anonymousMain": "bddb2f9adf7957af3636ce9f39fe61c0b48a92aa",
+          "remoteRevision": "bddb2f9adf7957af3636ce9f39fe61c0b48a92aa",
           "credentialHelperDisabled": true
         }
       }
@@ -178,12 +178,12 @@
   "archiveDelivery": {
     "status": "verified",
     "artifact": {
-      "path": "commitgate-authority-source-0acb043.tar.gz",
-      "bytes": 1391292,
-      "sha256": "cc1cc060dedcb0ab49ed5165c033ee70ba72bd34fe6dbac1f4afc890162e2132",
-      "sha256File": "commitgate-authority-source-0acb043.tar.gz.sha256",
-      "recordedSha256": "cc1cc060dedcb0ab49ed5165c033ee70ba72bd34fe6dbac1f4afc890162e2132",
-      "generatedFromMirrorHeadSha256": "cc1cc060dedcb0ab49ed5165c033ee70ba72bd34fe6dbac1f4afc890162e2132",
+      "path": "commitgate-authority-source-bddb2f9.tar.gz",
+      "bytes": 1371509,
+      "sha256": "931d50d3bf51a24ce6f53492d0b88c5e1334490ca986dbcf7bd1e619fc0a2851",
+      "sha256File": "commitgate-authority-source-bddb2f9.tar.gz.sha256",
+      "recordedSha256": "931d50d3bf51a24ce6f53492d0b88c5e1334490ca986dbcf7bd1e619fc0a2851",
+      "generatedFromMirrorHeadSha256": "931d50d3bf51a24ce6f53492d0b88c5e1334490ca986dbcf7bd1e619fc0a2851",
       "filenameBound": true
     }
   },

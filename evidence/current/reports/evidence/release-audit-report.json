@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "kind": "release-evidence-audit",
+  "generatedAt": "2026-08-30T14:13:46.681Z",
+  "status": "unverified",
+  "source": {
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "items": [
+    {
+      "file": "eval/evidence/check-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T13:38:37.113Z"
+    },
+    {
+      "file": "eval/protocol-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T13:38:43.162Z"
+    },
+    {
+      "file": "eval/adversarial-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T13:38:47.747Z"
+    },
+    {
+      "file": "eval/recovery-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T13:39:07.951Z"
+    },
+    {
+      "file": "eval/container-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T13:39:31.146Z"
+    },
+    {
+      "file": "eval/evidence/p1-product-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T14:02:15.882Z"
+    },
+    {
+      "file": "eval/evidence/linux-filesystem-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T13:43:13.562Z"
+    },
+    {
+      "file": "eval/evidence/topology-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T14:02:18.439Z"
+    },
+    {
+      "file": "eval/evidence/demo-smoke-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T13:47:04.694Z"
+    },
+    {
+      "file": "eval/browser-clean-clone-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T14:01:16.646Z"
+    },
+    {
+      "file": "eval/evidence/invariants-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T14:02:28.830Z"
+    },
+    {
+      "file": "eval/evidence/docker-recovery-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T13:41:41.269Z"
+    },
+    {
+      "file": "eval/evidence/receipt-verification-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T14:02:28.372Z"
+    },
+    {
+      "file": "eval/evidence/performance-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T13:46:05.009Z"
+    },
+    {
+      "file": "eval/evidence/documentation-review.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T14:07:46.604Z"
+    },
+    {
+      "file": "eval/evidence/architecture-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T13:39:09.076Z"
+    },
+    {
+      "file": "eval/authority-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T13:39:08.364Z"
+    },
+    {
+      "file": "eval/independent-audit-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T14:07:47.711Z"
+    },
+    {
+      "file": "eval/evidence/evidence-checklist-report.json",
+      "status": "unverified",
+      "generatedAt": "2026-08-30T14:13:46.087Z"
+    },
+    {
+      "file": "eval/evidence/source-delivery-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T14:13:38.190Z"
+    },
+    {
+      "file": "eval/evidence/secret-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T14:04:04.372Z"
+    },
+    {
+      "file": "eval/evidence/demo-video-report.json",
+      "status": "unverified",
+      "generatedAt": null
+    },
+    {
+      "file": "eval/provider-ark-report.json",
+      "status": "verified",
+      "generatedAt": "2026-08-30T13:50:55.771Z"
+    },
+    {
+      "file": "active evidence report inventory",
+      "status": "verified",
+      "generatedAt": null
+    }
+  ],
+  "claimBoundary": "This is a release evidence completeness audit, not an official score. Missing, stale, dirty-tree, or non-verified inputs remain unverified."
+}

@@ -1,15 +1,15 @@
 {
   "schemaVersion": 3,
   "kind": "commitgate-evidence-checklist",
-  "generatedAt": "2026-08-30T13:35:55.304Z",
+  "generatedAt": "2026-08-30T14:13:46.087Z",
   "status": "unverified",
   "organizerScore": null,
   "providerE2EVerified": "verified",
   "providerId": "ark",
   "source": {
-    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
-    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "headRevision": "6888c53c73321f1cd5297cef6d796109ba5e2de2",
+    "sourceTreeHash": "130c744f0386dea735e189fd6edee34053c92749cbe0b9d50dcbe0a2453f74c2",
     "sourceFileCount": 233,
     "workingTreeCleanAtCapture": true,
     "provenanceMode": "git"
@@ -57,9 +57,9 @@
     }
   },
   "totals": {
-    "verified": 14,
+    "verified": 26,
     "failed": 0,
-    "unverified": 13
+    "unverified": 1
   },
   "sections": [
     {
@@ -78,7 +78,7 @@
         {
           "id": "commit",
           "label": "Sealed proposal and one-shot commit",
-          "status": "unverified",
+          "status": "verified",
           "evidence": [
             "eval/protocol-report.json"
           ]
@@ -86,7 +86,7 @@
         {
           "id": "quarantine",
           "label": "Protected-path rejection",
-          "status": "unverified",
+          "status": "verified",
           "evidence": [
             "eval/protocol-report.json",
             "eval/adversarial-report.json"
@@ -95,7 +95,7 @@
         {
           "id": "session",
           "label": "View and session continuation fence",
-          "status": "unverified",
+          "status": "verified",
           "evidence": [
             "eval/protocol-report.json",
             "eval/adversarial-report.json"
@@ -104,7 +104,7 @@
         {
           "id": "rollback",
           "label": "Append-only rollback and recovery",
-          "status": "unverified",
+          "status": "verified",
           "evidence": [
             "eval/protocol-report.json",
             "eval/recovery-report.json"
@@ -119,7 +119,7 @@
           ]
         }
       ],
-      "status": "unverified"
+      "status": "verified"
     },
     {
       "id": "design",
@@ -128,7 +128,7 @@
         {
           "id": "protocol",
           "label": "State-view, proposal, evidence and permit protocol",
-          "status": "unverified",
+          "status": "verified",
           "evidence": [
             "eval/protocol-report.json"
           ]
@@ -136,7 +136,7 @@
         {
           "id": "authority",
           "label": "Persistent write authority audit",
-          "status": "unverified",
+          "status": "verified",
           "evidence": [
             "eval/authority-report.json"
           ]
@@ -158,7 +158,7 @@
           ]
         }
       ],
-      "status": "unverified"
+      "status": "verified"
     },
     {
       "id": "robustness",
@@ -167,7 +167,7 @@
         {
           "id": "automated",
           "label": "Protocol, adversarial and recovery suites",
-          "status": "unverified",
+          "status": "verified",
           "evidence": [
             "eval/protocol-report.json",
             "eval/adversarial-report.json",
@@ -193,7 +193,7 @@
         {
           "id": "filesystem",
           "label": "Linux filesystem contract",
-          "status": "unverified",
+          "status": "verified",
           "evidence": [
             "eval/evidence/linux-filesystem-report.json"
           ]
@@ -201,7 +201,7 @@
         {
           "id": "docker-recovery",
           "label": "Docker process kill/restart matrix",
-          "status": "unverified",
+          "status": "verified",
           "evidence": [
             "eval/evidence/docker-recovery-report.json"
           ]
@@ -225,7 +225,7 @@
         {
           "id": "performance",
           "label": "Linux Worker protocol microbenchmark p50/p95 disclosure",
-          "status": "unverified",
+          "status": "verified",
           "evidence": [
             "eval/evidence/performance-report.json"
           ]
@@ -233,7 +233,7 @@
         {
           "id": "bypass",
           "label": "Candidate and environment bypass protection",
-          "status": "unverified",
+          "status": "verified",
           "evidence": [
             "eval/adversarial-report.json"
           ]
@@ -241,14 +241,14 @@
         {
           "id": "secrets",
           "label": "Secret scanning and redaction",
-          "status": "unverified",
+          "status": "verified",
           "evidence": [
             "eval/evidence/secret-report.json",
             "eval/adversarial-report.json"
           ]
         }
       ],
-      "status": "unverified"
+      "status": "verified"
     },
     {
       "id": "demo",
