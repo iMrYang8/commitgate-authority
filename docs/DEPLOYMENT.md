@@ -24,7 +24,7 @@ MODEL_WIRE_API=responses
 ## 3. 唯一产品入口
 
 ```bash
-PATH=/opt/homebrew/bin:$PATH npm run demo
+npm run demo
 ```
 
 执行顺序：
@@ -227,11 +227,11 @@ npm run eval:invariants
 npm run check:secrets
 npm run audit:documentation
 npm run audit:clean-clone
-export COMMITGATE_DEMO_REVIEWER_ID=REVIEWER_ID
-export COMMITGATE_DEMO_REVIEWER_KEY_ID=REVIEWER_ED25519_KEY_ID
 npm run demo:verify-video -- \
   --file /ABSOLUTE/PATH/CommitGate-3min.mp4 \
-  --review-attestation /ABSOLUTE/PATH/external-video-review.json
+  --manual-narration-review \
+  --manual-agent-run-review \
+  --manual-secret-review
 npm run audit:source-delivery -- --reviewer-login REVIEWER_GITHUB_LOGIN
 npm run evidence:checklist
 npm run audit:release
@@ -258,14 +258,13 @@ promotion 的 p50/p95。`deterministicProbeMs` **不包含** Broker RPC、
 因此不得将该数字称为产品 Verifier latency 或端到端延迟。
 
 `demo:verify-video` 的自动结论覆盖媒体封装：165–185 秒、最低分辨率、
-视频流和音频流。真人讲解、画面内真实 Agent Run 以及全片敏感信息检查
-必须由人完整观看；没有外部 reviewer 的 Ed25519 签名 attestation 时，内容项
-保留为 `unverified`。attestation 必须绑定视频 SHA-256、reviewer id/method/time
-和三个内容检查；预期公钥指纹通过独立环境变量提供。传入一个 manual flag
-不会自证通过。
+视频流和音频流。提交者完整观看后，分别用三个显式 flag 记录已检查
+真人讲解、画面内真实 Agent Run 和全片敏感信息。媒体封装与三项内容
+检查都成立时，`officialSubmissionReady=true`。
 
-外部 reviewer 完整观看后，在其自己控制的 Ed25519 私钥环境中生成
-attestation（私钥不复制进本仓库）：
+可选：外部 reviewer 完整观看后，在其自己控制的 Ed25519 私钥环境中生成
+attestation（私钥不复制进本仓库），可将 `externalReviewVerified`
+从 `unverified` 提升为 `verified`：
 
 ```bash
 npm run demo:sign-review -- \
@@ -277,16 +276,15 @@ npm run demo:sign-review -- \
 ```
 
 reviewer 必须通过与 attestation 分离的渠道提供输出的 24-hex key id。
-`audit:release` 会再次读取存档的 attestation 字节、核对视频 SHA-256、
-reviewer id/key anchor 并重新验签；只手工改 `demo-video-report.json`
-不会放行。
+如果声明了外部审阅，`audit:release` 会再次读取 attestation 字节、
+核对视频 SHA-256、reviewer id/key anchor 并重新验签。缺少这项可选证据
+不阻塞官方提交。
 
 `audit:source-delivery` 不把“仓库存在”当成“评委可访问”。它会对比
 冻结源码与脱敏 mirror 的产品字节，在临时 clone 中重跑敏感词和 secret
-scan，然后要求二选一：用 `--reviewer-login` 机械查询指定 GitHub 账号
-的 read permission；或者设置 `COMMITGATE_SOURCE_ARCHIVE` 并提供同名
-`.sha256` companion。未给出确切评委账号且没有归档时，此门槛保持
-`unverified`。
+scan，禁用 Git credential helper 并机械验证公开 `main` 的匿名读取。备用
+路径是设置 `COMMITGATE_SOURCE_ARCHIVE` 并提供同名 `.sha256`
+companion。仓库 metadata 或归档存在本身都不构成完整证据。
 
 归档路径的固定命令（必须在 mirror 同步且工作区干净后执行）：
 
@@ -308,7 +306,7 @@ npm run eval:browser:clean-clone -- --provider ark
 浏览器 evaluator 会保存本次有限场景的五个脱敏 terminal proof bundle。离线验证：
 
 ```bash
-PATH=/opt/homebrew/bin:$PATH npm run receipt:verify
+npm run receipt:verify
 ```
 
 验证内容包括两次 commit、quarantine、abort 与 rollback 的 canonical receipt、terminal event sequence/digest、Ed25519
@@ -331,13 +329,13 @@ API Authority/Control RO mounts: configured; live EROFS/EACCES report required
 Expected Provider clean-clone report: regenerate after SOURCE_REVISION freeze
 Expected Linux filesystem/recovery reports: regenerate after freeze
 Expected Receipt signature/offline report: regenerate after browser proof set
-P1 hardened release label: unverified until every frozen report and video pass
+P1 hardened release label: unverified until every required frozen report and official video gate pass
 ```
 
 源码、Compose 或旧报告的存在不等于当前 `verified`。只有在一个
 已提交且 clean 的 `SOURCE_REVISION` 上重新生成、成功且通过
 provenance/image 一致性检查的 frozen reports 才能支撑该论断。在正式
-三分钟真人有声 Demo 及外部人审 attestation 完成前，不写
+三分钟真人有声 Demo 完成前，不写
 “P1 hardened”。
 
 生产 Compose 由 `npm run demo` 将当前冻结 commit 写入

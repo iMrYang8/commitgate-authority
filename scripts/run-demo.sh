@@ -4,10 +4,11 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_dir"
 
-if [[ -f .env.local ]]; then
+environment_file="${COMMITGATE_ENV_FILE:-.env.local}"
+if [[ -f "$environment_file" ]]; then
   set -a
   # shellcheck disable=SC1091
-  source .env.local
+  source "$environment_file"
   set +a
 fi
 
@@ -26,7 +27,7 @@ export MODEL_WIRE_API="${MODEL_WIRE_API:-responses}"
 export COMMITGATE_POLICY_PROFILE="${COMMITGATE_POLICY_PROFILE:-deployment-protected}"
 
 if [[ -z "$MODEL_ID" || -z "$MODEL_API_KEY" ]]; then
-  echo "MODEL_ID and MODEL_API_KEY are required in .env.local" >&2
+  echo "MODEL_ID and MODEL_API_KEY are required in $environment_file" >&2
   exit 1
 fi
 

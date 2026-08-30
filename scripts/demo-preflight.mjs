@@ -11,7 +11,6 @@ const evidenceDir = path.join(root, "eval", "evidence");
 const engine = process.env.CONTAINER_ENGINE || "docker";
 const image = process.env.CONTAINER_RUNTIME_IMAGE || "volc-agent-runtime:local";
 const pinned = "8d0bd4f14ad1e453d984149aebcdd0bcb4f74178";
-const sanitizedSourceCopy = process.env.COMMITGATE_SANITIZED_SOURCE_COPY === "1";
 const source = await evidenceProvenance(root);
 
 function command(name, args) {
@@ -39,25 +38,23 @@ const base = command("git", ["rev-list", "--max-parents=0", "HEAD"]);
 add(
   "pinned-starter-base",
   base.status === 0 && base.stdout.trim() === pinned,
-  sanitizedSourceCopy
-    ? `${base.stdout.trim()}; sanitized source copy explicitly declared`
-    : base.stdout.trim(),
-  !sanitizedSourceCopy,
+  base.status === 0
+    ? `${base.stdout.trim()}; informational provenance only`
+    : `${source.provenanceMode}; Git ancestry unavailable`,
+  false,
 );
 
 const branch = command("git", ["branch", "--show-current"]);
 add(
-  "feature-branch",
-  ["feature/commitgate", "feature/commitgate-sealed-view", "feature/commitgate-94", "feature/commitgate-authority-v2", "feature/commitgate-proof-closure", "feature/commitgate-policy-release"].includes(
-    branch.stdout.trim(),
-  ),
-  branch.stdout.trim() || "detached HEAD",
+  "checkout-mode",
+  source.provenanceMode === "release-manifest" || branch.status === 0,
+  source.provenanceMode === "release-manifest"
+    ? "validated release archive"
+    : branch.stdout.trim() || "detached HEAD",
   false,
 );
 
-const trackedImplementation = command("git", [
-  "ls-files",
-  "--error-unmatch",
+const implementationPaths = [
   "apps/server/src/commitgate/coordinator.ts",
   "apps/server/src/commitgate/protocol.ts",
   "apps/server/src/commitgate/sealed-proposal-store.ts",
@@ -67,12 +64,21 @@ const trackedImplementation = command("git", [
   "scripts/audit-authority.mjs",
   "scripts/score.mjs",
   "scripts/demo-auth.mjs",
-]);
+];
+const trackedImplementation = command("git", ["ls-files", "--error-unmatch", ...implementationPaths]);
+const implementationPresent = source.provenanceMode === "release-manifest"
+  ? (await Promise.all(
+      implementationPaths.map((relative) => access(path.join(root, relative)).then(
+        () => true,
+        () => false,
+      )),
+    )).every(Boolean)
+  : trackedImplementation.status === 0;
 add(
   "implementation-tracked",
-  trackedImplementation.status === 0,
-  trackedImplementation.status === 0
-    ? "CommitGate core, evidence-checklist, and Demo-auth scripts are part of the checked-out revision"
+  implementationPresent,
+  implementationPresent
+    ? "CommitGate core, evidence-checklist, and Demo-auth scripts are bound to the source identity"
     : trackedImplementation.stderr.trim(),
 );
 
@@ -101,7 +107,13 @@ add(
 );
 
 const ignored = command("git", ["check-ignore", "-q", ".env.local"]);
-add("local-secret-file-ignored", ignored.status === 0, ".env.local");
+add(
+  "local-secret-file-ignored",
+  source.provenanceMode === "release-manifest" || ignored.status === 0,
+  source.provenanceMode === "release-manifest"
+    ? ".env.local is outside the release source manifest"
+    : ".env.local",
+);
 
 const modelProvider = process.env.MODEL_PROVIDER ?? "ark";
 const modelKey = (

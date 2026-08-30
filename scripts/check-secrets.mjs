@@ -38,6 +38,26 @@ function exactCredentialsFromEnvironment(environment, names = credentialNames) {
     .filter((entry) => entry.value.length > 0);
 }
 
+async function exactCredentialsFromLocalProfiles(directory) {
+  const profileNames = (await readdir(directory))
+    .filter((name) => /^\.env(?:\.[A-Za-z0-9_-]+)?\.local$/.test(name))
+    .sort();
+  const credentials = [];
+  for (const profileName of profileNames) {
+    const text = await readFile(path.join(directory, profileName), "utf8");
+    const environment = {};
+    for (const line of text.split(/\r?\n/)) {
+      const match = line.match(/^\s*(?:export\s+)?([A-Z][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);
+      if (!match) continue;
+      environment[match[1]] = (match[2] ?? "")
+        .replace(/^['"]|['"]$/g, "")
+        .trim();
+    }
+    credentials.push(...exactCredentialsFromEnvironment(environment));
+  }
+  return credentials;
+}
+
 function exactMatchRecords(data, source, credentials) {
   const matches = [];
   for (const credential of credentials) {
@@ -51,7 +71,16 @@ function exactMatchRecords(data, source, credentials) {
   return matches;
 }
 
-const exactCredentials = exactCredentialsFromEnvironment(process.env);
+const exactCredentials = [
+  ...exactCredentialsFromEnvironment(process.env),
+  ...(await exactCredentialsFromLocalProfiles(root)),
+].filter(
+  (credential, index, all) =>
+    all.findIndex(
+      (candidate) =>
+        candidate.name === credential.name && candidate.value === credential.value,
+    ) === index,
+);
 const normalizationFixture = exactCredentialsFromEnvironment({
   MODEL_API_KEY: "  fixture-exact-key  ",
 });
@@ -140,7 +169,11 @@ async function walk(directory, relative = "") {
       (relative === "" && excludedRuntimeRoots.has(entry.name))
     ) continue;
     const nextRelative = relative ? `${relative}/${entry.name}` : entry.name;
-    if (nextRelative === ".env.local") continue;
+    // Local Provider profiles are deliberately Git-ignored credential inputs.
+    // Their exact values are still scanned against tracked files, evidence and
+    // Git history through `exactCredentials`; scanning the credential file
+    // itself would turn every correctly configured profile into a false alarm.
+    if (/^\.env(?:\.[A-Za-z0-9_-]+)?\.local$/.test(nextRelative)) continue;
     const absolute = path.join(directory, entry.name);
     if (entry.isDirectory()) {
       await walk(absolute, nextRelative);
@@ -274,7 +307,7 @@ const report = {
   gitObjectExactScan,
   exactCredentialNormalizationSelfCheck:
     exactCredentialNormalizationSelfCheck ? "verified" : "failed",
-  ignoredLocalCredentialFile: ".env.local",
+  ignoredLocalCredentialFiles: [".env.local", ".env.<provider>.local"],
   scope:
     "Repository working tree (including eval evidence) and Git history; runtime data roots are excluded and covered by deterministic receipt-redaction tests",
   exactCredentialScan: Object.fromEntries(

@@ -73,8 +73,20 @@ for (const sizeBytes of sizes) {
     });
     const candidate = path.join(config.inboxRoot, prepared.relativeSubpath);
     const marker = Buffer.from("COMMITGATE_OK\n", "utf8");
+    const checkoutConfigBytes = Buffer.from(
+      '{"retryLimit":3,"feature":"checkout"}\n',
+      "utf8",
+    );
+    await mkdir(path.join(candidate, "services", "checkout"), { recursive: true });
     await writeFile(path.join(candidate, "result.txt"), marker);
-    let remainingBytes = Math.max(0, sizeBytes - marker.byteLength);
+    await writeFile(
+      path.join(candidate, "services", "checkout", "config.json"),
+      checkoutConfigBytes,
+    );
+    let remainingBytes = Math.max(
+      0,
+      sizeBytes - marker.byteLength - checkoutConfigBytes.byteLength,
+    );
     let chunkIndex = 0;
     while (remainingBytes > 0) {
       const chunkBytes = Math.min(262_144, remainingBytes);

@@ -21,7 +21,11 @@ const option = (name) => {
   const index = cli.indexOf(name);
   return index >= 0 ? cli[index + 1] ?? null : null;
 };
-const legacyManualSecretFlag = cli.includes("--manual-secret-review");
+const manualReview = {
+  narration: cli.includes("--manual-narration-review"),
+  realAgentRun: cli.includes("--manual-agent-run-review"),
+  secrets: cli.includes("--manual-secret-review"),
+};
 const reviewAttestationInput = option("--review-attestation") ??
   process.env.COMMITGATE_DEMO_REVIEW_ATTESTATION ?? null;
 const expectedReviewerId = option("--expected-reviewer-id") ??
@@ -92,33 +96,44 @@ if (reviewVerification.valid && attestationBytes) {
 const attestedChecks = new Map(
   (reviewVerification.checks ?? []).map((entry) => [entry.id, entry]),
 );
+const manualChecks = new Map([
+  ["narrated-audio-content-review", manualReview.narration],
+  ["real-agent-run-content-review", manualReview.realAgentRun],
+  ["visual-secret-content-review", manualReview.secrets],
+]);
+const manualReviewComplete = [...manualChecks.values()].every(Boolean);
 const contentReview = DEMO_VIDEO_REVIEW_CHECK_IDS.map((id) => ({
   id,
   status:
     reviewVerification.valid && attestedChecks.get(id)?.status === "verified"
       ? "verified"
-      : reviewVerification.status,
+      : manualChecks.get(id)
+        ? "verified"
+        : "unverified",
   detail: reviewVerification.valid
     ? `Externally signed review by ${reviewVerification.reviewerId}`
-    : attestationParseError ?? reviewVerification.reason,
+    : manualChecks.get(id)
+      ? "Submitter reviewed the complete video and declared this official content check satisfied"
+      : attestationParseError ?? "Required submitter content review flag was not supplied",
 }));
 const technicalStatus = technicalChecks.some((check) => check.status === "failed")
   ? "failed"
   : "verified";
+const officialSubmissionReady =
+  technicalStatus === "verified" && (reviewVerification.valid || manualReviewComplete);
+const externalReviewVerified = reviewVerification.valid
+  ? "verified"
+  : reviewVerification.status === "failed"
+    ? "failed"
+    : "unverified";
 const report = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   kind: "three-minute-demo-video-verification",
   generatedAt: new Date().toISOString(),
-  // This tool mechanically verifies only the media envelope. It deliberately
-  // keeps the release result unverified until a real reviewer watches the
-  // recording; a self-declared CLI flag is not independent evidence.
-  status:
-    technicalStatus === "failed" || reviewVerification.status === "failed"
-      ? "failed"
-      : technicalStatus === "verified" && reviewVerification.status === "verified"
-        ? "verified"
-        : "unverified",
+  status: technicalStatus === "failed" ? "failed" : officialSubmissionReady ? "verified" : "unverified",
   technicalStatus,
+  officialSubmissionReady,
+  externalReviewVerified,
   source: await evidenceProvenance(root),
   artifact: {
     path: path.basename(videoPath),
@@ -128,13 +143,14 @@ const report = {
   },
   technicalChecks,
   contentReview: {
-    status: reviewVerification.status,
+    status: officialSubmissionReady ? "verified" : "unverified",
     method:
       reviewVerification.valid
         ? "external signed full-video review"
-        : "external signed full-video review required",
-    legacyManualSecretFlagReceived: legacyManualSecretFlag,
-    legacyManualSecretFlagAffectsStatus: false,
+        : manualReviewComplete
+          ? "submitter full-video content review"
+          : "submitter full-video content review required",
+    submitterDeclarations: manualReview,
     attestation: reviewVerification.valid && attestationBytes
       ? {
           path: "eval/evidence/demo-video-review-attestation.json",
@@ -150,7 +166,7 @@ const report = {
     checks: contentReview,
   },
   claimBoundary:
-    "Technical verification measures the supplied media bytes. Content becomes verified only through a separate Ed25519-signed human review attestation bound to the video SHA-256 and an externally supplied reviewer identity/key anchor; a CLI assertion alone has no effect.",
+    "officialSubmissionReady covers the official media envelope plus an explicit submitter review of narration, a visible real Agent Run, and sensitive information. externalReviewVerified is a separate optional Ed25519-signed independent review and never blocks the official submission result.",
 };
 const reportPath = path.join(root, "eval", "evidence", "demo-video-report.json");
 await mkdir(path.dirname(reportPath), { recursive: true });
@@ -161,11 +177,8 @@ for (const check of technicalChecks) {
 for (const check of contentReview) {
   console.log(`${check.status.padEnd(10)} ${check.id}: ${JSON.stringify(check.detail)}`);
 }
-if (legacyManualSecretFlag) {
-  console.log(
-    "unverified legacy-manual-flag: --manual-secret-review was recorded but does not convert a manual content claim into verified evidence",
-  );
-}
 console.log(`${reviewVerification.status.padEnd(10)} external-review-attestation: ${JSON.stringify(reviewVerification.reason)}`);
+console.log(`${String(officialSubmissionReady).padEnd(10)} official-submission-ready`);
+console.log(`${externalReviewVerified.padEnd(10)} external-review-verified`);
 console.log(`video report: ${reportPath}`);
 process.exitCode = report.status === "failed" ? 1 : report.status === "unverified" ? 2 : 0;

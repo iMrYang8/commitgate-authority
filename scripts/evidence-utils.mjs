@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { lstat, readFile, readlink } from "node:fs/promises";
+import { lstat, readFile, readdir, readlink } from "node:fs/promises";
 import path from "node:path";
 
 function git(root, args) {
@@ -10,6 +10,8 @@ function git(root, args) {
     maxBuffer: 16 * 1024 * 1024,
   });
 }
+
+export const RELEASE_PROVENANCE_FILE = "RELEASE_PROVENANCE.json";
 
 function isSourcePath(relative) {
   return (
@@ -33,6 +35,166 @@ function isSourcePath(relative) {
     relative.startsWith("eval/trusted-checks/") ||
     relative === "eval/demo-policy.json"
   );
+}
+
+const skippedWalkSegments = new Set([
+  ".git",
+  ".demo-state",
+  ".data",
+  ".local",
+  "node_modules",
+  "dist",
+  "coverage",
+]);
+
+async function walkSourceSurface(root) {
+  const files = [];
+  const visit = async (relative) => {
+    const absolute = path.join(root, relative);
+    const stats = await lstat(absolute);
+    if (stats.isDirectory()) {
+      const entries = await readdir(absolute, { withFileTypes: true });
+      for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
+        if (skippedWalkSegments.has(entry.name)) continue;
+        const child = relative ? path.posix.join(relative, entry.name) : entry.name;
+        if (entry.isDirectory() || isSourcePath(child)) await visit(child);
+      }
+      return;
+    }
+    if (isSourcePath(relative)) files.push(relative);
+  };
+
+  const roots = [
+    "package.json",
+    "package-lock.json",
+    "README.md",
+    ".gitignore",
+    ".dockerignore",
+    ".env.example",
+    ".env.local.example",
+    "tsconfig.base.json",
+    "docker-compose.yml",
+    "Dockerfile",
+    ".github",
+    "apps",
+    "scripts",
+    "docs",
+    "eval/fixtures",
+    "eval/trusted-checks",
+    "eval/demo-policy.json",
+  ];
+  const rootEntries = await readdir(root, { withFileTypes: true });
+  for (const entry of rootEntries) {
+    if (
+      entry.isFile() &&
+      (entry.name.startsWith("Dockerfile.") || /^docker-compose\.[^/]+\.ya?ml$/.test(entry.name))
+    ) {
+      roots.push(entry.name);
+    }
+  }
+  for (const relative of [...new Set(roots)].sort()) {
+    try {
+      await visit(relative);
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+  }
+  return [...new Set(files)].sort();
+}
+
+async function hashSourceFiles(root, files) {
+  const hash = createHash("sha256");
+  const records = [];
+  for (const relative of [...files].sort()) {
+    const absolute = path.join(root, relative);
+    const stats = await lstat(absolute);
+    const type = stats.isFile()
+      ? "file"
+      : stats.isSymbolicLink()
+        ? "symlink"
+        : "unsupported";
+    if (type === "unsupported") throw new Error(`Unsupported source entry type: ${relative}`);
+    const contents = type === "file" ? await readFile(absolute) : Buffer.from(await readlink(absolute));
+    const executable = (stats.mode & 0o111) !== 0;
+    hash.update(relative);
+    hash.update("\0");
+    hash.update(type);
+    hash.update("\0");
+    hash.update((stats.mode & 0o111).toString(8));
+    hash.update("\0");
+    hash.update(contents);
+    hash.update("\0");
+    records.push({
+      path: relative,
+      executable,
+      sha256: createHash("sha256").update(contents).digest("hex"),
+    });
+  }
+  return { hash: hash.digest("hex"), files: records.length, records };
+}
+
+async function readReleaseProvenance(root) {
+  const manifestPath = path.join(root, RELEASE_PROVENANCE_FILE);
+  let manifest;
+  try {
+    manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  } catch (error) {
+    if (error?.code === "ENOENT") throw new Error("SOURCE_PROVENANCE_UNAVAILABLE");
+    throw new Error(
+      `SOURCE_PROVENANCE_INVALID:${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  if (
+    manifest?.schemaVersion !== 1 ||
+    !/^[a-f0-9]{40}$/.test(manifest.sourceRevision ?? "") ||
+    !/^[a-f0-9]{64}$/.test(manifest.sourceTreeHash ?? "") ||
+    !Number.isSafeInteger(manifest.sourceFileCount) ||
+    !Array.isArray(manifest.files)
+  ) {
+    throw new Error("SOURCE_PROVENANCE_INVALID:SCHEMA");
+  }
+  const expected = [...manifest.files].sort((left, right) =>
+    left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
+  );
+  if (
+    expected.length !== manifest.sourceFileCount ||
+    expected.some(
+      (entry, index) =>
+        typeof entry?.path !== "string" ||
+        entry.path !== entry.path.replaceAll("\\", "/") ||
+        entry.path.startsWith("/") ||
+        entry.path.split("/").includes("..") ||
+        typeof entry.executable !== "boolean" ||
+        !/^[a-f0-9]{64}$/.test(entry.sha256 ?? "") ||
+        (index > 0 && expected[index - 1].path === entry.path),
+    )
+  ) {
+    throw new Error("SOURCE_PROVENANCE_INVALID:FILES");
+  }
+  const actualPaths = await walkSourceSurface(root);
+  const expectedPaths = expected.map((entry) => entry.path);
+  if (JSON.stringify(actualPaths) !== JSON.stringify(expectedPaths)) {
+    const mismatch = Math.max(
+      0,
+      expectedPaths.findIndex((entry, index) => entry !== actualPaths[index]),
+    );
+    throw new Error(
+      `SOURCE_PROVENANCE_MISMATCH:FILE_SET:expected=${expectedPaths[mismatch] ?? "<end>"}:actual=${actualPaths[mismatch] ?? "<end>"}`,
+    );
+  }
+  const actual = await hashSourceFiles(root, actualPaths);
+  for (let index = 0; index < expected.length; index += 1) {
+    if (
+      expected[index].sha256 !== actual.records[index].sha256 ||
+      expected[index].executable !== actual.records[index].executable
+    ) {
+      throw new Error(`SOURCE_PROVENANCE_MISMATCH:${expected[index].path}`);
+    }
+  }
+  if (actual.hash !== manifest.sourceTreeHash || actual.files !== manifest.sourceFileCount) {
+    throw new Error("SOURCE_PROVENANCE_MISMATCH:TREE");
+  }
+  return { manifest, actual };
 }
 
 /**
@@ -82,7 +244,10 @@ export async function sourceTreeHash(root) {
     "--others",
     "--exclude-standard",
   ]);
-  if (listed.status !== 0) throw new Error(listed.stderr.trim() || "git ls-files failed");
+  if (listed.status !== 0) {
+    const release = await readReleaseProvenance(root);
+    return { hash: release.actual.hash, files: release.actual.files };
+  }
   const files = listed.stdout
     .split("\0")
     .filter(Boolean)
@@ -148,8 +313,19 @@ function changedPaths(root) {
 }
 
 export async function evidenceProvenance(root) {
-  const revision = frozenSourceRevision(root);
   const headResult = git(root, ["rev-parse", "HEAD"]);
+  if (headResult.status !== 0) {
+    const release = await readReleaseProvenance(root);
+    return {
+      sourceRevision: release.manifest.sourceRevision,
+      headRevision: null,
+      sourceTreeHash: release.actual.hash,
+      sourceFileCount: release.actual.files,
+      workingTreeCleanAtCapture: true,
+      provenanceMode: "release-manifest",
+    };
+  }
+  const revision = frozenSourceRevision(root);
   const headCandidate = headResult.status === 0 ? headResult.stdout.trim() : "";
   const headRevision = /^[a-f0-9]{40}$/.test(headCandidate) ? headCandidate : null;
   const tree = await sourceTreeHash(root);
@@ -161,6 +337,32 @@ export async function evidenceProvenance(root) {
     sourceTreeHash: tree.hash,
     sourceFileCount: tree.files,
     workingTreeCleanAtCapture: status.ok && dirtySourcePaths.length === 0,
+    provenanceMode: "git",
+  };
+}
+
+export async function createReleaseProvenanceManifest(root) {
+  const source = await evidenceProvenance(root);
+  if (
+    source.provenanceMode !== "git" ||
+    !source.sourceRevision ||
+    !source.workingTreeCleanAtCapture
+  ) {
+    throw new Error("SOURCE_PROVENANCE_REQUIRES_CLEAN_GIT_CHECKOUT");
+  }
+  const listed = git(root, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"]);
+  if (listed.status !== 0) throw new Error(listed.stderr.trim() || "git ls-files failed");
+  const files = listed.stdout.split("\0").filter(Boolean).filter(isSourcePath).sort();
+  const tree = await hashSourceFiles(root, files);
+  if (tree.hash !== source.sourceTreeHash || tree.files !== source.sourceFileCount) {
+    throw new Error("SOURCE_PROVENANCE_GENERATION_MISMATCH");
+  }
+  return {
+    schemaVersion: 1,
+    sourceRevision: source.sourceRevision,
+    sourceTreeHash: source.sourceTreeHash,
+    sourceFileCount: source.sourceFileCount,
+    files: tree.records,
   };
 }
 

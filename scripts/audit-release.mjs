@@ -486,33 +486,45 @@ async function validateSemantics(file, parsed) {
     }
   }
   if (file === "eval/evidence/demo-video-report.json") {
-    const attestationVerification = verifyDemoVideoReviewAttestation(
-      videoReviewAttestation,
-      {
-        videoSha256: parsed.artifact?.sha256 ?? null,
-        expectedReviewerId: expectedVideoReviewerId,
-        expectedSigningKeyId: expectedVideoReviewerKeyId,
-      },
-    );
     if (
-      parsed.schemaVersion !== 2 ||
+      parsed.schemaVersion !== 3 ||
       parsed.kind !== "three-minute-demo-video-verification" ||
+      parsed.officialSubmissionReady !== true ||
       parsed.technicalStatus !== "verified" ||
       parsed.contentReview?.status !== "verified" ||
       !Array.isArray(parsed.technicalChecks) ||
       !parsed.technicalChecks.every((entry) => entry.status === "verified") ||
       !Array.isArray(parsed.contentReview?.checks) ||
-      !parsed.contentReview.checks.every((entry) => entry.status === "verified") ||
-      parsed.contentReview?.method !== "external signed full-video review" ||
-      parsed.contentReview?.attestation?.path !==
-        "eval/evidence/demo-video-review-attestation.json" ||
-      parsed.contentReview?.attestation?.sha256 !== videoReviewAttestationDigest ||
-      parsed.contentReview?.attestation?.reviewerId !== expectedVideoReviewerId ||
-      parsed.contentReview?.attestation?.signingKeyId !== expectedVideoReviewerKeyId ||
-      attestationVerification.status !== "verified" ||
-      attestationVerification.valid !== true
+      !parsed.contentReview.checks.every((entry) => entry.status === "verified")
     ) {
-      return "video envelope or externally anchored signed content review is incomplete";
+      return "video envelope or required submitter content review is incomplete";
+    }
+    if (parsed.externalReviewVerified === "verified") {
+      const attestationVerification = verifyDemoVideoReviewAttestation(
+        videoReviewAttestation,
+        {
+          videoSha256: parsed.artifact?.sha256 ?? null,
+          expectedReviewerId: expectedVideoReviewerId,
+          expectedSigningKeyId: expectedVideoReviewerKeyId,
+        },
+      );
+      if (
+        parsed.contentReview?.method !== "external signed full-video review" ||
+        parsed.contentReview?.attestation?.path !==
+          "eval/evidence/demo-video-review-attestation.json" ||
+        parsed.contentReview?.attestation?.sha256 !== videoReviewAttestationDigest ||
+        parsed.contentReview?.attestation?.reviewerId !== expectedVideoReviewerId ||
+        parsed.contentReview?.attestation?.signingKeyId !== expectedVideoReviewerKeyId ||
+        attestationVerification.status !== "verified" ||
+        attestationVerification.valid !== true
+      ) {
+        return "declared external video review is not cryptographically valid";
+      }
+    } else if (
+      parsed.externalReviewVerified !== "unverified" ||
+      parsed.contentReview?.method !== "submitter full-video content review"
+    ) {
+      return "optional external review state is malformed";
     }
   }
   if (file === "eval/authority-report.json") {
@@ -566,7 +578,7 @@ async function validateSemantics(file, parsed) {
         .includes("verified") ||
       parsed.repositoryDelivery?.credentialsRecorded !== false
     ) {
-      return "reviewer source delivery is not byte-bound to an accessible private repository or SHA-256 archive";
+      return "reviewer source delivery is not byte-bound to an anonymously accessible public repository or SHA-256 archive";
     }
   }
   return null;

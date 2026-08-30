@@ -64,6 +64,8 @@
     "demo:smoke": "node scripts/demo-smoke.mjs",
     "evidence:checklist": "node scripts/score.mjs",
     "evidence:package": "node scripts/package-evidence.mjs",
+    "evidence:snapshot": "node scripts/snapshot-public-evidence.mjs",
+    "release:provenance": "node scripts/release-provenance.mjs",
     "score": "node scripts/score.mjs",
     "poc": "./scripts/start-local-poc.sh",
     "start": "npm run start -w @launchpad/server"

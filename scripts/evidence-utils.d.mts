@@ -4,11 +4,22 @@ export interface EvidenceProvenance {
   sourceTreeHash: string;
   sourceFileCount: number;
   workingTreeCleanAtCapture: boolean;
+  provenanceMode: "git" | "release-manifest";
+}
+
+export interface ReleaseProvenanceManifestV1 {
+  schemaVersion: 1;
+  sourceRevision: string;
+  sourceTreeHash: string;
+  sourceFileCount: number;
+  files: Array<{ path: string; executable: boolean; sha256: string }>;
 }
 
 export function sourceTreeHash(root: string): Promise<{ hash: string; files: number }>;
 export function frozenSourceRevision(root: string): string | null;
 export function evidenceProvenance(root: string): Promise<EvidenceProvenance>;
+export function createReleaseProvenanceManifest(root: string): Promise<ReleaseProvenanceManifestV1>;
+export const RELEASE_PROVENANCE_FILE: "RELEASE_PROVENANCE.json";
 export function revisionIsAncestor(root: string, revision: unknown): boolean;
 export function executionIdentity(
   root: string,

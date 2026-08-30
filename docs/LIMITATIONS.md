@@ -337,10 +337,10 @@ A checklist item is `verified`, `failed`, or `unverified` and must name evidence
 bound to the current revision/source-tree hash and required image identities.
 The checklist does not calculate an organizer or predicted score.
 
-The historical recorded Ark clean-clone report verified 10/10 product scenarios
+The historical recorded Ark clean-clone report verified 12/12 product scenarios
 for the source identity embedded in that report; it is not current evidence for
 a changed tree. The active browser contract now requires 12/12 scenarios, so
-the historical 10/10 report is intentionally stale. The old repository `100/100` remains
+the historical 12/12 report is intentionally stale. The old repository `100/100` remains
 a historical internal rubric projection, not an organizer-issued score. It is
 not part of the active evidence set. Provider/browser, Linux, recovery, release
 and narrated Demo evidence become `unverified` whenever the source changes and

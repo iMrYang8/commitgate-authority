@@ -62,7 +62,12 @@ async function waitForState(container, desired, timeoutMs = 20_000) {
   return null;
 }
 
-async function waitForReady(container, timeoutMs = 20_000) {
+// A rollback recovery has more durable state to replay than an empty or
+// pre-promotion transition.  Cold Docker Desktop/Colima volumes can make that
+// replay exceed 20 seconds even though the Worker is still progressing.  Use
+// one release-grade budget for every recovery point so the evaluator measures
+// recovery correctness rather than host cache temperature.
+async function waitForReady(container, timeoutMs = 60_000) {
   const deadline = Date.now() + timeoutMs;
   let last = "";
   while (Date.now() < deadline) {
@@ -84,7 +89,9 @@ async function waitForReady(container, timeoutMs = 20_000) {
     if (state) throw new Error(`worker exited before readiness: ${last}`);
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
-  throw new Error(`worker readiness timeout: ${last}`);
+  const logs = await command(["logs", container], { timeout: 5_000 });
+  const diagnostic = `${last}\n${logs.stdout}${logs.stderr}`.trim().slice(-4_096);
+  throw new Error(`worker readiness timeout: ${diagnostic}`);
 }
 
 async function waitForApiReady(container, timeoutMs = 30_000) {
@@ -386,9 +393,21 @@ async function evaluateScenario(scenario) {
       "exec", container, "node", "/app/recovery-docker-driver.mjs",
       scenario.action, scenario.transitionId,
     ], { timeout: 2_000 });
-    const armedLogs = await command(["logs", container], { timeout: 10_000 });
-    const faultArmed = `${armedLogs.stdout}${armedLogs.stderr}`
-      .includes('"action":"AWAIT_EXTERNAL_SIGKILL"');
+    // A rollback fixture first creates a committed version to roll back to.
+    // That setup can outlive the short-lived docker-exec capture, so a single
+    // immediate log read can race ahead of the durable fault event. Wait for
+    // the exact post-append marker before issuing SIGKILL; otherwise the
+    // evaluator would mistake the still-running fault latch for a restarted
+    // Worker readiness failure.
+    const armedOutput = await waitForLogMarker(
+      container,
+      `"point":"${scenario.point}"`,
+      60_000,
+    );
+    const faultArmed =
+      armedOutput.includes('"action":"AWAIT_EXTERNAL_SIGKILL"') &&
+      armedOutput.includes(`"agentId":"recovery-agent"`) &&
+      armedOutput.includes(`"transitionId":"${scenario.transitionId}"`);
     const killed = faultArmed
       ? await command(["kill", "--signal", "KILL", container], { timeout: 10_000 })
       : { status: 1, stdout: "", stderr: "fault hook was not armed" };

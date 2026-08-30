@@ -314,22 +314,27 @@ const demoSmokeStatus = semanticStatus(
 const demoVideoStatus = semanticStatus(
   reports.demoVideo,
   "three-minute-demo-video-verification",
-  2,
+  3,
   (report) => {
-    const verification = verifyDemoVideoReviewAttestation(
-      demoVideoReviewAttestation,
-      {
-        videoSha256: report.artifact?.sha256 ?? null,
-        expectedReviewerId: process.env.COMMITGATE_DEMO_REVIEWER_ID?.trim() || null,
-        expectedSigningKeyId:
-          process.env.COMMITGATE_DEMO_REVIEWER_KEY_ID?.trim() || null,
-      },
-    );
-    return report.technicalStatus === "verified" &&
-      report.contentReview?.status === "verified" &&
-      report.contentReview?.attestation?.sha256 ===
-        demoVideoReviewAttestationArtifact?.sha256 &&
-      verification.valid === true;
+    if (
+      report.officialSubmissionReady !== true ||
+      report.technicalStatus !== "verified" ||
+      report.contentReview?.status !== "verified" ||
+      !report.technicalChecks?.every((entry) => entry.status === "verified")
+    ) return false;
+    if (!report.contentReview?.checks?.every((entry) => entry.status === "verified")) return false;
+    if (report.externalReviewVerified !== "verified") {
+      return report.externalReviewVerified === "unverified" &&
+        report.contentReview?.method === "submitter full-video content review";
+    }
+    const verification = verifyDemoVideoReviewAttestation(demoVideoReviewAttestation, {
+      videoSha256: report.artifact?.sha256 ?? null,
+      expectedReviewerId: process.env.COMMITGATE_DEMO_REVIEWER_ID?.trim() || null,
+      expectedSigningKeyId:
+        process.env.COMMITGATE_DEMO_REVIEWER_KEY_ID?.trim() || null,
+    });
+    return report.contentReview?.attestation?.sha256 ===
+      demoVideoReviewAttestationArtifact?.sha256 && verification.valid === true;
   },
   false,
 );

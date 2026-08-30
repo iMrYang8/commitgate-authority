@@ -5,7 +5,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { evidenceProvenance, sourceTreeHash } from "./evidence-utils.mjs";
+import {
+  createReleaseProvenanceManifest,
+  evidenceProvenance,
+  sourceTreeHash,
+} from "./evidence-utils.mjs";
 
 function git(root, ...args) {
   return execFileSync("git", args, {
@@ -94,6 +98,52 @@ test("source and evidence revisions remain distinct without report self-referenc
     assert.equal(renamedOut.sourceRevision, fixtureF);
     assert.equal(renamedOut.workingTreeCleanAtCapture, false);
     git(root, "reset", "--hard", "--quiet", "HEAD");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("a validated release manifest provides fail-closed provenance without .git", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "commitgate-release-provenance-"));
+  try {
+    git(root, "init", "--quiet", "--initial-branch=main");
+    await put(root, "package.json", '{"name":"archive-fixture","private":true}\n');
+    await put(root, "apps/server/src/index.ts", "export const ready = true;\n");
+    git(root, "add", ".");
+    git(root, "commit", "--quiet", "-m", "freeze archive source");
+    const manifest = await createReleaseProvenanceManifest(root);
+    await put(root, "RELEASE_PROVENANCE.json", JSON.stringify(manifest, null, 2) + "\n");
+    await rm(path.join(root, ".git"), { recursive: true, force: true });
+
+    const release = await evidenceProvenance(root);
+    assert.equal(release.sourceRevision, manifest.sourceRevision);
+    assert.equal(release.headRevision, null);
+    assert.equal(release.sourceTreeHash, manifest.sourceTreeHash);
+    assert.equal(release.workingTreeCleanAtCapture, true);
+    assert.equal(release.provenanceMode, "release-manifest");
+
+    await put(root, "apps/server/src/index.ts", "export const ready = false;\n");
+    await assert.rejects(
+      evidenceProvenance(root),
+      /SOURCE_PROVENANCE_MISMATCH:apps\/server\/src\/index\.ts/,
+    );
+
+    await put(root, "apps/server/src/index.ts", "export const ready = true;\n");
+    await put(root, "apps/server/src/extra.ts", "export const extra = true;\n");
+    await assert.rejects(evidenceProvenance(root), /SOURCE_PROVENANCE_MISMATCH:FILE_SET/);
+    await rm(path.join(root, "apps/server/src/extra.ts"));
+    await rm(path.join(root, "apps/server/src/index.ts"));
+    await assert.rejects(evidenceProvenance(root), /SOURCE_PROVENANCE_MISMATCH:FILE_SET/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("a source archive without Git or a release manifest is rejected", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "commitgate-missing-provenance-"));
+  try {
+    await put(root, "package.json", '{"name":"unbound-archive","private":true}\n');
+    await assert.rejects(evidenceProvenance(root), /SOURCE_PROVENANCE_UNAVAILABLE/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

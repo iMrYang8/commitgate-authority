@@ -287,12 +287,21 @@ const permission = reviewerPermission?.permission ?? reviewerPermission?.user?.p
 const reviewerCanRead = typeof permission === "string"
   ? ["read", "triage", "write", "maintain", "admin"].includes(permission)
   : permission === true;
+const anonymousRemote = run(
+  "git",
+  ["-c", "credential.helper=", "ls-remote", `${expectedRemote}.git`, "refs/heads/main"],
+  root,
+  30_000,
+);
+const anonymousMain = anonymousRemote.status === 0
+  ? anonymousRemote.stdout.trim().split(/\s+/)[0] ?? null
+  : null;
 const repositoryChecks = [
   {
-    id: "remote-private-repository",
+    id: "remote-public-repository",
     status: triState(
       repositoryMetadata?.nameWithOwner?.toLowerCase() === repository.toLowerCase() &&
-        repositoryMetadata?.isPrivate === true &&
+        repositoryMetadata?.isPrivate === false &&
         repositoryMetadata?.defaultBranchRef?.name === "main",
       githubUnavailable,
     ),
@@ -331,23 +340,14 @@ const repositoryChecks = [
       : "workflow metadata unavailable",
   },
   {
-    id: "reviewer-private-repository-read-access",
-    status: reviewerLogin
-      ? reviewerCanRead
-        ? "verified"
-        : reviewerPermissionQuery?.exitCode === 0 || reviewerPermissionQuery?.notFound
-          ? "failed"
-          : "unverified"
-      : "unverified",
-    detail: reviewerLogin
-      ? {
-          reviewerLogin,
-          permission: reviewerPermission?.permission ?? null,
-          queryExitCode: reviewerPermissionQuery?.exitCode ?? null,
-          queryUnavailable:
-            githubUnavailable || reviewerPermissionQuery?.unavailable === true,
-        }
-      : "Set COMMITGATE_REVIEWER_GITHUB_LOGIN or --reviewer-login to check an exact account.",
+    id: "anonymous-public-read-access",
+    status: triState(anonymousMain === remoteRevision && Boolean(remoteRevision), anonymousRemote.status !== 0),
+    detail: {
+      remote: `${expectedRemote}.git`,
+      anonymousMain,
+      remoteRevision,
+      credentialHelperDisabled: true,
+    },
   },
 ];
 const repositoryDeliveryStatus =
@@ -441,7 +441,7 @@ const report = {
     artifact: archive,
   },
   claimBoundary:
-    "Verified requires an exact source-to-sanitized-product byte binding plus either confirmed read access for a named reviewer on the private repository at the matching successful-CI revision, or a byte-for-byte git archive with a matching SHA-256 companion file. Repository visibility alone is not reviewer access; archive existence alone is not provenance.",
+    "Verified requires an exact source-to-sanitized-product byte binding plus anonymous read access to the public repository at the matching successful-CI revision, or a byte-for-byte git archive with a matching SHA-256 companion file. Repository metadata alone is not anonymous access; archive existence alone is not provenance.",
 };
 await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
 for (const item of localMirrorChecks) {

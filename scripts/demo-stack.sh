@@ -12,10 +12,11 @@ stack_id="${COMMITGATE_STACK_ID:-${compose_project}-policy-v2}"
 
 load_environment() {
   local require_credentials="${1:-true}"
-  if [[ -f .env.local ]]; then
+  local environment_file="${COMMITGATE_ENV_FILE:-.env.local}"
+  if [[ -f "$environment_file" ]]; then
     set -a
     # shellcheck disable=SC1091
-    source .env.local
+    source "$environment_file"
     set +a
   fi
   export MODEL_PROVIDER="${MODEL_PROVIDER:-ark}"
@@ -54,7 +55,7 @@ load_environment() {
   )"
   export COMMITGATE_SOURCE_REVISION
   if [[ "$require_credentials" == "true" && ( -z "$MODEL_ID" || -z "$MODEL_API_KEY" ) ]]; then
-    echo "MODEL_ID and MODEL_API_KEY are required in .env.local" >&2
+    echo "MODEL_ID and MODEL_API_KEY are required in $environment_file" >&2
     exit 1
   fi
   # `docker compose down`, logs, and status must remain usable after a key was
@@ -229,7 +230,7 @@ start() {
   # containers never retain the previous auth or relay capability in memory.
   compose up --detach --no-build --remove-orphans --force-recreate
   wait_ready
-  PATH="/opt/homebrew/bin:$PATH" npm run demo:preflight
+  npm run demo:preflight
 
   DEMO_BASE_URL="http://127.0.0.1:$port" \
     APP_AUTH_TOKEN_FILE="$secret_dir/app_auth_token" \

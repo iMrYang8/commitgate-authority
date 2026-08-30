@@ -666,12 +666,6 @@ export class TransitionWorker {
         `# ${input.name} workspace\n\nFiles created or edited by the Agent live here.\n`,
         { encoding: "utf8", mode: 0o600, flag: "wx" },
       );
-      await mkdir(path.join(staging, "services", "checkout"), { recursive: true, mode: 0o700 });
-      await writeFile(
-        path.join(staging, "services", "checkout", "config.json"),
-        '{"retryLimit":3,"feature":"checkout"}\n',
-        { encoding: "utf8", mode: 0o600, flag: "wx" },
-      );
       const manifest = await this.buildManifest(staging);
       const stateHashes = deriveWorkerStateHashes(manifest);
       const view = makeStateView({

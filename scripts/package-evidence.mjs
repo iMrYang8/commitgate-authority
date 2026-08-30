@@ -69,6 +69,10 @@ const copy = async (sourcePath, relative) => {
 
 try {
   await mkdir(staging, { recursive: true });
+  const releaseProvenance = path.join(root, "RELEASE_PROVENANCE.json");
+  if (await stat(releaseProvenance).catch(() => null)) {
+    await copy(releaseProvenance, path.join("provenance", "RELEASE_PROVENANCE.json"));
+  }
   const reportNames = [
     "adversarial-report.json",
     "authority-report.json",

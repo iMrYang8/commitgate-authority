@@ -6,27 +6,26 @@
 cp .env.local.example .env.local
 chmod 600 .env.local
 # 填写 MODEL_ID 与 MODEL_API_KEY
-PATH=/opt/homebrew/bin:$PATH npm run demo
+npm run demo
 ```
 
 另一个终端确认：
 
 ```bash
-PATH=/opt/homebrew/bin:$PATH npm run demo:status
+npm run demo:status
 ```
 
 需要调用受保护 API 时，只复制临时凭据，不在终端打印：
 
 ```bash
-PATH=/opt/homebrew/bin:$PATH npm run demo:auth
+npm run demo:auth
 ```
 
-## 0:00–0:20：问题与 HEAD
+## 0:00–0:20：零配置创建 Agent
 
 讲解：
 
-> Coding Agent 完成任务不代表它写出的文件可以直接成为下一轮事实。CommitGate 把修改先变成 proposal；只有 trusted evidence 和一次性 permit 都成立，HEAD 才推进。
-> 这就是我们的一句话不变量：**No evidence, no effect.**
+> 我现在用原有的 Create Agent 页面新建一个 Agent，没有配置任何专用提示词或每 Agent 策略。平台上的每个 Agent 都自动获得 CommitGate：修改先进入隔离 proposal，只有 trusted evidence 和一次性 permit 都成立，HEAD 才推进。**No evidence, no effect.**
 
 画面只突出：
 
@@ -40,9 +39,8 @@ HEAD gN / View H0
 receipt 代替）。为了把 Provider 延迟留在 45 秒以内，使用小型业务修改：
 
 ```text
-Use the shell tool. Write READY to result.txt and update
-services/checkout/config.json to {"feature":"checkout","enabled":true}.
-Do not modify deployment-protected paths or AGENTS.md. Stop after the writes.
+Create services/checkout/config.json with a small checkout configuration and
+create result.txt containing COMMITGATE_OK.
 ```
 
 完成后展示：
@@ -64,6 +62,10 @@ HEAD gN/H0
 platform-owned trusted bundle。
 
 再请求修改真实部署配置 `infra/production.yaml`：
+
+```text
+Change infra/production.yaml to replicas: 0 and create rejected-marker.txt.
+```
 
 ```text
 Decision: Rejected / QUARANTINED
@@ -111,11 +113,11 @@ Rollback、完整 kill/restart matrix、Receipt 签名和性能数据留在 Q&A/
 ## 录像验收
 
 ```bash
-export COMMITGATE_DEMO_REVIEWER_ID=REVIEWER_ID
-export COMMITGATE_DEMO_REVIEWER_KEY_ID=REVIEWER_ED25519_KEY_ID
-PATH=/opt/homebrew/bin:$PATH npm run demo:verify-video -- \
+npm run demo:verify-video -- \
   --file /ABSOLUTE/PATH/CommitGate-3min.mp4 \
-  --review-attestation /ABSOLUTE/PATH/external-video-review.json
+  --manual-narration-review \
+  --manual-agent-run-review \
+  --manual-secret-review
 ```
 
 要求：
@@ -127,14 +129,14 @@ PATH=/opt/homebrew/bin:$PATH npm run demo:verify-video -- \
 - 不显示 `.env.local`、API key、完整 secret 或终端环境；
 - 报告写入 `eval/evidence/demo-video-report.json`。
 
-这个工具机械确认时长、分辨率和音视频流。它不会根据一个命令行
-勾选把“真人讲解”“真实 Agent Run”或“全片无密钥”写成 `verified`。内容结论
-只接受外部 reviewer 的 Ed25519 签名 attestation：绑定视频 SHA-256、reviewer
-id/method/time 与三个内容检查，并且签名 key fingerprint 由项目外部单独
-提供。没有该 attestation 时，项目自产报告保持 `unverified`。
+工具机械检查时长、分辨率和音视频流。三个显式 manual flag 记录
+提交者已完整观看并检查真人讲解、可见的真实 Agent Run 与敏感信息。
+这可以使 `officialSubmissionReady=true`。外部 reviewer 的 Ed25519 签名
+attestation 仍可用于将 `externalReviewVerified` 提升为 `verified`，但不再
+阻塞官方提交。
 
 结束后：
 
 ```bash
-PATH=/opt/homebrew/bin:$PATH npm run demo:down
+npm run demo:down
 ```
