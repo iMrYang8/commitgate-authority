@@ -13,10 +13,12 @@ import {
   BROWSER_CLEAN_CLONE_ARTIFACT_KINDS,
   BROWSER_CLEAN_CLONE_PRECONDITION_IDS,
   BROWSER_CLEAN_CLONE_STEP_IDS,
+  REAL_PROVIDER_E2E_SCENARIO_IDS,
   TERMINAL_RECEIPT_PROOF_CONTRACT,
   declaredCurrentProviderE2EStatus,
   validateBrowserCleanCloneContract,
   validateBrowserReceiptArtifactBinding,
+  validateRealProviderE2EContract,
   validateTerminalReceiptProofSetContract,
 } from "./receipt-proof-set-contract.mjs";
 import {
@@ -623,6 +625,36 @@ test("real Provider evaluator binds its frozen source revision into its isolated
     evaluator,
     /path\.join\(root,\s*"eval",\s*"real-report\.json"\)/s,
   );
+  for (const id of REAL_PROVIDER_E2E_SCENARIO_IDS) {
+    assert.match(evaluator, new RegExp(`id: ["']${id}["']`));
+  }
+});
+
+test("real Provider compatibility and browser frontend remain separate contracts", () => {
+  const providerId = "ark";
+  const report = {
+    schemaVersion: 2,
+    kind: "real-provider-evaluation",
+    status: "verified",
+    providerE2EVerified: "verified",
+    provider: {
+      providerId,
+      resolvedModel: "resolved-model",
+      credentialsRecorded: false,
+    },
+    provenance: {
+      realProviderRequest: true,
+      realCodexContainer: true,
+      frontendAssetServed: false,
+    },
+    scenario: REAL_PROVIDER_E2E_SCENARIO_IDS.map((id) => ({
+      id,
+      status: "verified",
+    })),
+  };
+  assert.equal(validateRealProviderE2EContract(report, { providerId }).valid, true);
+  report.scenario[0] = { id: "frontend-served", status: "verified" };
+  assert.equal(validateRealProviderE2EContract(report, { providerId }).valid, false);
 });
 
 test("Docker recovery evaluator exercises the frozen product Worker image", async () => {

@@ -21,10 +21,16 @@ export const TERMINAL_RECEIPT_PROOF_CONTRACT: Readonly<
 export const BROWSER_CLEAN_CLONE_STEP_IDS: readonly string[];
 export const BROWSER_CLEAN_CLONE_PRECONDITION_IDS: readonly string[];
 export const BROWSER_CLEAN_CLONE_ARTIFACT_KINDS: readonly string[];
+export const REAL_PROVIDER_E2E_SCENARIO_IDS: readonly string[];
 
 export function declaredCurrentProviderE2EStatus(
   report: unknown,
 ): "verified" | "failed" | "unverified";
+
+export function validateRealProviderE2EContract(
+  report: unknown,
+  expected?: { providerId?: string | null },
+): { valid: boolean; reason: string | null };
 
 export function validateTerminalReceiptProofSetContract(
   proofSet: unknown,

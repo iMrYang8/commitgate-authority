@@ -10,6 +10,7 @@ import {
   executionIdentity,
   parseFlag,
 } from "./evidence-utils.mjs";
+import { REAL_PROVIDER_E2E_SCENARIO_IDS } from "./receipt-proof-set-contract.mjs";
 import { removeEvaluatorTempTree } from "./evaluator-temp-cleanup.js";
 
 const root = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
@@ -428,7 +429,16 @@ try {
     nextGeneration: rollback.agent?.stateGeneration ?? rollback.version?.generation ?? null,
   });
 
-  const status = scenario.every((item) => item.status === "verified") ? "verified" : "failed";
+  const scenarioIds = scenario.map((item) => item.id);
+  const scenarioById = new Map(scenario.map((item) => [item.id, item]));
+  const status =
+    scenario.length === REAL_PROVIDER_E2E_SCENARIO_IDS.length &&
+    new Set(scenarioIds).size === scenarioIds.length &&
+    REAL_PROVIDER_E2E_SCENARIO_IDS.every(
+      (id) => scenarioById.get(id)?.status === "verified",
+    )
+      ? "verified"
+      : "failed";
   const report = {
     schemaVersion: 2,
     kind: "real-provider-evaluation",

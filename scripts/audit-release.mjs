@@ -12,8 +12,8 @@ import { activeEvidenceReportInventory } from "./evidence-inventory.mjs";
 import { validateInvariantReportContract } from "./invariant-contract.mjs";
 import { validatePerformanceReportContract } from "./performance-contract.mjs";
 import {
-  declaredCurrentProviderE2EStatus,
   validateBrowserCleanCloneContract,
+  validateRealProviderE2EContract,
   validateTerminalReceiptProofSetContract,
 } from "./receipt-proof-set-contract.mjs";
 import { verifyDemoVideoReviewAttestation } from "./video-review-attestation.mjs";
@@ -195,15 +195,9 @@ async function validateSemantics(file, parsed) {
     }
   }
   if (file === providerEvidenceFile) {
-    if (
-      parsed.schemaVersion !== 2 ||
-      parsed.kind !== "real-provider-evaluation" ||
-      parsed.provider?.providerId !== browserProviderId ||
-      parsed.provider?.credentialsRecorded !== false ||
-      declaredCurrentProviderE2EStatus(parsed) !== "verified" ||
-      parsed.provenance?.realProviderRequest !== true ||
-      parsed.provenance?.realCodexContainer !== true
-    ) {
+    if (!validateRealProviderE2EContract(parsed, {
+      providerId: browserProviderId,
+    }).valid) {
       return "real Provider report does not match the browser Provider identity";
     }
   }

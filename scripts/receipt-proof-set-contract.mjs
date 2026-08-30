@@ -46,6 +46,54 @@ export function declaredCurrentProviderE2EStatus(report) {
     : "unverified";
 }
 
+export const REAL_PROVIDER_E2E_SCENARIO_IDS = Object.freeze([
+  "provider-api-ready",
+  "real-positive-commit",
+  "provider-identity-bound",
+  "real-protected-quarantine",
+  "fresh-session-follow-up",
+  "manual-history-rollback",
+]);
+
+/**
+ * Validate the Provider compatibility evaluator without pretending that its
+ * isolated API adapter served the browser frontend. Browser/product topology
+ * evidence is a separate clean-clone contract and is combined by the release
+ * checklist.
+ */
+export function validateRealProviderE2EContract(
+  report,
+  { providerId = null } = {},
+) {
+  const scenarios = Array.isArray(report?.scenario) ? report.scenario : [];
+  const ids = scenarios.map((entry) => entry?.id);
+  const byId = new Map(scenarios.map((entry) => [entry?.id, entry]));
+  const exactScenarioSet =
+    scenarios.length === REAL_PROVIDER_E2E_SCENARIO_IDS.length &&
+    new Set(ids).size === ids.length &&
+    REAL_PROVIDER_E2E_SCENARIO_IDS.every(
+      (id) => byId.get(id)?.status === "verified",
+    );
+  const valid =
+    report?.schemaVersion === 2 &&
+    report?.kind === "real-provider-evaluation" &&
+    report?.status === "verified" &&
+    (providerId === null || report?.provider?.providerId === providerId) &&
+    report?.provider?.credentialsRecorded === false &&
+    typeof report?.provider?.resolvedModel === "string" &&
+    report.provider.resolvedModel.length > 0 &&
+    report?.provenance?.realProviderRequest === true &&
+    report?.provenance?.realCodexContainer === true &&
+    declaredCurrentProviderE2EStatus(report) === "verified" &&
+    exactScenarioSet;
+  return {
+    valid,
+    reason: valid
+      ? null
+      : "real Provider report is incomplete or does not match the fixed compatibility scenario contract",
+  };
+}
+
 export const TERMINAL_RECEIPT_PROOF_CONTRACT = Object.freeze({
   "positive-commit": Object.freeze({ decision: "COMMITTED", rollback: false }),
   "protected-path-quarantine": Object.freeze({

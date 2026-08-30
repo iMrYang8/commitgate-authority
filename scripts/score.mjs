@@ -10,8 +10,8 @@ import {
   sourceTreeHash,
 } from "./evidence-utils.mjs";
 import {
-  declaredCurrentProviderE2EStatus,
   validateBrowserCleanCloneContract,
+  validateRealProviderE2EContract,
 } from "./receipt-proof-set-contract.mjs";
 import { validateInvariantReportContract } from "./invariant-contract.mjs";
 import { validatePerformanceReportContract } from "./performance-contract.mjs";
@@ -161,29 +161,12 @@ const claimStatus = (report, kind, id) => {
 
 function providerStatus(providerId) {
   const report = reports[providerId];
-  return semanticStatus(report, "real-provider-evaluation", 2, (candidate) => {
-    const required = [
-      "frontend-served",
-      "provider-identity-bound",
-      "real-positive-commit",
-      "real-protected-quarantine",
-      "fresh-session-follow-up",
-      "manual-history-rollback",
-    ];
-    const byId = new Map(
-      (candidate.scenario ?? []).map((entry) => [entry.id, entry]),
-    );
-    return (
-      candidate.provider?.providerId === providerId &&
-      candidate.provider?.credentialsRecorded === false &&
-      typeof candidate.provider?.resolvedModel === "string" &&
-      candidate.provider.resolvedModel.length > 0 &&
-      candidate.provenance?.realProviderRequest === true &&
-      candidate.provenance?.realCodexContainer === true &&
-      declaredCurrentProviderE2EStatus(candidate) === "verified" &&
-      required.every((id) => byId.get(id)?.status === "verified")
-    );
-  });
+  return semanticStatus(
+    report,
+    "real-provider-evaluation",
+    2,
+    (candidate) => validateRealProviderE2EContract(candidate, { providerId }).valid,
+  );
 }
 
 const providerStatuses = {
