@@ -8,7 +8,7 @@ state_dir="$repo_dir/.demo-state"
 secret_dir="$state_dir/secrets"
 port="${PUBLIC_PORT:-${PORT:-3000}}"
 compose_project="${COMMITGATE_COMPOSE_PROJECT:-commitgate}"
-stack_id="${COMMITGATE_STACK_ID:-$compose_project}"
+stack_id="${COMMITGATE_STACK_ID:-${compose_project}-policy-v2}"
 
 load_environment() {
   local require_credentials="${1:-true}"
@@ -36,6 +36,7 @@ load_environment() {
   fi
   export MODEL_BASE_URL
   export MODEL_WIRE_API="${MODEL_WIRE_API:-responses}"
+  export COMMITGATE_POLICY_PROFILE="${COMMITGATE_POLICY_PROFILE:-deployment-protected}"
   export PUBLIC_PORT="$port"
   export COMMITGATE_COMPOSE_PROJECT="$compose_project"
   export COMMITGATE_STACK_ID="$stack_id"

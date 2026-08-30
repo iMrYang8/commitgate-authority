@@ -188,11 +188,13 @@ describe("TransitionWorker", () => {
     })).toThrow(/40-hex COMMITGATE_SOURCE_REVISION/);
     expect(() => loadTransitionWorkerConfig({
       NODE_ENV: "production",
+      COMMITGATE_POLICY_PROFILE: "deployment-protected",
       COMMITGATE_SOURCE_REVISION: "a".repeat(40),
       BROKER_ATTESTATION_KEY: "k".repeat(32),
     })).toThrow(/pinned trusted bundle/);
     expect(loadTransitionWorkerConfig({
       NODE_ENV: "production",
+      COMMITGATE_POLICY_PROFILE: "deployment-protected",
       COMMITGATE_SOURCE_REVISION: "a".repeat(40),
       BROKER_ATTESTATION_KEY: "k".repeat(32),
       COMMITGATE_EXPECTED_CHECK_BUNDLE_HASH: "b".repeat(64),
@@ -203,6 +205,32 @@ describe("TransitionWorker", () => {
       sourceRevision: "a".repeat(40),
       requireVerifiedSourceRevision: true,
       requireRuntimeTeardownHandshake: true,
+      policyProfile: "deployment-protected",
+    });
+  });
+
+  it("pins a policy profile to a control volume and rejects silent profile switches", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "commitgate-worker-policy-marker-"));
+    roots.push(root);
+    const baseConfig: TransitionWorkerConfig = {
+      workspaceRoot: path.join(root, "workspaces"),
+      controlRoot: path.join(root, "control"),
+      inboxRoot: path.join(root, "inbox"),
+      socketPath: path.join(root, "run", "worker.sock"),
+      policyProfile: "workspace-default",
+    };
+    const first = new TransitionWorker(baseConfig);
+    await first.initialize();
+    expect(first.health()).toMatchObject({
+      policyProfile: "workspace-default",
+      policyVersion: 1,
+    });
+    const switched = new TransitionWorker({
+      ...baseConfig,
+      policyProfile: "deployment-protected",
+    });
+    await expect(switched.initialize()).rejects.toMatchObject({
+      code: "POLICY_PROFILE_MISMATCH",
     });
   });
 
@@ -457,7 +485,7 @@ describe("TransitionWorker", () => {
       ...deriveWorkerStateHashes(manifest),
       sessionEpoch: 2,
       agentConfigVersion: 3,
-      policyVersion: 4,
+      policyVersion: 1,
     });
     const adopted = await worker.adoptLegacyState({
       agentId: "agent-preserved",

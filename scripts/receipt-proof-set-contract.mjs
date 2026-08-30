@@ -12,6 +12,8 @@ export const BROWSER_CLEAN_CLONE_STEP_IDS = Object.freeze([
   "provider-identity-bound",
   "stale-permit-replay-rejected",
   "browser-manual-rollback",
+  "browser-second-agent-committed",
+  "cross-agent-reference-rejected",
 ]);
 
 export const BROWSER_CLEAN_CLONE_PRECONDITION_IDS = Object.freeze([
@@ -26,6 +28,9 @@ export const BROWSER_CLEAN_CLONE_ARTIFACT_KINDS = Object.freeze([
   "playwright-trace",
   "playwright-video",
   "final-screenshot",
+  "committed-exact-proposal-screenshot",
+  "quarantined-no-effect-screenshot",
+  "permit-replay-head-unchanged-screenshot",
   "receipt-proof-bundle",
   "receipt-proof-key-id",
   "rollback-receipt-proof-bundle",
@@ -102,6 +107,7 @@ export const TERMINAL_RECEIPT_PROOF_CONTRACT = Object.freeze({
   }),
   "provider-or-verifier-abort": Object.freeze({ decision: "ABORTED", rollback: false }),
   "fresh-follow-up-commit": Object.freeze({ decision: "COMMITTED", rollback: false }),
+  "second-agent-commit": Object.freeze({ decision: "COMMITTED", rollback: false }),
   "manual-rollback": Object.freeze({ decision: "COMMITTED", rollback: true }),
 });
 

@@ -114,11 +114,14 @@ for (const sizeBytes of sizes) {
     const exportedRoot = path.join(config.inboxRoot, exported.relativeSubpath);
     const verifierManifest = await buildWorkerManifest(exportedRoot, manifestOptions);
     const result = await readFile(path.join(exportedRoot, "result.txt"), "utf8");
-    const protectedValue = await readFile(path.join(exportedRoot, "protected.txt"), "utf8");
+    const checkoutConfig = await readFile(
+      path.join(exportedRoot, "services", "checkout", "config.json"),
+      "utf8",
+    );
     if (
       verifierManifest.hash !== artifactHash ||
       result !== "COMMITGATE_OK\n" ||
-      protectedValue !== "TRUSTED_BASELINE\n"
+      !checkoutConfig.includes('"retryLimit":3')
     ) {
       throw new Error("BENCHMARK_DETERMINISTIC_PROBE_FAILED");
     }

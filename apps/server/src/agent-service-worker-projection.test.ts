@@ -362,6 +362,10 @@ async function makeService(
       manifestSchemaVersion: 2,
       filesystemProfile: "linux-strong",
       signingKeyId: "0123456789abcdef01234567",
+      policyProfile: "workspace-default",
+      policyVersion: 1,
+      policyHash: "c".repeat(64),
+      checkSpecHash: "d".repeat(64),
       authority: "transition-worker",
     }),
     recover: async () => structuredClone(state.projection),
@@ -429,6 +433,13 @@ describe("AgentService Worker authority projection recovery", () => {
       proposalId: `proposal-${state.run.id}`,
     });
     expect(first.service.getVersions(state.agent.id)).toHaveLength(2);
+    await expect(first.service.getCommitGateReceipt(state.run.id)).resolves.toMatchObject({
+      schemaVersion: 3,
+      policyProfile: "workspace-default",
+      policyVersion: 1,
+      policyHash: "c".repeat(64),
+      checkSpecHash: "d".repeat(64),
+    });
 
     const afterFirstStart = first.store.snapshot();
     const second = await makeService(state, first.root);

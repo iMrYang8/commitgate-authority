@@ -26,3 +26,30 @@ jobs:
       - run: npm run check:secrets
       - run: node scripts/check-public-copy.mjs
       - run: python3 scripts/check-drawio.py
+
+  linux-topology:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      MODEL_PROVIDER: ark
+      MODEL_BASE_URL: http://127.0.0.1:1/v1
+      MODEL_ID: ci-placeholder
+      COMMITGATE_CI_MODEL_TOKEN: ci-placeholder-not-a-provider-secret
+      MODEL_WIRE_API: responses
+      COMMITGATE_POLICY_PROFILE: deployment-protected
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install Linux filesystem metadata tools
+        run: sudo apt-get update && sudo apt-get install -y attr acl
+      - name: Configure non-secret offline model placeholder
+        run: printf 'MODEL_%s_KEY=%s\n' API "$COMMITGATE_CI_MODEL_TOKEN" >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: npm run eval:filesystem:linux
+      - run: npm run demo:smoke
+      - run: npm run audit:topology
+      - if: always()
+        run: npm run demo:down

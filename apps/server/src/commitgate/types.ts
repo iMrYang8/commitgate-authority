@@ -244,8 +244,8 @@ export interface PreparedCandidate {
 }
 
 export interface GateReceipt {
-  /** v2 makes the state transition explicit. v1 remains readable as legacy evidence. */
-  schemaVersion: 1 | 2;
+  /** v3 additionally binds the deployment-selected Worker policy profile. */
+  schemaVersion: 1 | 2 | 3;
   runId: string;
   agentId: string;
   phase: "PENDING_PROMOTION" | "PENDING_DISPOSITION" | "TERMINAL";
@@ -257,6 +257,9 @@ export interface GateReceipt {
   patchHash: string | null;
   finalSnapshotHash: string;
   policyHash: string;
+  policyProfile?: "workspace-default" | "deployment-protected";
+  policyVersion?: number;
+  checkSpecHash?: string;
   evidence: Record<string, EvidenceCoverage>;
   checks: CheckResult[];
   changedPaths: string[];

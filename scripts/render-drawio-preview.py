@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import base64
 import html
+import hashlib
 import re
 import textwrap
 import xml.etree.ElementTree as ET
@@ -51,7 +52,8 @@ def geometry(cell: ET.Element) -> tuple[float, float, float, float]:
 def render(source: Path, target: Path) -> None:
     root = ET.parse(source).getroot()
     pages = root.findall("diagram")
-    page_width = 1640
+    first_model = pages[0].find("mxGraphModel") if pages else None
+    page_width = int(float(first_model.get("pageWidth", "1760"))) if first_model is not None else 1760
     page_gap = 45
     rendered_pages: list[str] = []
     canvas_height = 0
@@ -83,7 +85,8 @@ def render(source: Path, target: Path) -> None:
         vertices = [cell for cell in cells.values() if cell.get("vertex") == "1"]
         edges = [cell for cell in cells.values() if cell.get("edge") == "1"]
         max_y = max((absolute(cell.get("id", ""))[1] + absolute(cell.get("id", ""))[3] for cell in vertices), default=700)
-        page_height = max(720, int(max_y + 65))
+        declared_height = int(float(model.get("pageHeight", "720")))
+        page_height = max(declared_height, int(max_y + 20))
         offset_y = canvas_height
         canvas_height += page_height + (page_gap if page_index < len(pages) - 1 else 0)
 
@@ -222,9 +225,13 @@ def render(source: Path, target: Path) -> None:
         parts.append("</g>")
         rendered_pages.append("\n".join(parts))
 
-    encoded_source = base64.b64encode(source.read_bytes()).decode("ascii")
+    source_bytes = source.read_bytes()
+    encoded_source = base64.b64encode(source_bytes).decode("ascii")
+    source_sha256 = hashlib.sha256(source_bytes).hexdigest()
     svg = f'''<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="{page_width}" height="{canvas_height}" viewBox="0 0 {page_width} {canvas_height}">
+<svg xmlns="http://www.w3.org/2000/svg" width="{page_width}" height="{canvas_height}" viewBox="0 0 {page_width} {canvas_height}" role="img" aria-labelledby="title desc" data-drawio-sha256="{source_sha256}">
+  <title id="title">CommitGate — Verified Workspace Transactions</title>
+  <desc id="desc">No evidence, no effect. Verified immutable proposal promotion and non-effect disposition.</desc>
   <metadata id="drawio-source" data-encoding="base64">{encoded_source}</metadata>
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">

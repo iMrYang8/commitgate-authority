@@ -10,6 +10,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { hashManifestEntries } from "../commitgate/manifest.js";
+import { pathMatches } from "../commitgate/policy.js";
 import { canonicalJson, sha256Canonical } from "../commitgate/protocol.js";
 import {
   verifyAuthorityReceiptProof,
@@ -20,6 +21,7 @@ import {
 import { computeStateViewId, EMPTY_STATE_HASH, makeStateView } from "../state-view.js";
 import { TransitionEventLog, type TransitionEvent } from "../transition-log.js";
 import type { StateViewRef } from "../types.js";
+import type { CommitGatePolicy } from "../commitgate/types.js";
 import type {
   ApplyPromotionParams,
   ApplyRollbackParams,
@@ -62,7 +64,12 @@ import {
 } from "./evidence-blob-store.js";
 import { WorkerSigningKeyStore } from "./signing-key-store.js";
 import {
+  DEFAULT_WORKER_POLICY_PROFILE,
+  parseWorkerPolicyProfile,
+  resolveWorkerGateContract,
   validateWorkerEvidenceContract,
+  type WorkerGateContract,
+  type WorkerPolicyProfile,
 } from "../worker-gate-policy.js";
 import {
   verifyBrokerAttestation,
@@ -90,6 +97,8 @@ export interface TransitionWorkerConfig {
   /** Production accepts Runtime and Verifier facts only from the keyed Broker. */
   requireBrokerAttestations?: boolean;
   brokerAttestationKey?: string;
+  /** Deployment-selected, Worker-owned policy pack. Never accepted over RPC. */
+  policyProfile?: WorkerPolicyProfile;
 }
 
 export interface WorkerReceiptSigner {
@@ -117,6 +126,10 @@ export interface WorkerHealth {
   filesystemProfile: "linux-strong" | "portable-development";
   /** Stable public-key fingerprint; safe to pin before retrieving a receipt proof. */
   signingKeyId: string;
+  policyProfile: WorkerPolicyProfile;
+  policyVersion: number;
+  policyHash: string;
+  checkSpecHash: string;
 }
 
 export interface PreparedRunRef {
@@ -211,6 +224,7 @@ export function deriveWorkerStateHashes(manifest: WorkerManifest): WorkerStateHa
 export function inspectProposalDiff(
   base: WorkerManifest,
   candidate: WorkerManifest,
+  policy: CommitGatePolicy = resolveWorkerGateContract().policy,
 ): { changedPaths: string[]; staticFailures: string[] } {
   const before = new Map(base.entries.map((entry) => [entry.path, entry]));
   const after = new Map(candidate.entries.map((entry) => [entry.path, entry]));
@@ -221,7 +235,7 @@ export function inspectProposalDiff(
   const changedFilePaths = changedPaths.filter(
     (entryPath) => before.get(entryPath)?.type === "file" || after.get(entryPath)?.type === "file",
   );
-  if (changedFilePaths.length > 100) failures.push("CHANGED_FILE_BUDGET_EXCEEDED");
+  if (changedFilePaths.length > policy.maxChangedFiles) failures.push("CHANGED_FILE_BUDGET_EXCEEDED");
   let changedBytes = 0;
   for (const entryPath of changedPaths) {
     const beforeEntry = before.get(entryPath);
@@ -233,18 +247,18 @@ export function inspectProposalDiff(
       // Deletion and shrink are effects too. Charging only the candidate size
       // would let a proposal erase a large authoritative file at zero cost.
       changedBytes += affectedBytes;
-      if (affectedBytes > 262_144) {
+      if (affectedBytes > policy.maxSingleFileBytes) {
         failures.push(`SINGLE_FILE_BUDGET_EXCEEDED:${entryPath}`);
       }
     }
-    if (entryPath === "protected.txt" || entryPath.startsWith("protected.txt/")) {
-      failures.push("PROTECTED_PATH_CHANGED:protected.txt");
+    if (pathMatches(entryPath, policy.protectedPaths)) {
+      failures.push(`PROTECTED_PATH_CHANGED:${entryPath}`);
     }
-    if (entryPath === "AGENTS.md" || entryPath.startsWith("AGENTS.md/")) {
-      failures.push("PLATFORM_MANAGED_PATH_CHANGED:AGENTS.md");
+    if (pathMatches(entryPath, policy.platformManagedPaths)) {
+      failures.push(`PLATFORM_MANAGED_PATH_CHANGED:${entryPath}`);
     }
   }
-  if (changedBytes > 1_048_576) failures.push("CHANGED_BYTE_BUDGET_EXCEEDED");
+  if (changedBytes > policy.maxChangedBytes) failures.push("CHANGED_BYTE_BUDGET_EXCEEDED");
   return { changedPaths, staticFailures: [...new Set(failures)] };
 }
 
@@ -384,6 +398,7 @@ export class TransitionWorker {
   private readonly exchangeRefTails = new Map<string, Promise<void>>();
   private readonly signingKeys: WorkerReceiptSigner;
   private readonly manifestOptions: WorkerManifestOptions;
+  readonly gateContract: WorkerGateContract;
 
   constructor(
     readonly config: TransitionWorkerConfig,
@@ -393,6 +408,9 @@ export class TransitionWorker {
     this.projections = new WorkerProjectionStore(config.controlRoot);
     this.evidenceBlobs = new EvidenceBlobStore(config.controlRoot);
     this.manifestOptions = dependencies.manifestOptions ?? {};
+    this.gateContract = resolveWorkerGateContract(
+      config.policyProfile ?? DEFAULT_WORKER_POLICY_PROFILE,
+    );
     this.signingKeys =
       dependencies.signingKeyStore ?? new WorkerSigningKeyStore(config.controlRoot);
   }
@@ -404,6 +422,7 @@ export class TransitionWorker {
       mkdir(this.config.inboxRoot, { recursive: true, mode: 0o700 }),
       mkdir(path.dirname(this.config.socketPath), { recursive: true, mode: 0o750 }),
     ]);
+    await this.ensurePolicyProfileMarker();
     await Promise.all([
       this.signingKeys.initialize(),
       this.evidenceBlobs.initialize(),
@@ -436,6 +455,43 @@ export class TransitionWorker {
     await this.gcStartupOrphans(agents);
   }
 
+  private async ensurePolicyProfileMarker(): Promise<void> {
+    const markerPath = path.join(this.config.controlRoot, "policy-profile.json");
+    const expected = {
+      schemaVersion: 1,
+      profile: this.gateContract.profile,
+      policyVersion: this.gateContract.policyVersion,
+      policyHash: this.gateContract.policyHash,
+      checkSpecHash: this.gateContract.checkSpecHash,
+    };
+    try {
+      const stored = JSON.parse(await readFile(markerPath, "utf8"));
+      if (canonicalJson(stored) !== canonicalJson(expected)) {
+        throw new WorkerFault(
+          "POLICY_PROFILE_MISMATCH",
+          "Control volume is pinned to a different CommitGate policy profile",
+        );
+      }
+      return;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+    const existing = (await readdir(this.config.controlRoot)).filter(
+      (name) => name !== "policy-profile.json",
+    );
+    if (existing.length > 0) {
+      throw new WorkerFault(
+        "POLICY_PROFILE_MISMATCH",
+        "Unmarked legacy control state requires a new versioned control volume",
+      );
+    }
+    await writeFile(markerPath, canonicalJson(expected) + "\n", {
+      encoding: "utf8",
+      mode: 0o600,
+      flag: "wx",
+    });
+  }
+
   health(): WorkerHealth {
     const signingKeyId = this.signingKeys.keyId;
     if (!/^[a-f0-9]{24}$/.test(signingKeyId)) {
@@ -454,6 +510,10 @@ export class TransitionWorker {
           ? "linux-strong"
           : "portable-development",
       signingKeyId,
+      policyProfile: this.gateContract.profile,
+      policyVersion: this.gateContract.policyVersion,
+      policyHash: this.gateContract.policyHash,
+      checkSpecHash: this.gateContract.checkSpecHash,
     };
   }
 
@@ -606,11 +666,12 @@ export class TransitionWorker {
         `# ${input.name} workspace\n\nFiles created or edited by the Agent live here.\n`,
         { encoding: "utf8", mode: 0o600, flag: "wx" },
       );
-      await writeFile(path.join(staging, "protected.txt"), "TRUSTED_BASELINE\n", {
-        encoding: "utf8",
-        mode: 0o600,
-        flag: "wx",
-      });
+      await mkdir(path.join(staging, "services", "checkout"), { recursive: true, mode: 0o700 });
+      await writeFile(
+        path.join(staging, "services", "checkout", "config.json"),
+        '{"retryLimit":3,"feature":"checkout"}\n',
+        { encoding: "utf8", mode: 0o600, flag: "wx" },
+      );
       const manifest = await this.buildManifest(staging);
       const stateHashes = deriveWorkerStateHashes(manifest);
       const view = makeStateView({
@@ -620,7 +681,7 @@ export class TransitionWorker {
         ...stateHashes,
         sessionEpoch: input.sessionEpoch,
         agentConfigVersion: input.agentConfigVersion,
-        policyVersion: input.policyVersion,
+        policyVersion: this.gateContract.policyVersion,
       });
       const intent = await this.log.append({
         agentId: input.agentId,
@@ -651,9 +712,13 @@ export class TransitionWorker {
       assertView(input.adoptedView);
       if (
         input.adoptedView.agentId !== input.agentId ||
-        input.adoptedView.liveStateHash !== input.expectedWorkspaceHash
+        input.adoptedView.liveStateHash !== input.expectedWorkspaceHash ||
+        input.adoptedView.policyVersion !== this.gateContract.policyVersion
       ) {
-        throw new WorkerFault("LEGACY_STATE_CONFLICT", "Legacy StateView does not bind the import");
+        throw new WorkerFault(
+          "LEGACY_STATE_CONFLICT",
+          "Legacy StateView does not bind the import or selected policy profile",
+        );
       }
       const source = input.legacyAgentId
         ? this.legacyWorkspacePath(input.legacyAgentId)
@@ -1628,7 +1693,7 @@ export class TransitionWorker {
         throw new WorkerFault("ARTIFACT_HASH_MISMATCH", "Inbox artifact hash differs from request");
       }
       const baseManifest = await this.buildManifest(this.workspacePath(input.agentId));
-      const inspection = inspectProposalDiff(baseManifest, sourceManifest);
+      const inspection = inspectProposalDiff(baseManifest, sourceManifest, this.gateContract.policy);
       const proposalRoot = this.proposalPath(input.agentId, input.proposalId);
       const temporary = this.proposalImportStagingPath(input.agentId, input.proposalId);
       await mkdir(path.dirname(proposalRoot), { recursive: true, mode: 0o700 });
@@ -3310,11 +3375,15 @@ export class TransitionWorker {
       terminalReceipt.dispositionBaseGeneration != null &&
       terminalReceipt.dispositionBaseWorkspaceHash != null
         ? {
-            schemaVersion: 2,
+            schemaVersion: 3,
             ...receiptCommon,
             dispositionBaseViewId: terminalReceipt.dispositionBaseViewId,
             dispositionBaseGeneration: terminalReceipt.dispositionBaseGeneration,
             dispositionBaseWorkspaceHash: terminalReceipt.dispositionBaseWorkspaceHash,
+            policyProfile: this.gateContract.profile,
+            policyVersion: this.gateContract.policyVersion,
+            policyHash: this.gateContract.policyHash,
+            checkSpecHash: this.gateContract.checkSpecHash,
           }
         : { schemaVersion: 1, ...receiptCommon };
     const bundle = this.signingKeys.sign(
@@ -3688,7 +3757,7 @@ export class TransitionWorker {
         ...(this.config.expectedResourcePolicyHash
           ? { expectedResourcePolicyHash: this.config.expectedResourcePolicyHash }
           : {}),
-      });
+      }, this.gateContract);
       if (contractFailure) {
         throw new WorkerFault(contractFailure.code, contractFailure.message);
       }
@@ -4006,11 +4075,17 @@ export function loadTransitionWorkerConfig(
   const requireVerifiedSourceRevision = environment.NODE_ENV === "production";
   const requireRuntimeTeardownHandshake = environment.NODE_ENV === "production";
   const requireBrokerAttestations = environment.NODE_ENV === "production";
+  const policyProfile = parseWorkerPolicyProfile(
+    environment.COMMITGATE_POLICY_PROFILE ?? DEFAULT_WORKER_POLICY_PROFILE,
+  );
   const brokerAttestationKey = environment.BROKER_ATTESTATION_KEY?.trim() || undefined;
   if (requireVerifiedSourceRevision && !/^[a-f0-9]{40}$/.test(sourceRevision)) {
     throw new Error(
       "Production Transition Worker requires a full 40-hex COMMITGATE_SOURCE_REVISION",
     );
+  }
+  if (environment.NODE_ENV === "production" && environment.COMMITGATE_POLICY_PROFILE === undefined) {
+    throw new Error("Production Transition Worker requires explicit COMMITGATE_POLICY_PROFILE");
   }
   if (
     requireBrokerAttestations &&
@@ -4079,6 +4154,7 @@ export function loadTransitionWorkerConfig(
     requireVerifiedSourceRevision,
     requireRuntimeTeardownHandshake,
     requireBrokerAttestations,
+    policyProfile,
     ...(brokerAttestationKey ? { brokerAttestationKey } : {}),
     ...(expectedCheckBundleHash ? { expectedCheckBundleHash } : {}),
     ...(expectedVerifierImageDigest ? { expectedVerifierImageDigest } : {}),

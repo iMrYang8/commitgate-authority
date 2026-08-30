@@ -199,6 +199,12 @@ describe("effect disposition proof", () => {
         runner: { getReceipt: () => receipt },
         authority: { getProjection: async () => projection },
       },
+      workerAuthorityHealth: {
+        policyProfile: "workspace-default",
+        policyVersion: 1,
+        policyHash: "c".repeat(64),
+        checkSpecHash: "d".repeat(64),
+      },
     });
 
     const projected = await service.getCommitGateReceipt(runId);

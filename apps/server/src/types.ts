@@ -77,6 +77,9 @@ export interface CommitGateSummary {
   candidateHash: string | null;
   finalHash: string;
   policyHash: string;
+  policyProfile?: "workspace-default" | "deployment-protected";
+  policyVersion?: number;
+  checkSpecHash?: string;
   checks: Array<{
     id: string;
     status: GateCheckStatus;

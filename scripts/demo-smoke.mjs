@@ -100,6 +100,14 @@ try {
     { id: "manifest-v2", passed: systemBody.authorityManifestSchemaVersion === 2 },
     { id: "linux-strong-filesystem", passed: systemBody.authorityFilesystemProfile === "linux-strong" },
     {
+      id: "deployment-policy-profile",
+      passed:
+        systemBody.authorityPolicyProfile === "deployment-protected" &&
+        systemBody.authorityPolicyVersion === 2 &&
+        /^[a-f0-9]{64}$/.test(systemBody.authorityPolicyHash ?? "") &&
+        /^[a-f0-9]{64}$/.test(systemBody.authorityCheckSpecHash ?? ""),
+    },
+    {
       id: "pre-run-receipt-key-anchor",
       passed: /^[a-f0-9]{24}$/.test(systemBody.authorityReceiptSigningKeyId ?? ""),
     },

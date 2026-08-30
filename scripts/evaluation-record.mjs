@@ -25,6 +25,10 @@ export function evaluationRecord({ source, provider, scenario, surface = "browse
     evaluationContextHash: scenario.evaluationContextHash ?? null,
     permitId: scenario.permitId ?? null,
     permitState: scenario.permitState ?? null,
+    policyProfile: scenario.policyProfile ?? null,
+    policyVersion: Number.isInteger(scenario.policyVersion) ? scenario.policyVersion : null,
+    policyHash: scenario.policyHash ?? null,
+    checkSpecHash: scenario.checkSpecHash ?? null,
     eventSequence: Number.isInteger(scenario.eventSequence) ? scenario.eventSequence : null,
     eventDigest: scenario.eventDigest ?? null,
     decision: scenario.decision ?? null,
@@ -48,6 +52,20 @@ export function assertEvaluationRecord(record) {
     !["protocol", "adversarial", "recovery", "container", "filesystem", "topology", "browser-clean-clone", "p1-product"].includes(record.surface)
   ) {
     throw new Error("EVALUATION_RECORD_INVALID");
+  }
+  if (
+    record.surface === "browser-clean-clone" &&
+    record.decision !== null &&
+    (typeof record.runtimeImageDigest !== "string" ||
+      typeof record.verifierImageDigest !== "string" ||
+      !Number.isInteger(record.eventSequence) ||
+      !/^[a-f0-9]{64}$/.test(record.eventDigest ?? "") ||
+      !["workspace-default", "deployment-protected"].includes(record.policyProfile) ||
+      !Number.isInteger(record.policyVersion) ||
+      !/^[a-f0-9]{64}$/.test(record.policyHash ?? "") ||
+      !/^[a-f0-9]{64}$/.test(record.checkSpecHash ?? ""))
+  ) {
+    throw new Error("EVALUATION_RECORD_TERMINAL_IDENTITY_INCOMPLETE");
   }
   return record;
 }

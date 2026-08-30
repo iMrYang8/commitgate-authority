@@ -66,6 +66,7 @@ services:
       NODE_ENV: production
       PROCESS_ROLE: transition-worker
       COMMITGATE_TRANSITION_WORKER: enabled
+      COMMITGATE_POLICY_PROFILE: ${COMMITGATE_POLICY_PROFILE:-deployment-protected}
       TRANSITION_WORKER_WORKSPACE_ROOT: /var/lib/commitgate/workspaces
       TRANSITION_WORKER_CONTROL_ROOT: /var/lib/commitgate/control
       TRANSITION_WORKER_INBOX_ROOT: /var/lib/commitgate/exchange
@@ -125,6 +126,7 @@ services:
       RUNTIME_BROKER_SOCKET: /run/commitgate/broker/runtime-broker.sock
       TRANSITION_AUTHORITY: worker
       COMMITGATE_ENABLED: "false"
+      COMMITGATE_POLICY_PROFILE: ${COMMITGATE_POLICY_PROFILE:-deployment-protected}
       COMMITGATE_EXCHANGE_ROOT: /var/lib/commitgate/exchange
       COMMITGATE_EXCHANGE_VOLUME: ${COMMITGATE_STACK_ID:-commitgate}-exchange
       CODEX_HOME: /var/lib/commitgate/sessions
@@ -238,6 +240,7 @@ services:
       COMMITGATE_CONTROL_ROOT: /control
       CODEX_HOME: /tmp/codex-home
       COMMITGATE_ENABLED: "true"
+      COMMITGATE_POLICY_PROFILE: ${COMMITGATE_POLICY_PROFILE:-deployment-protected}
       TRANSITION_AUTHORITY: worker
       TRANSITION_WORKER_SOCKET: /run/commitgate/transition/transition-worker.sock
       RUNTIME_PROVIDER: broker

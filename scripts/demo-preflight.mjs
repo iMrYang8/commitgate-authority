@@ -40,7 +40,7 @@ add("pinned-starter-base", base.status === 0 && base.stdout.trim() === pinned, b
 const branch = command("git", ["branch", "--show-current"]);
 add(
   "feature-branch",
-  ["feature/commitgate", "feature/commitgate-sealed-view", "feature/commitgate-94", "feature/commitgate-authority-v2", "feature/commitgate-proof-closure"].includes(
+  ["feature/commitgate", "feature/commitgate-sealed-view", "feature/commitgate-94", "feature/commitgate-authority-v2", "feature/commitgate-proof-closure", "feature/commitgate-policy-release"].includes(
     branch.stdout.trim(),
   ),
   branch.stdout.trim() || "detached HEAD",

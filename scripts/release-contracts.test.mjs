@@ -419,7 +419,7 @@ test("performance release contract is Worker-only and rejects verifier-latency r
   assert.equal(validatePerformanceReportContract(productVerifierClaim).valid, false);
 });
 
-test("browser checklist and release audit share the exact 10-step evidence contract", () => {
+test("browser checklist and release audit share the exact 12-step evidence contract", () => {
   const fixture = browserReportFixture();
   const expected = {
     providerId: "ark",

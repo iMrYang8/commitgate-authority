@@ -2,6 +2,7 @@ import { chmod, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
 import type { ModelProviderIdentity } from "./types.js";
+import { parseWorkerPolicyProfile } from "./worker-gate-policy.js";
 
 const DEFAULT_ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3";
 const DEFAULT_OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
@@ -56,6 +57,9 @@ const envSchema = z.object({
     .min(128)
     .default(4_096),
   COMMITGATE_ENABLED: z.enum(["true", "false"]).default("true"),
+  COMMITGATE_POLICY_PROFILE: z
+    .enum(["workspace-default", "deployment-protected"])
+    .default("workspace-default"),
   TRANSITION_AUTHORITY: z.enum(["in-process", "worker"]).default("in-process"),
   TRANSITION_WORKER_SOCKET: z.string().optional(),
   COMMITGATE_EXCHANGE_ROOT: z.string().optional(),
@@ -327,6 +331,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
     containerAgentIgnoredBytes: env.CONTAINER_AGENT_IGNORED_BYTES,
     containerAgentIgnoredFiles: env.CONTAINER_AGENT_IGNORED_FILES,
     commitGateEnabled: env.COMMITGATE_ENABLED === "true",
+    commitGatePolicyProfile: parseWorkerPolicyProfile(env.COMMITGATE_POLICY_PROFILE),
     transitionAuthority: env.TRANSITION_AUTHORITY,
     transitionWorkerSocket: path.resolve(
       env.TRANSITION_WORKER_SOCKET || path.join(env.APP_DATA_DIR, "run", "transition-worker.sock"),

@@ -10,6 +10,7 @@ import {
   sourceTreeHash,
 } from "./evidence-utils.mjs";
 import {
+  TERMINAL_RECEIPT_PROOF_CONTRACT,
   validateBrowserCleanCloneContract,
   validateRealProviderE2EContract,
 } from "./receipt-proof-set-contract.mjs";
@@ -380,7 +381,7 @@ const receiptVerificationStatus = semanticStatus(
     report.verification?.valid === true &&
     report.verification?.allTerminalReceiptsVerified === true &&
     report.verification?.trustAnchor?.valid === true &&
-    report.proofSet?.proofCount === 5 &&
+    report.proofSet?.proofCount === Object.keys(TERMINAL_RECEIPT_PROOF_CONTRACT).length &&
     report.records?.every(
       (entry) =>
         entry.status === "verified" &&

@@ -315,4 +315,35 @@ describe("Agent lifecycle", () => {
       fixture.service.getMessages(agent.id).find((message) => message.role === "user"),
     ).toMatchObject({ viewId: reboundViewId });
   });
+
+  it("rejects a cross-Agent rollback version before reserving the target Agent", async () => {
+    const fixture = await makeFixture();
+    const agent = await fixture.service.createAgent({ name: "Rollback target" });
+    await fixture.store.mutate((database) => {
+      database.versions.push({
+        id: "foreign-version",
+        agentId: "different-agent",
+        sequence: 1,
+        parentVersionId: null,
+        kind: "INITIAL",
+        snapshotHash: "a".repeat(64),
+        liveStateHash: "a".repeat(64),
+        pathPolicyHash: "b".repeat(64),
+        sourceRunId: null,
+        sourceReceiptId: null,
+        rollbackTargetVersionId: null,
+        changedPaths: [],
+        snapshotAvailable: true,
+        generation: 1,
+        viewId: null,
+        transitionEventId: null,
+        createdAt: new Date().toISOString(),
+      });
+    });
+
+    await expect(
+      fixture.service.rollback(agent.id, "foreign-version", "unused-head"),
+    ).rejects.toMatchObject({ statusCode: 404, code: "VERSION_NOT_FOUND" });
+    expect(fixture.service.getAgent(agent.id)).toMatchObject({ status: "ready" });
+  });
 });

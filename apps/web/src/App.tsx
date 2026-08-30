@@ -62,13 +62,13 @@ function displayDecision(decision: CommitGateSummary["decision"]): string {
 
 function displayDecisionReason(gate: CommitGateSummary): string | null {
   if (gate.decision === "CONFLICTED") {
-    return "Base drift detected — HEAD unchanged";
+    return "Base drift detected — workspace HEAD unchanged";
   }
   if (gate.decision === "QUARANTINED") {
-    return "Trusted policy or check rejected the proposal — HEAD unchanged";
+    return "Trusted policy or check rejected the proposal — workspace HEAD unchanged";
   }
   if (gate.decision === "ABORTED") {
-    return "Infrastructure or evidence did not complete — HEAD unchanged";
+    return "Infrastructure or evidence did not complete — workspace HEAD unchanged";
   }
   return null;
 }
@@ -123,6 +123,9 @@ function GateFlow({
     gate.nextViewId ??
     gate.finalHash;
   const committed = gate.decision === "COMMITTED";
+  const nextGeneration =
+    gate.nextGeneration ?? receipt?.nextGeneration ?? receipt?.generation;
+  const sessionEpoch = receipt?.sessionEpoch;
 
   return (
     <div className="gate-flow" aria-label="CommitGate state transition">
@@ -149,16 +152,21 @@ function GateFlow({
       </div>
       <span className="gate-flow-arrow">→</span>
       <div className={"gate-flow-node " + (committed ? "gate-flow-next" : "gate-flow-unchanged")}>
-        <span>{committed ? "Next HEAD" : "HEAD unchanged"}</span>
-        <strong>{shortIdentifier(nextView)}</strong>
+        <span>{committed ? "Next authoritative HEAD" : "Workspace HEAD unchanged"}</span>
+        <strong>{committed ? shortIdentifier(nextView) : shortHash(gate.finalHash)}</strong>
         <small>
-          {gate.nextGeneration == null && receipt?.nextGeneration == null && receipt?.generation == null
+          {nextGeneration == null
             ? committed
               ? "authoritative"
               : "proposal not promoted"
-            : "generation " +
-              (gate.nextGeneration ?? receipt?.nextGeneration ?? receipt?.generation)}
+            : "generation " + nextGeneration}
         </small>
+        {!committed && (
+          <small>
+            Session-fenced View → {shortIdentifier(nextView)}
+            {sessionEpoch == null ? "" : " · epoch " + sessionEpoch}
+          </small>
+        )}
       </div>
     </div>
   );
@@ -457,7 +465,18 @@ function GateCard({ run, agent }: { run: AgentRun; agent: Agent }) {
               <span>Requested model <code>{receipt.provider?.requestedModel ?? gate.provider?.requestedModel ?? recordValue(receipt.evidence, "requestedModel") ?? "—"}</code></span>
               <span>Resolved model <code>{receipt.provider?.resolvedModel ?? gate.provider?.resolvedModel ?? recordValue(receipt.evidence, "resolvedModel") ?? "—"}</code></span>
             </div>
-            <span>Policy <code>{shortHash(receipt.policyHash)}</code></span>
+            <span>
+              Policy{" "}
+              <strong>
+                {(receipt.policyProfile ?? gate.policyProfile ?? "legacy-policy")
+                  .replaceAll("-", " ")}
+                {(receipt.policyVersion ?? gate.policyVersion) != null
+                  ? " v" + String(receipt.policyVersion ?? gate.policyVersion)
+                  : ""}
+              </strong>
+            </span>
+            <span>Policy digest <code>{shortHash(receipt.policyHash)}</code></span>
+            <span>Check spec <code>{shortHash(receipt.checkSpecHash ?? gate.checkSpecHash ?? null)}</code></span>
             <span>Patch <code>{shortHash(receipt.patchHash)}</code></span>
             <span>Session epoch <strong>{receipt.sessionEpoch}</strong></span>
             <span>Version <code>{receipt.versionId ?? "—"}</code></span>
@@ -830,9 +849,11 @@ export default function App() {
           <div>
             <strong>Agent Launchpad</strong>
             <span>
-              {system?.runtimeProvider === "container"
-                ? "Container Runtime · Codex CLI"
-                : "Local process · CRUD only with CommitGate"}
+              {system?.runtimeProvider === "broker"
+                ? "Isolated Runtime Broker · Codex CLI"
+                : system?.runtimeProvider === "container"
+                  ? "Container Runtime · Codex CLI"
+                  : "Local process · development only"}
             </span>
           </div>
         </div>
@@ -899,8 +920,8 @@ export default function App() {
                   : !system?.commitGateReady ||
                       (system?.commitGateEnabled && !system.verifierAvailable)
                     ? "CommitGate requires the container Runtime and an available credential-free verifier."
-                  : system.runtimeProvider === "container"
-                    ? "The local container engine or Agent Runtime image is unavailable. Rerun npm run poc."
+                  : ["container", "broker"].includes(system.runtimeProvider)
+                    ? "The isolated Runtime or Agent image is unavailable. Rerun npm run demo."
                     : "Codex CLI was not found. Use the Docker image or install @openai/codex."}
               </p>
             </div>

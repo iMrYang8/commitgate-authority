@@ -1,20 +1,20 @@
 import { createHash } from "node:crypto";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { computeEvaluationContextHash, sha256Canonical } from "../commitgate/protocol.js";
 import type { EvaluationContext } from "../commitgate/types.js";
 import {
-  WORKER_CHECK_SPEC_HASH,
-  WORKER_GATE_POLICY_HASH,
   WORKER_MANIFEST_SCHEMA_VERSION,
+  resolveWorkerGateContract,
 } from "../worker-gate-policy.js";
 import { buildWorkerManifest, makeTreeWritable } from "./filesystem.js";
 import { TransitionWorker, type TransitionWorkerConfig } from "./worker.js";
 
 const roots: string[] = [];
 const SOURCE_REVISION = "a".repeat(40);
+const DEPLOYMENT_CONTRACT = resolveWorkerGateContract("deployment-protected");
 
 afterEach(async () => {
   await Promise.all(roots.splice(0).map(async (root) => {
@@ -51,6 +51,7 @@ async function productEvidenceFixture(input: {
     expectedVerifierImageDigest: `sha256:${"c".repeat(64)}`,
     expectedVerifierConfigHash: "d".repeat(64),
     expectedResourcePolicyHash: "e".repeat(64),
+    policyProfile: "deployment-protected",
   };
   const worker = new TransitionWorker(config);
   await worker.initialize();
@@ -77,7 +78,8 @@ async function productEvidenceFixture(input: {
   });
   const candidate = path.join(config.inboxRoot, prepared.relativeSubpath);
   if (input.protectedMutation) {
-    await writeFile(path.join(candidate, "protected.txt"), "untrusted replacement\n");
+    await mkdir(path.join(candidate, "infra"), { recursive: true });
+    await writeFile(path.join(candidate, "infra", "production.yaml"), "replicas: 0\n");
   } else {
     await writeFile(path.join(candidate, "feature.ts"), "export const ok = true;\n");
   }
@@ -98,9 +100,9 @@ async function productEvidenceFixture(input: {
     proposalId: "proposal-policy",
     baseView: initialized.head!.view,
     manifestSchemaVersion: WORKER_MANIFEST_SCHEMA_VERSION,
-    policyHash: WORKER_GATE_POLICY_HASH,
+    policyHash: DEPLOYMENT_CONTRACT.policyHash,
     checkBundleHash: "b".repeat(64),
-    checkSpecHash: WORKER_CHECK_SPEC_HASH,
+    checkSpecHash: DEPLOYMENT_CONTRACT.checkSpecHash,
     verifierImageDigest: `sha256:${"c".repeat(64)}`,
     verifierConfigHash: "d".repeat(64),
     resourcePolicyHash: "e".repeat(64),

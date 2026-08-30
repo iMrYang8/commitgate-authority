@@ -1,150 +1,66 @@
-# Local POC
+# Local compatibility launcher
 
-The local profile runs the React/Fastify control plane on macOS or Linux and
-starts every Codex turn in a disposable container. A protected run receives an
-isolated candidate rather than the authoritative workspace; CommitGate seals
-the result before verification/promotion. The selected model Provider is the
-only required remote service in the basic profile.
+`npm run poc` is retained only for users of the earlier command name. It is a
+compatibility alias for the same sealed-protocol product launcher as:
 
-## Start
+```bash
+npm run demo
+```
+
+It does **not** start the former lightweight local-process POC and it does not
+define a second deployment profile. Both commands execute
+`scripts/run-demo.sh`, which starts the unified root `docker-compose.yml` with:
+
+```text
+Browser/API
+  -> Transition Worker (Authority/Control RW)
+  -> Runtime Broker (Docker socket)
+  -> Model Relay (Provider credential)
+  -> isolated Agent/Verifier containers
+```
+
+## Use the canonical command
 
 Requirements:
 
-- Node.js 22+
-- Docker for the currently verified protected path (Colima/Podman are
-  compatibility targets until separately evidenced)
-- A Responses-compatible Provider key and model
+- Node.js 22+ and npm 10+;
+- Docker with Compose and volume-subpath support;
+- a Responses-compatible Provider endpoint, model ID, and key in the
+  Git-ignored `.env.local` file.
 
 ```bash
-MODEL_PROVIDER=ark \
-MODEL_BASE_URL=your-responses-base-url \
-MODEL_API_KEY=your-provider-api-key \
-MODEL_ID=ep-your-endpoint-id \
-npm run poc
+cp .env.local.example .env.local
+chmod 600 .env.local
+# Edit MODEL_PROVIDER, MODEL_BASE_URL, MODEL_ID, MODEL_API_KEY.
+npm run demo
 ```
 
-Open <http://localhost:3000>. Press `Ctrl+C` to stop the server and remove this
-instance's remaining Runtime containers.
-
-Force an engine with `CONTAINER_ENGINE=docker` or
-`CONTAINER_ENGINE=podman`. Colima uses the Docker CLI.
-
-## Data and Runtime
-
-Persistent state defaults to:
-
-- macOS: `~/.volc-agent-launchpad/`
-- Linux: `.local/`
-
-Set `LOCAL_POC_DATA_ROOT` to use another directory.
-
-Each protected turn mounts only its candidate, bounded scratch, and a
-session-epoch-specific Codex directory. It does not mount the authoritative
-workspace or CommitGate control root. After Runtime teardown, CommitGate imports
-the candidate into a gate-owned sealed proposal; the verifier receives only a
-read-only projection of that proposal.
-Default limits are 2 CPUs, 2 GiB memory, 256 processes, dropped capabilities,
-and `no-new-privileges`.
-
-Codex requests `workspace-write`. If the Linux kernel lacks Landlock, startup
-warns and disables only the inner Codex sandbox. The outer container limits
-remain active, but this fallback is not tenant isolation.
-
-## Rootless Podman on Linux
-
-This path requires no Docker or Compose. It supports Ubuntu 22.04/24.04, Debian
-12, and veLinux 2.
-
-Install Podman:
+After startup:
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y podman uidmap slirp4netns fuse-overlayfs
+npm run demo:status
+npm run demo:auth      # copies the temporary API token; does not print it
+npm run demo:logs
+npm run demo:down
 ```
 
-Install Node.js 22 if needed. Inspect the downloaded setup script before
-running it:
+`demo:down` and `demo:reset` remove generated Runtime secrets and clear the
+clipboard only when it still contains this Demo's API token.
 
-```bash
-curl -fsSL https://deb.nodesource.com/setup_22.x \
-  -o /tmp/nodesource_setup_22.sh
-less /tmp/nodesource_setup_22.sh
-sudo -E bash /tmp/nodesource_setup_22.sh
-sudo apt-get install -y nodejs
-```
+## Commands that are not release entrypoints
 
-Check subordinate UID/GID ranges:
+- `npm run poc`: compatibility spelling for `npm run demo`; use the canonical
+  command in reproduction and release instructions.
+- `npm start`: API-only development process. It does not start Worker, Broker,
+  Relay, protected Runtime/Verifier containers, or the release permission
+  topology.
+- old split Relay/Worker Compose files: historical or evaluator scaffolds, not
+  supported product launchers.
+- `RUNTIME_PROVIDER=local-process`, direct Provider mode, rootless Podman, or a
+  manually assembled partial stack: development/compatibility experiments only.
+  They are not evidence for the Linux Docker release boundary.
 
-```bash
-grep "^$USER:" /etc/subuid
-grep "^$USER:" /etc/subgid
-```
-
-If both are missing, assign unused ranges and log in again:
-
-```bash
-sudo usermod --add-subuids 100000-165535 "$USER"
-sudo usermod --add-subgids 100000-165535 "$USER"
-```
-
-Verify rootless Podman:
-
-```bash
-podman info
-podman run --rm docker.io/library/alpine:3.20 echo PODMAN_OK
-```
-
-`podman info` must report `rootless: true`. Start the POC:
-
-```bash
-CONTAINER_ENGINE=podman \
-MODEL_PROVIDER=ark \
-MODEL_API_KEY=your-provider-api-key \
-MODEL_ID=ep-your-endpoint-id \
-npm run poc
-```
-
-The upstream Runtime flow was verified on veLinux 2 with rootless Podman 4.3.1;
-that does not establish parity with the current CommitGate protected protocol.
-A `vfs` storage
-driver works but needs more disk space; keep at least 5 GiB free for a cold
-build.
-
-## Common options
-
-```bash
-CONTAINER_RUNTIME_APT_PACKAGES='ca-certificates git ripgrep python3 build-essential' \
-MODEL_PROVIDER=ark \
-MODEL_API_KEY=your-provider-api-key \
-MODEL_ID=ep-your-endpoint-id \
-npm run poc
-```
-
-For restricted networks, configure:
-
-- `CONTAINER_RUNTIME_BASE_IMAGE`
-- `CONTAINER_APT_MIRROR`
-- `CONTAINER_APT_SECURITY_MIRROR`
-
-Resource limits are controlled by `CONTAINER_CPU_LIMIT`,
-`CONTAINER_MEMORY_LIMIT`, and `CONTAINER_PIDS_LIMIT`.
-
-## Troubleshooting
-
-Check Runtime readiness:
-
-```bash
-docker info                       # Or: podman info
-docker image inspect volc-agent-runtime:local
-curl http://localhost:3000/api/system
-```
-
-If a bind mount is rejected, set `LOCAL_POC_DATA_ROOT` to a directory shared
-with the container VM. On Linux, the startup script automatically uses the host
-UID/GID and validates workspace write access.
-
-Remove only the default Runtime image:
-
-```bash
-podman image rm volc-agent-runtime:local
-```
+The only release/Demo entry is `npm run demo`. Machine claims become verified
+only when the expected reports are regenerated successfully from one clean,
+frozen `SOURCE_REVISION`; this file and the launcher source are not runtime
+evidence by themselves.

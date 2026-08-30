@@ -127,6 +127,11 @@ export class AgentService {
     if (this.commitGate?.mode === "worker") {
       this.workerAuthorityHealth = await this.commitGate.authority.initialize();
       if (
+        this.workerAuthorityHealth.policyProfile !== this.config.commitGatePolicyProfile
+      ) {
+        throw new Error("POLICY_PROFILE_MISMATCH");
+      }
+      if (
         this.config.nodeEnv === "production" &&
         this.workerAuthorityHealth.filesystemProfile !== "linux-strong"
       ) {
@@ -759,6 +764,19 @@ export class AgentService {
           ? "version_snapshot"
           : "destroyed"
         : "deferred";
+    const policyProfile =
+      this.workerAuthorityHealth?.policyProfile ?? run.commitGate?.policyProfile;
+    const policyVersion =
+      this.workerAuthorityHealth?.policyVersion ?? run.commitGate?.policyVersion;
+    const policyHash =
+      this.workerAuthorityHealth?.policyHash ??
+      evidence?.policyHash ??
+      run.commitGate?.policyHash;
+    const checkSpecHash =
+      this.workerAuthorityHealth?.checkSpecHash ?? run.commitGate?.checkSpecHash;
+    if (!policyProfile || !policyVersion || !policyHash || !checkSpecHash) {
+      throw new Error(`WORKER_TERMINAL_BINDING_MISSING:${run.id}:policy`);
+    }
     const summary: CommitGateSummary = {
       transactionStatus: "TERMINAL",
       decision: receipt.decision,
@@ -767,7 +785,10 @@ export class AgentService {
       baseHash: transition.baseWorkspaceHash,
       candidateHash,
       finalHash: receipt.workspaceHash,
-      policyHash: evidence?.policyHash ?? run.commitGate?.policyHash ?? "worker-authority",
+      policyHash,
+      policyProfile,
+      policyVersion,
+      checkSpecHash,
       checks,
       changedPaths: proposal?.changedPaths ?? run.commitGate?.changedPaths ?? [],
       threadDisposition:
@@ -920,7 +941,10 @@ export class AgentService {
       currentPlatformManagedHash: EMPTY_STATE_HASH,
       currentLiveStateHash: EMPTY_STATE_HASH,
       agentConfigVersion: 1,
-      policyVersion: 1,
+      policyVersion:
+        this.commitGate?.mode === "worker"
+          ? (this.workerAuthorityHealth?.policyVersion ?? 1)
+          : 1,
       activeRunLeaseId: null,
       recoveryRequired: false,
       lastError: null,
@@ -1287,8 +1311,12 @@ export class AgentService {
       cached.baseView.liveStateHash === transition.baseWorkspaceHash
         ? cached.baseView
         : null;
+    const authorityPolicy = this.workerAuthorityHealth;
+    if (!authorityPolicy) {
+      throw new HttpError(503, "Worker policy projection is unavailable", "RECEIPT_PROJECTION_MISMATCH");
+    }
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
       runId: run.id,
       agentId: run.agentId,
       phase: "TERMINAL",
@@ -1299,7 +1327,10 @@ export class AgentService {
       candidateSnapshotHash: proposal?.artifactHash ?? null,
       patchHash: null,
       finalSnapshotHash: terminal.workspaceHash,
-      policyHash: evidence?.policyHash ?? summary.policyHash,
+      policyHash: authorityPolicy.policyHash,
+      policyProfile: authorityPolicy.policyProfile,
+      policyVersion: authorityPolicy.policyVersion,
+      checkSpecHash: authorityPolicy.checkSpecHash,
       evidence: { trusted: evidence?.coverage ?? "unavailable" },
       checks: evidence?.checks.map((check) => ({
         id: check.id,
@@ -1462,8 +1493,17 @@ export class AgentService {
       policyVersion: summary.finalView?.policyVersion ?? agent.policyVersion,
     };
     const finalView = summary.finalView ?? null;
+    const policyProfile =
+      summary.policyProfile ?? this.workerAuthorityHealth?.policyProfile;
+    const policyVersion =
+      summary.policyVersion ?? this.workerAuthorityHealth?.policyVersion;
+    const checkSpecHash =
+      summary.checkSpecHash ?? this.workerAuthorityHealth?.checkSpecHash;
+    if (!policyProfile || !policyVersion || !checkSpecHash) {
+      throw new Error(`WORKER_RECEIPT_POLICY_BINDING_MISSING:${run.id}`);
+    }
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
       runId: run.id,
       agentId: run.agentId,
       phase: "TERMINAL",
@@ -1477,6 +1517,9 @@ export class AgentService {
       patchHash: null,
       finalSnapshotHash: summary.finalHash,
       policyHash: summary.policyHash,
+      policyProfile,
+      policyVersion,
+      checkSpecHash,
       evidence: { projection: "partial" },
       checks: summary.checks.map((check) => ({
         id: check.id,
@@ -1601,8 +1644,24 @@ export class AgentService {
     expectedViewId?: string,
     expectedGeneration?: number,
   ): Promise<{ agent: Agent; version: WorkspaceVersion; sessionReset: true }> {
+    // A run can become terminal in the product DB one microtask before its
+    // in-memory execution fence is released. Rollback follows the same
+    // terminal-cleanup rule as a fresh message instead of exposing a race.
+    await this.awaitTerminalExecutionCleanup(agentId);
     this.assertRecoveryReady(this.getAgent(agentId));
     this.assertNoActiveMutation(agentId);
+    // Validate Agent ownership before reserving the workspace. A version id is
+    // never a cross-Agent capability, and a rejected reference must not leave
+    // the target Agent marked busy.
+    const target = this.store.snapshot().versions.find(
+      (version) => version.agentId === agentId && version.id === targetVersionId,
+    );
+    if (!target) {
+      throw new HttpError(404, "Target version does not exist", "VERSION_NOT_FOUND");
+    }
+    if (!target.snapshotAvailable) {
+      throw new HttpError(410, "Target snapshot has been pruned", "SNAPSHOT_PRUNED");
+    }
     const operation = this.performRollback(
       agentId,
       targetVersionId,
@@ -2008,6 +2067,14 @@ export class AgentService {
       // anchor for the Worker-signed terminal receipt proof returned later.
       authorityReceiptSigningKeyId:
         this.workerAuthorityHealth?.signingKeyId ?? null,
+      authorityPolicyProfile:
+        this.workerAuthorityHealth?.policyProfile ?? null,
+      authorityPolicyVersion:
+        this.workerAuthorityHealth?.policyVersion ?? null,
+      authorityPolicyHash:
+        this.workerAuthorityHealth?.policyHash ?? null,
+      authorityCheckSpecHash:
+        this.workerAuthorityHealth?.checkSpecHash ?? null,
       containerEngine:
         ["container", "broker"].includes(this.config.runtimeProvider) ? this.config.containerEngine : null,
       runtime:
@@ -2958,6 +3025,11 @@ export class AgentService {
       candidateHash: receipt.candidateSnapshotHash,
       finalHash: receipt.finalSnapshotHash,
       policyHash: receipt.policyHash,
+      ...(receipt.policyProfile ? { policyProfile: receipt.policyProfile } : {}),
+      ...(receipt.policyVersion !== undefined
+        ? { policyVersion: receipt.policyVersion }
+        : {}),
+      ...(receipt.checkSpecHash ? { checkSpecHash: receipt.checkSpecHash } : {}),
       checks: receipt.checks.map((check) => ({
         id: check.id,
         status: check.status,

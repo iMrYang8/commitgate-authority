@@ -23,6 +23,7 @@ if [[ -z "${MODEL_BASE_URL:-}" ]]; then
 fi
 export MODEL_BASE_URL
 export MODEL_WIRE_API="${MODEL_WIRE_API:-responses}"
+export COMMITGATE_POLICY_PROFILE="${COMMITGATE_POLICY_PROFILE:-deployment-protected}"
 
 if [[ -z "$MODEL_ID" || -z "$MODEL_API_KEY" ]]; then
   echo "MODEL_ID and MODEL_API_KEY are required in .env.local" >&2

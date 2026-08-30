@@ -6,6 +6,24 @@ import type {
   RequiredCheckPolicy,
 } from "./commitgate/types.js";
 
+export type WorkerPolicyProfile = "workspace-default" | "deployment-protected";
+
+export interface WorkerGateContract {
+  profile: WorkerPolicyProfile;
+  policyVersion: 1 | 2;
+  policy: CommitGatePolicy;
+  policyHash: string;
+  checkSpecHash: string;
+  requiredCheckIds: readonly string[];
+}
+
+export const DEFAULT_WORKER_POLICY_PROFILE: WorkerPolicyProfile = "workspace-default";
+export const DEPLOYMENT_PROTECTED_PATHS = Object.freeze([
+  ".github/workflows/deploy.yml",
+  "infra/production.yaml",
+  "config/payment-production.json",
+]);
+
 /**
  * The product Worker, rather than an API caller, owns this authorization
  * contract.  Callers may submit verifier evidence, but they cannot select the
@@ -20,26 +38,62 @@ const WORKSPACE_SANITY_CHECK: RequiredCheckPolicy = Object.freeze({
   scratchBytes: 64 * 1024 * 1024,
 });
 
-const FROZEN_WORKER_GATE_POLICY: CommitGatePolicy = Object.freeze({
-  ...defaultCommitGatePolicy,
-  protectedPaths: Object.freeze([...defaultCommitGatePolicy.protectedPaths]) as unknown as string[],
-  platformManagedPaths: Object.freeze([...defaultCommitGatePolicy.platformManagedPaths]) as unknown as string[],
-  ignoredEphemeralNames: Object.freeze([...defaultCommitGatePolicy.ignoredEphemeralNames]) as unknown as string[],
-  canaryPatterns: Object.freeze([...defaultCommitGatePolicy.canaryPatterns]) as unknown as string[],
-  requiredChecks: Object.freeze([WORKSPACE_SANITY_CHECK]) as unknown as RequiredCheckPolicy[],
+function frozenPolicy(protectedPaths: readonly string[]): CommitGatePolicy {
+  return Object.freeze({
+    ...defaultCommitGatePolicy,
+    protectedPaths: Object.freeze([...protectedPaths]) as unknown as string[],
+    platformManagedPaths: Object.freeze([
+      ...defaultCommitGatePolicy.platformManagedPaths,
+    ]) as unknown as string[],
+    ignoredEphemeralNames: Object.freeze([
+      ...defaultCommitGatePolicy.ignoredEphemeralNames,
+    ]) as unknown as string[],
+    canaryPatterns: Object.freeze([
+      ...defaultCommitGatePolicy.canaryPatterns,
+    ]) as unknown as string[],
+    requiredChecks: Object.freeze([
+      WORKSPACE_SANITY_CHECK,
+    ]) as unknown as RequiredCheckPolicy[],
+  });
+}
+
+const PROFILE_POLICIES: Record<WorkerPolicyProfile, CommitGatePolicy> = Object.freeze({
+  "workspace-default": frozenPolicy([]),
+  "deployment-protected": frozenPolicy(DEPLOYMENT_PROTECTED_PATHS),
 });
 
+export function parseWorkerPolicyProfile(value: unknown): WorkerPolicyProfile {
+  if (value === "workspace-default" || value === "deployment-protected") return value;
+  throw new Error("COMMITGATE_POLICY_PROFILE must be workspace-default or deployment-protected");
+}
+
+export function resolveWorkerGateContract(
+  profile: WorkerPolicyProfile = DEFAULT_WORKER_POLICY_PROFILE,
+): WorkerGateContract {
+  const policy = structuredClone(PROFILE_POLICIES[profile]);
+  const requiredCheckIds = Object.freeze(policy.requiredChecks.map((check) => check.id));
+  return Object.freeze({
+    profile,
+    policyVersion: profile === "workspace-default" ? 1 : 2,
+    policy,
+    policyHash: policyHash(policy),
+    checkSpecHash: computeCheckSpecHash(policy.requiredChecks),
+    requiredCheckIds,
+  });
+}
+
 export const WORKER_MANIFEST_SCHEMA_VERSION = 2 as const;
-export const WORKER_GATE_POLICY_HASH = policyHash(FROZEN_WORKER_GATE_POLICY);
-export const WORKER_CHECK_SPEC_HASH = computeCheckSpecHash(
-  FROZEN_WORKER_GATE_POLICY.requiredChecks,
-);
+const DEFAULT_WORKER_GATE_CONTRACT = resolveWorkerGateContract();
+export const WORKER_GATE_POLICY_HASH = DEFAULT_WORKER_GATE_CONTRACT.policyHash;
+export const WORKER_CHECK_SPEC_HASH = DEFAULT_WORKER_GATE_CONTRACT.checkSpecHash;
 export const WORKER_REQUIRED_CHECK_IDS = Object.freeze(
-  FROZEN_WORKER_GATE_POLICY.requiredChecks.map((check) => check.id),
+  [...DEFAULT_WORKER_GATE_CONTRACT.requiredCheckIds],
 );
 
-export function workerGatePolicy(): CommitGatePolicy {
-  return structuredClone(FROZEN_WORKER_GATE_POLICY);
+export function workerGatePolicy(
+  profile: WorkerPolicyProfile = DEFAULT_WORKER_POLICY_PROFILE,
+): CommitGatePolicy {
+  return structuredClone(PROFILE_POLICIES[profile]);
 }
 
 export interface WorkerRecordedCheckContract {
@@ -86,6 +140,7 @@ export interface WorkerEvidenceContractFailure {
  */
 export function validateWorkerEvidenceContract(
   input: WorkerEvidenceContractInput,
+  contract: WorkerGateContract = DEFAULT_WORKER_GATE_CONTRACT,
 ): WorkerEvidenceContractFailure | null {
   if (input.context.manifestSchemaVersion !== WORKER_MANIFEST_SCHEMA_VERSION) {
     return {
@@ -93,13 +148,13 @@ export function validateWorkerEvidenceContract(
       message: `Evidence manifest schema ${input.context.manifestSchemaVersion} is not Worker schema ${WORKER_MANIFEST_SCHEMA_VERSION}`,
     };
   }
-  if (input.context.policyHash !== WORKER_GATE_POLICY_HASH) {
+  if (input.context.policyHash !== contract.policyHash) {
     return {
       code: "POLICY_HASH_MISMATCH",
       message: "Evidence policy hash is not the Worker-owned policy",
     };
   }
-  if (input.context.checkSpecHash !== WORKER_CHECK_SPEC_HASH) {
+  if (input.context.checkSpecHash !== contract.checkSpecHash) {
     return {
       code: "CHECK_SPEC_HASH_MISMATCH",
       message: "Evidence check specification is not the Worker-owned trusted-check contract",
@@ -169,9 +224,9 @@ export function validateWorkerEvidenceContract(
   const observedIds = input.checks.map((check) => check.id);
   const observedUnique = new Set(observedIds);
   if (
-    observedIds.length !== WORKER_REQUIRED_CHECK_IDS.length ||
+    observedIds.length !== contract.requiredCheckIds.length ||
     observedUnique.size !== observedIds.length ||
-    !WORKER_REQUIRED_CHECK_IDS.every((id) => observedUnique.has(id))
+    !contract.requiredCheckIds.every((id) => observedUnique.has(id))
   ) {
     return {
       code: "TRUSTED_CHECK_SET_MISMATCH",

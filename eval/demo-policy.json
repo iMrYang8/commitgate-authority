@@ -1,6 +1,10 @@
 {
   "schemaVersion": 1,
-  "protectedPaths": ["protected.txt", "release-notes.txt"],
+  "protectedPaths": [
+    ".github/workflows/deploy.yml",
+    "infra/production.yaml",
+    "config/payment-production.json"
+  ],
   "platformManagedPaths": ["AGENTS.md"],
   "ignoredEphemeralNames": [".git", ".codex", "node_modules", "dist", "coverage"],
   "maxChangedFiles": 100,

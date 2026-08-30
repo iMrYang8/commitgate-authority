@@ -28,6 +28,7 @@ export function createWorkerCommitGateComponents(
     config.commitGateExchangeRoot,
     config.commitGateSourceRevision,
     config.nodeEnv === "production",
+    config.commitGatePolicyProfile,
   );
   return { mode: "worker", runner, authority };
 }

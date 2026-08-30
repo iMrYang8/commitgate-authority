@@ -34,6 +34,12 @@ const ids = [...drawioText.matchAll(/<mxCell\b[^>]*\bid="([^"]+)"/g)].map(
   (match) => match[1],
 );
 const idSet = new Set(ids);
+const graphModel = /<mxGraphModel\b([^>]*)>/.exec(drawioText)?.[1] ?? "";
+const numericAttr = (text, key) => Number(new RegExp(`\\b${key}="([0-9.]+)"`).exec(text)?.[1] ?? NaN);
+const pageWidth = numericAttr(graphModel, "pageWidth");
+const pageHeight = numericAttr(graphModel, "pageHeight");
+const vertices = [...drawioText.matchAll(/<mxCell\b([^>]*)\bvertex="1"([^>]*)>([\s\S]*?)<\/mxCell>/g)]
+  .map((match) => `${match[1]} ${match[2]} ${match[3]}`);
 const edges = [...drawioText.matchAll(/<mxCell\b([^>]*)\bedge="1"([^>]*)>([\s\S]*?)<\/mxCell>/g)]
   .map((match) => `${match[1]} ${match[2]} ${match[3]}`);
 const ref = (text, key) => new RegExp(`\\b${key}="([^"]+)"`).exec(text)?.[1] ?? null;
@@ -63,8 +69,35 @@ const checks = [
       edges.every((edge) => {
         const source = ref(edge, "source");
         const target = ref(edge, "target");
-        return source && target && idSet.has(source) && idSet.has(target) && /<mxGeometry\b/.test(edge);
+        return source && target && idSet.has(source) && idSet.has(target) && /<mxGeometry\b[^>]*\brelative="1"/.test(edge);
       }),
+  },
+  {
+    id: "vertices-within-page-bounds",
+    verified:
+      Number.isFinite(pageWidth) &&
+      Number.isFinite(pageHeight) &&
+      vertices.every((vertex) => {
+        const geometry = /<mxGeometry\b([^>]*)\bas="geometry"\s*\/>/.exec(vertex)?.[1] ?? "";
+        const x = numericAttr(geometry, "x");
+        const y = numericAttr(geometry, "y");
+        const width = numericAttr(geometry, "width");
+        const height = numericAttr(geometry, "height");
+        return [x, y, width, height].every(Number.isFinite) && x >= 0 && y >= 0 && width > 0 && height > 0 && x + width <= pageWidth && y + height <= pageHeight;
+      }),
+  },
+  {
+    id: "reviewer-flow-nodes-present",
+    verified: [
+      "head-v0",
+      "attempt",
+      "seal",
+      "verify",
+      "permit",
+      "head-v1",
+      "negative",
+      "unchanged",
+    ].every((id) => idSet.has(id)),
   },
   {
     id: "svg-embeds-exact-editable-source",

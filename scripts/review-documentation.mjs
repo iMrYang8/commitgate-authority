@@ -34,7 +34,7 @@ const requirements = {
     /Responses-compatible Provider/i,
     /providerE2EVerified/i,
     /assigns no numeric score/i,
-    /release browser report[\s\S]{0,180}\*\*10\/10\*\*/i,
+    /release browser report[\s\S]{0,180}\*\*12\/12\*\*/i,
     /Editable source:[\s\S]{0,120}commitgate-architecture\.drawio/i,
     /Worker-derived View/i,
     /pre-run TOFU/i,

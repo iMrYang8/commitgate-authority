@@ -1,23 +1,16 @@
-# CommitGate architecture — Sealed State View protocol
+# CommitGate architecture — No Evidence, No Effect
 
-CommitGate remains a focused decorator around the Starter Kit `AgentRunner`.
-It does not replace the Codex/Agent loop. It changes what workspace that loop
-can write and introduces a trusted transition between Agent completion and the
-next authoritative state.
+CommitGate is a focused transaction boundary around an `AgentRunner`. It does
+not replace the Codex/Agent loop. It changes what workspace that loop can write
+and introduces a trusted transition between Agent completion and the next
+authoritative state.
 
 > The only positive authority is a one-shot `PromotionPermit` bound to one
 > immutable `SealedProposal`, one `EvaluationContextHash`, and one current base
 > `ViewId`.
 
-- Editable two-page diagram: [`commitgate-authority-v2.drawio`](commitgate-authority-v2.drawio)
-- Reviewable SVG with embedded source: [`commitgate-authority-v2.svg`](commitgate-authority-v2.svg)
-
-The SVG is deterministically rendered from the editable source with:
-
-```bash
-python3 ../scripts/render-drawio-preview.py \
-  commitgate-authority-v2.drawio commitgate-authority-v2.svg
-```
+- Editable one-page diagram: [`commitgate-architecture.drawio`](commitgate-architecture.drawio)
+- Reviewable SVG: [`commitgate-architecture.svg`](commitgate-architecture.svg)
 
 ## End-to-end state flow
 
@@ -51,6 +44,66 @@ Runtime/verifier/evidence/cancel failure  -> ABORTED
 an explicit negative verdict. Timeout, `ERROR`, missing output, malformed
 output, and unavailable infrastructure are `ABORTED`.
 
+The protocol's two persistence invariants are:
+
+```text
+COMMITTED:
+  sealedProposalHash
+  == verifierInputHash
+  == promotionSourceHash
+  == finalAuthoritativeHash
+
+NON-COMMIT:
+  authoritativeAfterHash == authoritativeBeforeHash
+```
+
+The latter compares the disposition-time authoritative HEAD. For a conflict,
+that may differ from the proposal's stale admission base because another valid
+transition already advanced HEAD. CommitGate proves that rejecting this proposal
+added no further persistent effect.
+
+Receipts expose that derivation as:
+
+```ts
+interface EffectDispositionProof {
+  candidateChanged: boolean; // compatibility projection of candidateObservation
+  candidateObservation: "changed" | "unchanged" | "unobserved";
+  admissionBaseHash: string;
+  authoritativeBeforeHash: string;
+  authoritativeAfterHash: string;
+  authoritativeChanged: boolean;
+  sealedProposalHash: string | null;
+  verifierInputHash: string | null;
+  promotionSourceHash: string | null;
+  finalAuthoritativeHash: string;
+  invariant: "PROMOTED_EXACT_PROPOSAL" | "NO_PERSISTENT_EFFECT";
+  invariantSatisfied: boolean;
+}
+```
+
+This structure is derived from Worker facts; an RPC caller does not supply
+`invariantSatisfied` as authorization.
+
+## Deployment policy packs
+
+The deployment selects one versioned Worker-owned profile; the API never sends
+arbitrary protected paths over RPC:
+
+```text
+workspace-default@1
+  generic Manifest v2, budgets, ignored and platform-managed paths
+
+deployment-protected@2
+  workspace-default plus:
+  .github/workflows/deploy.yml
+  infra/production.yaml
+  config/payment-production.json
+```
+
+The Worker persists `profile + version + policyHash + checkSpecHash` in its
+Control volume. A silent profile switch fails with `POLICY_PROFILE_MISMATCH`.
+Every terminal receipt binds the same identity inside its Ed25519 signature.
+
 ## Authoritative View
 
 A workspace hash is necessary but insufficient because content can traverse
@@ -79,6 +132,12 @@ increments the session epoch, producing a new `ViewId` and fencing old
 continuations/callbacks. Agent deletion archives the directory and removes the
 product record; there is no restore transition in the current product.
 
+Production RPC inputs carry an expected base View and an operation, not a
+caller-authored next View. The Worker derives the final generation, hashes,
+head and `ViewId` from its authoritative filesystem and append-only parent
+event. The API/product database can project that Worker-derived StateView but
+cannot supply or overwrite it.
+
 ## Proposal ownership transfer
 
 “Frozen candidate” means ownership transfer, not merely “we calculated a hash.”
@@ -106,13 +165,70 @@ Verifier, promotion staging, and version snapshot must all materialize from this
 same proposal. After sealing, the original candidate is destroyed; modifying
 or recreating its old pathname has no effect on the proposal.
 
-In the production topology, a dedicated-UID Worker owns the sealed store and
-the Authority/Control volumes. The API has read-only mounts and the Broker has
+In the production topology, the Worker is the sole RW owner of the sealed store
+and Authority/Control volumes. The API has read-only mounts and the Broker has
 neither mount. Proposal modes are preserved in the manifest and restored only
 into Worker-owned staging. Thus sealing is closed by content-addressed
 ownership, pre/post manifest validation, opaque RPC refs, and an OS permission
 boundary. The in-process `WorkspaceTransitionWriter` remains available only for
 development and contract tests; production does not fall back to it.
+
+The Worker derives the only admissible exchange names: `candidate-${runId}` and
+`verify-${runId}`. It binds the candidate to the admitted Agent/run/lease/session
+and binds the verifier export to the same run and sealed proposal. These are
+opaque identifiers, not client-selected paths. Bindings are write-once: sealing
+consumes and tombstones the candidate, exports refuse an existing or foreign
+destination, and neither a caller nor a restarted process can rebind a terminal
+name to another Agent, run, or proposal.
+
+The Transition Worker and Runtime Broker do not share an RPC socket directory.
+They publish sockets into distinct named volumes and distinct Unix groups; the
+API has read-only client mounts for both, while the Broker has no mount for the
+Worker socket. This prevents the Docker-socket holder from calling promotion
+authority directly, rather than relying on a shared application token.
+
+The Worker, Broker, and Runtime artifacts deliberately use numeric UID `10001`.
+Worker exports are normalized to owner-only `0500/0600`, so the Broker must use
+that artifact-owner UID to hash the exact export before and after verification.
+This is **not** a distinct-UID isolation claim: separation comes from disjoint
+mounts and socket groups (`20001` Worker RPC, `20002` Broker RPC). Only the
+Worker receives Authority/Control mounts; the Broker receives neither.
+
+The Broker also keeps a durable monotonic lifecycle ledger in its Session
+volume, keyed by the exact `runId + agentId + runLeaseId + sessionEpoch`
+binding. A run advances only through `AGENT_STARTED -> AGENT_CLOSED ->
+VERIFIER_STARTED -> ALL_CLOSED`. Teardown/reconciliation for a binding never
+launched by this Broker is rejected; after Agent closure the Agent cannot be
+restarted, and after full closure neither Agent nor Verifier can be relaunched.
+Those tombstones survive a Broker process restart and prevent a signed negative
+attestation from being followed by a new container under the same binding.
+
+### Broker-to-Worker evidence authentication
+
+The Broker is the only product service that owns the Docker socket, so the
+Worker cannot independently inspect Agent/Verifier containers. Production
+therefore gives only Broker and Worker a per-start `0600` secret and requires
+HMAC-SHA256 authenticated evidence at the authority boundary:
+
+```text
+runtime-teardown:
+  runId + agentId + runLeaseId + sessionEpoch + scope
+  + containerExited + containerRemoved + mountsReleased + source
+
+verifier-result:
+  run/lease/session + proposalId + verifierInputHash
+  + checkSpecHash + checkResultsHash + coverage + bounded check results
+  + checkBundle/image/config/resource/source pins
+```
+
+The Worker verifies the MAC, exact transition binding, proposal hash, check
+results, and frozen environment pins before recording evidence. The API cannot
+turn a caller-authored success boolean or unsigned JSON into a seal/permit fact.
+This is an authenticity boundary relative to the shared Broker/Worker key, not
+remote attestation: a compromised Broker can still lie about Docker, a
+compromised Worker can accept it, and host/root controls both. It is separate
+from the Relay HMAC bearer (model access) and Worker Ed25519 signature (terminal
+receipt integrity).
 
 P0 filesystem normalization permits authoritative regular directories/files
 only. Symlinks, special files, hardlinks (`nlink > 1`), Unicode normalization
@@ -153,10 +269,23 @@ The content-addressed trusted-bundle store currently has no pruning/retention
 worker; storage growth is an operational limitation rather than part of the
 acceptance protocol.
 
-`sourceRevision` participates in the context hash, but defaults to the literal
-`unverified` unless `COMMITGATE_SOURCE_REVISION` is supplied. A context hash
-therefore does not by itself prove that the revision matches the clean tree;
-the evidence report must bind and verify that provenance separately.
+Permit issuance recomputes authorization from a Worker-owned frozen contract.
+It rejects proposals with static policy failures and requires exact equality
+for Manifest schema, policy hash, check-spec hash, source revision, and the set
+of required check IDs. It also compares the trusted-bundle hash, Verifier image
+digest, Verifier config hash, and resource-policy hash with values frozen in
+the Worker configuration before startup. Coverage must be complete and every expected check must
+independently be `PASS` with exit code zero and no timeout. The caller-provided
+`requiredChecksPassed` field is only cross-checked; it is never an
+authority-bearing boolean.
+
+`sourceRevision` participates in the context hash. Portable development/tests
+may retain the literal `unverified`, while the production API, Runtime Broker,
+and Transition Worker require one matching full 40-hex
+`COMMITGATE_SOURCE_REVISION`. The Worker rejects product evidence whose context
+does not match its frozen revision. A context hash still does not prove that an
+environment value matches a clean tree; the release report separately binds
+the commit, source-tree hash, and image identities.
 
 The Docker verifier has no routable network, Provider credentials, Codex home,
 persistent workspace, control plane, or Docker socket. This is a verifier
@@ -214,7 +343,7 @@ applyRepair
 ```
 
 The static authority audit remains a defense-in-depth callsite fence; it is not
-a semantic whole-program proof. The production topology adds a runtime proof:
+a semantic whole-program proof. The release topology adds a runtime proof:
 `audit:topology` executes writes inside the API container and requires
 `EROFS/EACCES` for Authority and Control, verifies that only the Worker has RW
 mounts, and verifies that only the Broker has the Docker socket. These claims
@@ -244,6 +373,15 @@ or externally corrupted state enters `RECOVERY_REQUIRED` rather than guessing.
 The documented guarantee is process kill/restart. It is not an fsync protocol
 and does not cover sudden power loss or storage-controller failure.
 
+The Docker matrix kills the Worker and API at named protocol points and kills
+Broker-owned Agent/Verifier child containers. A dedicated
+`RUNTIME_BROKER_PROCESS_SIGKILL_ORPHAN_RECONCILIATION` scenario launches the
+Runtime Broker as a separate Node process, kills that process with `SIGKILL`,
+observes its labeled Agent child still running, and verifies that a restarted
+Broker performs exact-label reconciliation before returning a
+`broker-reconciliation` mount-release attestation. The Docker daemon itself
+remains alive; daemon, host, and power-loss failures remain outside this claim.
+
 Receipts have a separate projection lifecycle. A protocol-complete
 `PENDING_PROMOTION` receipt is persisted before rename-swap; `COMMITTED` becomes
 a terminal receipt only after workspace/head/session projection is complete.
@@ -252,6 +390,36 @@ decision in place: it appends a `RECOVERY_ACKNOWLEDGED` or
 `RECOVERY_ROLLED_BACK` sidecar event, from which the effective recovered state
 is projected. A pre-swap pending receipt without a journal is fail-closed
 against the admitted base hash.
+
+The Worker event stream stores bounded structured metadata and content
+digests, not raw rejected source. A complete, redacted `RecordedEvidenceV2`
+is written to a content-addressed blob store before `EVIDENCE_RECORDED` is
+appended. Permit issuance re-reads that blob and recomputes the proposal,
+evaluation-context, verifier-input, check-result, and evidence bindings. If a
+blob is missing, malformed, over budget, linked, or has changed bytes or file
+metadata, issuance fails closed. Deleting the mutable projection and replaying
+the append-only events therefore rebuilds Proposal, Evidence, Permit, Receipt,
+version, and HEAD state without treating the product database as authority.
+
+Every terminal receipt is also bound to the terminal event sequence/digest and
+signed with a Worker-owned Ed25519 key. The private key exists only in the
+Worker control volume as a single-link regular `0600` file. The public proof
+endpoint returns the redacted receipt, proof envelope, and public key; the
+live topology audit also confirms that the API UID receives `Permission
+denied` when it attempts to read that private key through its read-only control
+projection. The
+offline verifier checks canonical receipt bytes, event-chain binding,
+Proposal/Evidence/Permit digests, source revision, and signature. This proves
+origin and post-issuance integrity relative to that Worker key. It is not
+remote transparency, hardware attestation, or resistance to a hostile
+host/root user or compromised Worker.
+
+For the product/browser proof, the verifier first reads the 24-hex
+`authorityReceiptSigningKeyId` from `/api/system`, before any Agent run, and
+later requires the returned proof key to match it. This is a pre-run TOFU
+(trust-on-first-use) anchor, not an independent CA, transparency log, or
+host/root-resistant identity. It detects a key substituted only after the
+initial observation; it cannot make a compromised first observation trusted.
 
 ## Message and callback fencing
 
@@ -280,13 +448,19 @@ active run.
 ## Provider identity
 
 Provider transport is configured through a generic Responses-compatible
-adapter. Ark is the primary configured provider path; OpenRouter is an alternate
-development path. Receipts record provider, gateway, requested model, and
-resolved model when the transport can prove it; otherwise `resolvedModel`
+adapter. The repository supplies Ark and OpenRouter adapters, and Provider
+choice is not part of the middleware scoring claim. A historical real E2E
+capture used Ark and records that fact only for its embedded revision. A new
+source identity has no current Provider claim until its report is regenerated.
+New reports use
+`providerE2EVerified`; historical `officialProviderE2E` and
+`competitionVerified` values are read-only compatibility inputs and never
+assign checklist credit. Receipts record provider, gateway, requested model,
+and resolved model when the transport can prove it; otherwise `resolvedModel`
 remains `null`. `MODEL_WIRE_API` is configuration, and retry lineage is held by
 the product run record rather than being invented in a receipt. Automatic
 fallback orchestration is not implemented: `retryOfRunId` is currently a
-reserved field initialized to `null`. The deployed production process uses
+reserved field initialized to `null`. The deployed release process uses
 one configured Provider; a manual Provider change needs a restart, explicit
 Agent configuration/session reset, and a new run.
 
@@ -316,15 +490,24 @@ firewall or proof of zero egress through a hostile host/container engine.
 ## Runtime scratch and ignored paths
 
 The default root-level `.git`, `.codex`, `node_modules`, `dist`, and `coverage`
-paths are redirected to bounded tmpfs mounts. Independently, a streaming gate
-audit counts entries, aggregate bytes, and single-file size for ignored path
-segments at arbitrary nesting depths; those trees are omitted before seal.
+paths are redirected to bounded tmpfs mounts. Independently, Manifest v2
+classifies those names at **any path segment**. A streaming admission scan
+counts their entries, aggregate bytes, and single-file size against candidate
+resource quotas, while omitting their content from Proposal, Verifier input,
+promotion, and the next authoritative View.
 
-There is a deliberate P0 limitation: with a host bind-mounted candidate, an
-arbitrary nested ignored directory is not placed on its own filesystem quota
-during Runtime execution. It can consume host disk until teardown, after which
-the streaming audit rejects it before seal. Hard aggregate runtime quota for
-every nested ignored path requires the P1 per-run volume/filesystem boundary.
+The same streaming walk has a monotonic wall-clock budget of 30 seconds by
+default. Entry, byte, single-file, and time limits are all fail-closed;
+exceeding the time fence produces `CANDIDATE_SCAN_TIME_BUDGET_EXCEEDED`.
+Ignored entries consume these scan resources even though their contents are
+excluded from the authoritative proposal.
+
+The production Compose path mounts the single-active-run exchange as a shared
+tmpfs with fixed byte and inode ceilings. An arbitrary nested ignored directory
+therefore cannot grow beyond the kernel-enforced aggregate exchange budget even
+before teardown. Manifest limits still enforce per-class and single-file
+admission rules. This is sufficient only under the documented single-Agent
+serial boundary; it is not a general multi-tenant per-run quota scheduler.
 
 ## UI projection
 
@@ -335,33 +518,61 @@ inventing missing legacy fields:
 Authoritative HEAD: generation / View / live hash / version / session
 Transition: HEAD -> SEALED PROPOSAL -> ONE-SHOT PERMIT -> HEAD
 Receipt: proposal / context / evidence / permit / provider identities
+Effect proof: candidate changed / persistent changed-or-unchanged / invariant
+Receipt proof: terminal event binding / Ed25519 signature / public key
 Message: authority + View binding
 Rejected: artifact destroyed / evidence metadata only
 ```
 
-## P0, P1, and P2 boundary
+## Product and research boundary
 
 - **P0 protocol:** sealed proposal,
   evidence-bound permit, generation/View CAS, verifier isolation, callback
   fencing, process kill/restart recovery, generic Provider adapter.
-- **P1 product wiring:** separate UID transition-worker with sole RW volumes,
-  append-only event fact source, typed private RPC, constrained repair CLI, and
-  an explicit normalized Linux filesystem contract.
-- **P2 research:** semantic-intent shadow evidence, Effect Outbox/tool
-  capability mediation, signed proof bundles, and optional attestation.
+- **P1 product wiring:** Transition Worker with sole RW Authority/Control
+  volumes, append-only event fact source, typed private RPC, constrained repair
+  CLI, and an explicit normalized Linux filesystem contract. Worker/Broker/
+  Runtime artifacts share UID `10001`; service separation comes from mounts and
+  socket groups, not a false distinct-UID claim.
+- **Product proof closure:** complete Worker evidence projection,
+  explicit effect-disposition proof, Ed25519 terminal-receipt signing, offline
+  verification, real Docker process-kill evaluation, and invariant/performance
+  reports.
+- **Research-only:** semantic-intent shadow evidence, Effect Outbox/tool
+  capability mediation, and optional hardware/remote attestation.
+
+The invariant report uses an exact ten-item effect-capable negative-fixture
+registry. Browser quarantine, abort, and permit replay include raw
+authoritative before/after hashes. Three CAS and four accepted-cancellation
+fixtures are separately labelled `assertion-backed` and bind to named tests;
+their raw-hash fields remain `null`. The release audit rejects a missing
+fixture, an unexpected fixture, or an assertion-backed observation presented
+as a raw hash.
+
+The performance report is narrower than the product topology above. It is a
+Transition Worker local-filesystem microbenchmark covering seal, export,
+manifest plus fixed-file deterministic probe, permit, and promotion. It does
+not traverse Broker RPC or launch the product Verifier/trusted-check process,
+so `deterministicProbeMs` is not Verifier-container or end-to-end latency.
 
 The default product path now calls the Worker RPC and unified Compose enforces
-sole-RW mounts. Worker manifest code checks regular file/dir shape, hardlinks,
-Unicode/casefold collisions, sparse-file/EXDEV policy, and swap filesystem
-identity. xattr/ACL and arbitrary ownership preservation are outside the
-normalized state contract. The Worker log rebuilds transition, head, version,
-permit, and terminal receipt identity/decision projections; user messages and
-unavailable verbose verifier output are not invented during reconstruction.
-The revision-bound Linux, recovery, live topology, and Ark clean-clone machine
-gates are now verified for the default Worker authority path. `P1 hardened`
-remains withheld until the required narrated three-minute submission video is
-recorded and validated. P2 has neither product-path enforcement nor frozen
-shadow metrics; focused code and tests do not establish `P2 research-verified`.
+sole-RW mounts. In the production Linux profile, Worker Manifest v2 checks
+regular file/dir shape, hardlinks, Unicode/casefold collisions, sparse files,
+expected UID/GID, normalized modes, xattrs, non-trivial ACLs, EXDEV, and swap
+filesystem identity. Any xattr or non-trivial ACL is rejected rather than
+preserved. Portable in-process development does not make this strong-profile
+claim. The Worker log plus evidence blobs rebuild transition, head, version,
+proposal, evidence, permit, terminal receipt, and proof projections; user
+messages and unavailable natural-language Agent output are not invented during
+reconstruction.
+The expected Linux, recovery, live topology, and real-Provider clean-clone
+machine gates describe the default Worker authority path only after their
+reports are regenerated for one frozen source identity. `P1 hardened` remains
+withheld until those gates are regenerated for
+the frozen release source and the required narrated three-minute submission
+video is recorded and validated. Research-only intent/outbox/attestation work
+has neither product-path enforcement nor frozen metrics and receives no release
+credit.
 
 The evaluation tree contains an executable clean-clone Playwright driver
 that builds the app/Runtime/Relay, drives the required browser decisions and
@@ -370,4 +581,4 @@ screenshot/report artifacts. Historical **2026-08-27** machine evidence applies
 only to its earlier source revision and images, not Authority V2. Every source
 change requires a new clean-revision record; missing current evidence is
 reported as `unverified`. The repository evidence checklist is an index, not an
-external security review or independent verification.
+organizer score or substitute for independent judging.

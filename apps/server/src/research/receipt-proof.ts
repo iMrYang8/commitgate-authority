@@ -131,7 +131,22 @@ export interface AuthorityReceiptRecordV2 extends AuthorityReceiptRecordCommon {
   dispositionBaseWorkspaceHash: string;
 }
 
-export type AuthorityReceiptRecord = AuthorityReceiptRecordV1 | AuthorityReceiptRecordV2;
+/** Receipt v3 binds the deployment-selected, Worker-owned policy pack. */
+export interface AuthorityReceiptRecordV3 extends AuthorityReceiptRecordCommon {
+  schemaVersion: 3;
+  dispositionBaseViewId: string;
+  dispositionBaseGeneration: number;
+  dispositionBaseWorkspaceHash: string;
+  policyProfile: "workspace-default" | "deployment-protected";
+  policyVersion: number;
+  policyHash: string;
+  checkSpecHash: string;
+}
+
+export type AuthorityReceiptRecord =
+  | AuthorityReceiptRecordV1
+  | AuthorityReceiptRecordV2
+  | AuthorityReceiptRecordV3;
 
 export interface AuthorityReceiptProofBody {
   schemaVersion: 2;
@@ -212,7 +227,7 @@ function dispositionBase(receipt: AuthorityReceiptRecord): {
 }
 
 function authorityReceiptSemanticError(receipt: AuthorityReceiptRecord): string | null {
-  if (![1, 2].includes(receipt.schemaVersion)) {
+  if (![1, 2, 3].includes(receipt.schemaVersion)) {
     return "authority receipt schema invalid";
   }
   if (receipt.schemaVersion === 1 && receipt.decision === "CONFLICTED") {
@@ -257,6 +272,16 @@ function authorityReceiptSemanticError(receipt: AuthorityReceiptRecord): string 
   ) {
     return "authority receipt field format invalid";
   }
+  if (
+    receipt.schemaVersion === 3 &&
+    (!["workspace-default", "deployment-protected"].includes(receipt.policyProfile) ||
+      !Number.isSafeInteger(receipt.policyVersion) ||
+      receipt.policyVersion < 1 ||
+      !sha256Pattern.test(receipt.policyHash) ||
+      !sha256Pattern.test(receipt.checkSpecHash))
+  ) {
+    return "authority receipt policy binding invalid";
+  }
   if ((receipt.permitId === null) !== (receipt.permitState === null)) {
     return "authority receipt permit binding invalid";
   }
@@ -294,14 +319,14 @@ function authorityReceiptSemanticError(receipt: AuthorityReceiptRecord): string 
     receipt.baseGeneration === beforeDisposition.generation &&
     receipt.baseWorkspaceHash === beforeDisposition.workspaceHash;
   if (
-    receipt.schemaVersion === 2 &&
+    receipt.schemaVersion >= 2 &&
     receipt.decision === "CONFLICTED" &&
     proposalBaseMatchesDisposition
   ) {
     return "conflicted receipt has no base drift";
   }
   if (
-    receipt.schemaVersion === 2 &&
+    receipt.schemaVersion >= 2 &&
     receipt.decision !== "CONFLICTED" &&
     !proposalBaseMatchesDisposition
   ) {
@@ -334,7 +359,7 @@ function terminalReceiptBindingError(
   }
   const beforeDisposition = dispositionBase(receipt);
   if (
-    receipt.schemaVersion === 2 &&
+    receipt.schemaVersion >= 2 &&
     (!beforeDisposition || terminal.payload.previousViewId !== beforeDisposition.viewId)
   ) {
     return "non-commit disposition base event mismatch";
@@ -355,11 +380,19 @@ const canonicalAuthorityReceipt = (receipt: AuthorityReceiptRecord): Buffer => {
     baseGeneration: receipt.baseGeneration,
     nextGeneration: receipt.nextGeneration,
     baseWorkspaceHash: receipt.baseWorkspaceHash,
-    ...(receipt.schemaVersion === 2
+    ...(receipt.schemaVersion !== 1
       ? {
           dispositionBaseViewId: receipt.dispositionBaseViewId,
           dispositionBaseGeneration: receipt.dispositionBaseGeneration,
           dispositionBaseWorkspaceHash: receipt.dispositionBaseWorkspaceHash,
+        }
+      : {}),
+    ...(receipt.schemaVersion === 3
+      ? {
+          policyProfile: receipt.policyProfile,
+          policyVersion: receipt.policyVersion,
+          policyHash: receipt.policyHash,
+          checkSpecHash: receipt.checkSpecHash,
         }
       : {}),
     finalWorkspaceHash: receipt.finalWorkspaceHash,
@@ -613,7 +646,7 @@ export function verifyAuthorityReceiptProof(
   const { receipt, proof, publicKeyPem } = bundle;
   if (
     ![2, 3].includes(bundle.schemaVersion) ||
-    ![1, 2].includes(receipt.schemaVersion) ||
+    ![1, 2, 3].includes(receipt.schemaVersion) ||
     proof.schemaVersion !== 2 ||
     proof.signatureAlgorithm !== "Ed25519"
   ) {

@@ -16,6 +16,23 @@ Verifier input, promotion source, and version snapshot must derive from the same
 proposal identity. A stale View, changed context, incomplete evidence, or
 replayed permit cannot authorize promotion.
 
+The corresponding receipt proof is intentionally narrow:
+
+```text
+COMMITTED:
+sealedProposalHash == verifierInputHash == promotionSourceHash
+                   == finalAuthoritativeHash
+
+NON-COMMIT:
+authoritativeAfterHash == authoritativeBeforeHash
+```
+
+`EffectDispositionProof` derives these values from Worker facts and labels the
+result `PROMOTED_EXACT_PROPOSAL` or `NO_PERSISTENT_EFFECT`. For `CONFLICTED`, the
+before hash is the disposition-time HEAD after another valid transition, not the
+stale admission base. The proof means this rejected proposal caused no further
+effect; it does not say no other authorized transition occurred.
+
 This guarantee is deliberately scoped to:
 
 - a local Docker/Linux Runtime and the recorded image identities;
@@ -26,11 +43,35 @@ This guarantee is deliberately scoped to:
 - a normal, case-sensitive filesystem with supported rename behavior;
 - no hostile host/root writer bypassing the control plane.
 
+The reported invariant rates are finite-fixture results, not estimates of a
+universal production failure probability. Their denominator is the exact
+ten-item effect-capable negative registry. Only three browser observations
+carry raw before/after hashes; seven CAS/cancellation observations are clearly
+labelled assertion-backed and retain `null` raw-hash fields.
+
+The performance report is also deliberately narrow: it measures Worker-local
+filesystem protocol phases and a manifest plus fixed-file deterministic probe.
+It excludes Broker RPC, the real Verifier container, the trusted-check bundle
+process, model inference, and network latency. It is not evidence for product
+Verifier latency or complete Agent Run latency.
+
 Here “immutable” is a protocol property, not an OS immutable flag. The Worker
 owns sealed bytes and Authority/Control RW mounts; API sees those volumes RO,
 while Broker and Relay do not mount them. Pre/post manifests, content addressing
 and one-shot permits remain necessary. A host/root actor or compromised Docker
 engine can still bypass this boundary.
+
+Worker, Broker, and Runtime artifacts deliberately share numeric artifact-owner
+UID `10001` because Broker must hash Worker exports normalized to `0500/0600`.
+This is not distinct-UID service isolation. Authority/Control mount ownership and
+separate Unix socket groups establish the service boundary; Broker and Relay do
+not mount Authority/Control.
+
+The only exchange references are Worker-derived `candidate-${runId}` and
+`verify-${runId}`. Their Agent/run/lease/session/proposal bindings are write-once;
+candidate sealing and terminal export states leave durable tombstones. This
+prevents caller-selected paths, cross-run rebinding, and reuse after Broker/
+Worker restart under the documented process threat model.
 
 ## Verifier boundary, not whole-system no-egress
 
@@ -73,6 +114,30 @@ host egress mediation. The 2026-08-27 Ark/Playwright report verifies this Relay
 path for its recorded source/image identity; it does not prove general host
 egress mediation.
 
+## Broker evidence authenticity, not remote attestation
+
+Production mounts a generated `0600` HMAC-SHA256 key only into Runtime Broker
+and Transition Worker. Broker-authenticated teardown evidence binds
+run/Agent/lease/session/scope and the negative container/mount observation;
+Broker-authenticated verifier evidence additionally binds proposal/input,
+check specification/results/coverage, and frozen environment pins. Worker
+verifies the MAC and compares those fields with its own admitted transition.
+
+This closes the API-to-Worker gap where an unkeyed caller could fabricate a
+`PASS` or `mountsReleased=true` object. It does **not** prove the Broker's Docker
+observation to an external party, protect against a compromised Broker/Worker,
+or resist host/root control of the secret. The Broker's durable lifecycle ledger
+only enforces monotonic local history for an exact
+`runId + agentId + runLeaseId + sessionEpoch` binding:
+
+```text
+AGENT_STARTED -> AGENT_CLOSED -> VERIFIER_STARTED -> ALL_CLOSED
+```
+
+Its tombstones survive Broker process restart and prevent relaunch after a
+signed closure, but they are not remotely witnessed. This key/proof is distinct
+from the Relay HMAC bearer and the Ed25519 terminal-receipt signature.
+
 ## Trusted-check policy boundary
 
 The policy does not merely reference a registry ID. It stores the complete
@@ -94,7 +159,8 @@ The Authority V2 TCB includes:
 - host OS, filesystem, and Docker engine;
 - Fastify/AgentService projection and CommitGate protocol implementation;
 - dedicated Transition Worker and hash-linked transition log;
-- Runtime Broker and Docker engine;
+- Runtime Broker, its durable lifecycle ledger, shared Broker/Worker HMAC key,
+  and Docker engine;
 - product state database as a rebuildable/cache projection plus user messages;
 - State View/policy/trusted-check data;
 - configured Runtime and Verifier images;
@@ -122,6 +188,16 @@ Ambiguous or externally corrupted state becomes `RECOVERY_REQUIRED`; the system
 must not guess. This is a recoverable local admission protocol, not distributed
 ACID.
 
+The recovery evaluator is designed to kill Worker/API processes at the declared
+transaction points and Broker-owned Agent/Verifier child containers. The
+`RUNTIME_BROKER_PROCESS_SIGKILL_ORPHAN_RECONCILIATION` fixture also kills a
+separate Runtime Broker Node process, confirms its child survives, restarts the
+Broker, and requires exact-label negative-query evidence before mount release.
+It does not kill the Docker daemon and does not extend the guarantee to a
+host/root adversary, daemon corruption, or power loss. These scenarios become
+current evidence only when the Docker recovery report is regenerated and passes
+for the frozen source identity.
+
 ## Filesystem model
 
 The authoritative View accepts normalized regular directories/files only.
@@ -141,18 +217,28 @@ live in bounded scratch or a platform-owned offline layer. The system must not
 silently preserve ignored state while claiming the View fully identifies what
 the next turn can observe.
 
-The five default ignored names are bounded at the workspace root, while a
-streaming post-run audit covers ignored path segments at arbitrary nesting
-depths and enforces entry, aggregate-byte, and single-file limits before seal.
-The Worker/Broker exchange volume does not provide a strict per-run physical
-disk quota for arbitrary nested ignored content during Runtime execution; a run
-can consume shared exchange capacity until teardown and then be rejected. This
-resource window remains a limitation even though cross-run subpaths and
-promotion authority are isolated.
+The five default ignored names are redirected to bounded scratch at the
+workspace root, while Manifest v2 classifies ignored names at arbitrary path
+segments and enforces entry, aggregate-byte, and single-file limits before
+seal.
+The manifest walk additionally enforces a monotonic wall-clock limit (30
+seconds by default) and fails closed with
+`CANDIDATE_SCAN_TIME_BUDGET_EXCEEDED`. Ignored entries and bytes consume scan
+budgets even though their content is excluded from the proposal.
+The production Worker/Broker exchange is a byte- and inode-bounded tmpfs. Under
+the fixed single-Agent-serial boundary this provides a hard aggregate ceiling
+for the active candidate and verifier export, including arbitrary nested
+ignored content. It is not a multi-tenant per-run accounting system: concurrent
+Agents would share the same ceiling and require separate volumes or project
+quotas before this claim could be extended.
 
 The manifest does not treat mtime, uid, or gid as versioned product semantics.
-An operator must not infer ownership/ACL/xattr guarantees unless a corresponding
-normalization test/report exists.
+The production Linux Worker nevertheless requires one normalized UID/GID per
+tree, rejects setuid/setgid/sticky mode bits, and invokes fixed `getfattr` /
+`getfacl` binaries with bounded output and no shell. Any xattr or non-trivial
+ACL fails admission. Portable in-process development does not make this claim;
+the Worker health field must report `filesystemProfile=linux-strong` and the
+Linux evaluator must pass before release evidence may use it.
 
 ## Decision and retention semantics
 
@@ -208,10 +294,15 @@ new input rather than a magically rolled-back external belief.
 
 ## Provider and evidence boundary
 
-- Ark/ModelArk is the primary configured provider path unless a deployment selects a
-  substitute.
-- OpenRouter is a compatible development/alternate path.
-- OpenRouter evidence must never be reported as `realModelArk`.
+- CommitGate evaluates a Responses-compatible Provider path; the repository
+  supplies Ark and OpenRouter adapters.
+- Provider choice is provenance rather than a scoring category. A historical
+  recorded real clean-clone E2E used Ark for its embedded revision; it is not a
+  current claim after source changes.
+- New reports use the tri-state `providerE2EVerified` field. Historical
+  `officialProviderE2E`, `alternateProviderVerified`, and
+  `competitionVerified` fields are accepted only as read compatibility and do
+  not award checklist credit.
 - deterministic/FakeRunner tests establish protocol behavior, not model
   behavior;
 - verifier-container tests establish the verifier boundary, not a real Agent
@@ -222,8 +313,8 @@ new input rather than a magically rolled-back external belief.
   proof that a real Provider/browser scenario succeeded;
 - with missing credentials/clean source/Docker/Chromium it exits `2` and writes
   `unverified`, and a failed scenario is `failed`;
-- the checked-in earlier-revision report provides historical Ark/browser
-  evidence only for the identity it records; Authority V2 must regenerate it;
+- every earlier-revision Provider/browser report is historical evidence only
+  for the identity it records; Authority V2 must regenerate it after changes;
 - `audit:clean-clone` is a read-only clean-worktree CLI rerun, not browser
   evidence;
 - design documents, source files, and mock fixtures are not runtime evidence;
@@ -235,18 +326,25 @@ A manual Provider change needs a service restart, explicit Agent
 configuration/session reset, and a new run; there is no automatic fresh
 run/proposal/session orchestration to claim.
 
-`sourceRevision` is included in `EvaluationContext`, but defaults to the literal
-`unverified` unless explicitly configured. It becomes provenance evidence only
-when a clean-revision evaluation independently binds and verifies it.
+`sourceRevision` is included in `EvaluationContext`. Development/tests may use
+the literal `unverified`; the production API, Runtime Broker, and Transition
+Worker require the same full 40-hex configured revision, and the Worker rejects
+mismatched product evidence. It becomes provenance evidence only when a
+clean-revision evaluation independently binds and verifies that value against
+the source-tree hash and image identities.
 
-A score item is `verified`, `failed`, or `unverified` and must name evidence
+A checklist item is `verified`, `failed`, or `unverified` and must name evidence
 bound to the current revision/source-tree hash and required image identities.
+The checklist does not calculate an organizer or predicted score.
 
-The earlier Ark clean-clone report verified 10/10 product scenarios for its P0
-identity. The old repository `100/100` remains a historical internal
-evidence-checklist result, not an independently issued assessment. Neither is reused for
-Authority V2. Current Ark/browser, Linux, recovery, release and narrated Demo
-evidence remain `unverified` until regenerated against one clean identity.
+The historical recorded Ark clean-clone report verified 10/10 product scenarios
+for the source identity embedded in that report; it is not current evidence for
+a changed tree. The active browser contract now requires 12/12 scenarios, so
+the historical 10/10 report is intentionally stale. The old repository `100/100` remains
+a historical internal rubric projection, not an organizer-issued score. It is
+not part of the active evidence set. Provider/browser, Linux, recovery, release
+and narrated Demo evidence become `unverified` whenever the source changes and
+remain so until regenerated against one clean identity.
 
 ## Explicit non-goals
 
@@ -258,39 +356,51 @@ evidence remain `unverified` until regenerated against one clean identity.
 - semantic-intent correctness;
 - general policy DSL or policy editing UI;
 - multi-tenant hostile-user isolation;
-- cryptographic transparency/receipt signatures;
+- remotely witnessed transparency or host/root-resistant receipt signatures;
 - TPM/TEE remote attestation;
 - long-term rejected-artifact browsing;
 - protected execution through `RUNTIME_PROVIDER=local-process`.
 
 ## P1 product path and remaining evidence gates
 
-The default production path now uses the dedicated-UID Transition Worker over
-typed Unix RPC. The Worker is the sole service with read-write Authority and
+The default production path uses the Transition Worker over typed Unix RPC. The
+Worker is the sole service with read-write Authority and
 Control mounts; the API mounts them read-only, and the Runtime Broker owns the
 Docker socket without mounting either tree. The Worker append-only hash-linked
 event log is the transition fact source for head, generation, permit, version,
 receipt identity, promotion, rollback, archive, and recovery. Product database
 fields are a projection and cannot overwrite Worker state.
 
-This wiring is an implemented and machine-verified product property. Current
-revision-bound Linux filesystem, recovery, topology, and Ark clean-clone
-evidence is checked in. The broader label `P1 hardened` remains withheld until
-the narrated three-minute submission Demo is recorded and validated.
-The Worker rejects symlinks, special files, hardlinks, Unicode/case collisions
-and checks same-filesystem swap. Sparse-file and EXDEV behavior must be proven
-by the Linux evaluator; xattr/ACL and arbitrary ownership preservation remain
-outside the normalized regular-file/regular-directory state contract. Sealing
+This wiring is implemented. Linux filesystem, recovery, topology, and
+real-Provider clean-clone reports remain evidence only for the source identity
+they record; a source change makes them historical until regeneration. The
+broader label `P1 hardened` remains withheld until one frozen source passes all
+release gates and the narrated three-minute submission Demo is recorded and
+validated.
+The Worker rejects symlinks, special files, hardlinks, sparse files,
+Unicode/case collisions, unexpected ownership/mode, xattrs/ACLs, and checks
+same-filesystem swap. Those strong claims require the Linux Worker profile and
+Linux evaluator; portable development is explicitly weaker. Sealing
 changes the proposal tree root to `0500` while preserving artifact modes; OS
-exclusion comes from the Worker-only UID/volume ownership boundary.
+exclusion comes from the Worker-only Authority/Control mount and volume-
+ownership boundary, not from a unique Worker UID.
 
 The Worker reconstructs transition/head/version/permit state and terminal
 receipt identities/decisions. User messages remain in the product database,
 and a receipt reconstructed after loss of the product projection is explicitly
 marked partial rather than inventing missing verifier text.
 
-P2 contains prototype modules for semantic-intent `off|shadow` evidence, a
-registered-adapter Effect Outbox, and Ed25519 receipt proof/verification. They
-are not integrated as product promotion authority. The frozen 200-example x
+The Worker, rather than the RPC caller or product database, derives every next
+StateView from authoritative bytes plus the prior event. Receipt proof uses a
+pre-run TOFU anchor: the client observes
+`authorityReceiptSigningKeyId` from `/api/system` before starting the run and
+requires the proof key to match. This detects post-observation substitution but
+is not an externally witnessed identity and provides no hostile host/root
+guarantee.
+
+P2 contains prototype modules for semantic-intent `off|shadow` evidence and a
+registered-adapter Effect Outbox. They are not integrated as product promotion
+authority. Ed25519 terminal-receipt proof is integrated into the audit path,
+but is intentionally not an authorization input. The frozen 200-example x
 5-run stability/FPR/FNR/abstention report has not been produced, and OCI/TEE
 attestation is not verified. `P2 research-verified` remains unverified.

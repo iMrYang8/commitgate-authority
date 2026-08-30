@@ -60,6 +60,9 @@ export interface CommitGateSummary {
   candidateHash: string | null;
   finalHash: string;
   policyHash: string;
+  policyProfile?: "workspace-default" | "deployment-protected";
+  policyVersion?: number;
+  checkSpecHash?: string;
   checks: Array<{
     id: string;
     status: "PASS" | "FAIL" | "ERROR" | "SKIPPED";
@@ -110,6 +113,9 @@ export interface GateReceipt {
   patchHash: string | null;
   finalSnapshotHash: string;
   policyHash: string;
+  policyProfile?: "workspace-default" | "deployment-protected";
+  policyVersion?: number;
+  checkSpecHash?: string;
   checks: Array<{
     id: string;
     status: "PASS" | "FAIL" | "ERROR" | "SKIPPED";
@@ -267,4 +273,8 @@ export interface SystemInfo {
   authorityManifestSchemaVersion?: number | null;
   authorityFilesystemProfile?: "linux-strong" | "portable-development" | null;
   authorityReceiptSigningKeyId?: string | null;
+  authorityPolicyProfile?: "workspace-default" | "deployment-protected" | null;
+  authorityPolicyVersion?: number | null;
+  authorityPolicyHash?: string | null;
+  authorityCheckSpecHash?: string | null;
 }

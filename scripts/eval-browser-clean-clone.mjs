@@ -31,6 +31,8 @@ const requiredScenarioIds = [
   "provider-identity-bound",
   "stale-permit-replay-rejected",
   "browser-manual-rollback",
+  "browser-second-agent-committed",
+  "cross-agent-reference-rejected",
 ];
 
 if (!new Set(["ark", "openrouter"]).has(provider)) {
@@ -272,6 +274,7 @@ const stackEnvironment = {
   MODEL_ID: model,
   MODEL_API_KEY: key,
   MODEL_WIRE_API: "responses",
+  COMMITGATE_POLICY_PROFILE: "deployment-protected",
   PUBLIC_PORT: String(publicPort),
   COMMITGATE_COMPOSE_PROJECT: composeProject,
   COMMITGATE_STACK_ID: stackId,
@@ -369,6 +372,7 @@ try {
     MODEL_ID: model,
     MODEL_API_KEY: key,
     MODEL_WIRE_API: "responses",
+    COMMITGATE_POLICY_PROFILE: "deployment-protected",
     CONTAINER_ENGINE: engine,
     CONTAINER_RUNTIME_IMAGE: "volc-agent-runtime:local",
     COMMITGATE_MODEL_RELAY_IMAGE: "commitgate-model-relay:local",
@@ -477,6 +481,9 @@ const requiredArtifactKinds = new Set([
   "playwright-trace",
   "playwright-video",
   "final-screenshot",
+  "committed-exact-proposal-screenshot",
+  "quarantined-no-effect-screenshot",
+  "permit-replay-head-unchanged-screenshot",
   "receipt-proof-bundle",
   "receipt-proof-key-id",
   "rollback-receipt-proof-bundle",
@@ -515,6 +522,8 @@ const evaluationRecords = (driverReport?.scenario ?? []).map((scenario) =>
     source,
     provider: driverReport?.provider ?? { providerId: provider, requestedModel: model },
     scenario,
+    executionIdentity:
+      driverReport?.executionIdentity ?? executionIdentity(root, { providerId: provider }),
   })),
 );
 const report = {

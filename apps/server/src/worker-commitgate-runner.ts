@@ -11,10 +11,10 @@ import {
   sha256Canonical,
 } from "./commitgate/protocol.js";
 import {
-  WORKER_CHECK_SPEC_HASH,
-  WORKER_GATE_POLICY_HASH,
   WORKER_MANIFEST_SCHEMA_VERSION,
-  workerGatePolicy,
+  resolveWorkerGateContract,
+  type WorkerGateContract,
+  type WorkerPolicyProfile,
 } from "./worker-gate-policy.js";
 import { deriveEffectDispositionProof } from "./commitgate/effect-proof.js";
 import type {
@@ -111,8 +111,6 @@ const AMBIGUOUS_AUTHORITY_RESPONSE_CODES = new Set([
 ]);
 
 const now = (): string => new Date().toISOString();
-const WORKER_POLICY = workerGatePolicy();
-
 function summaryLifecycle(
   summary: CommitGateSummary,
 ): NonNullable<CommitGateSummary["lifecycle"]> {
@@ -131,6 +129,7 @@ export class WorkerCommitGateRunner implements AgentRunner {
   readonly mode = "worker" as const;
   private readonly runs = new Map<string, StoredRun>();
   private readonly active = new Map<string, ActiveWorkerRun>();
+  private readonly gateContract: WorkerGateContract;
 
   constructor(
     private readonly inner: BrokerBackedRunner,
@@ -138,7 +137,10 @@ export class WorkerCommitGateRunner implements AgentRunner {
     private readonly exchangeRoot: string,
     private readonly sourceRevision: string,
     private readonly requireVerifiedSourceRevision = false,
-  ) {}
+    policyProfile: WorkerPolicyProfile = "workspace-default",
+  ) {
+    this.gateContract = resolveWorkerGateContract(policyProfile);
+  }
 
   async isAvailable(): Promise<boolean> {
     try {
@@ -289,7 +291,7 @@ export class WorkerCommitGateRunner implements AgentRunner {
         exportVolumeId,
       });
       this.throwIfCancelled(active);
-      const checks = WORKER_POLICY.requiredChecks;
+      const checks = this.gateContract.policy.requiredChecks;
       const verification = await this.inner.runVerifier({
         runId: request.runId,
         agentId: request.agentId,
@@ -297,7 +299,7 @@ export class WorkerCommitGateRunner implements AgentRunner {
         sessionEpoch: request.sessionEpoch ?? 0,
         proposalId,
         verifierInputHash: exported.artifactHash,
-        checkSpecHash: WORKER_CHECK_SPEC_HASH,
+        checkSpecHash: this.gateContract.checkSpecHash,
         workspaceRef: {
           volumeId: exportVolumeId,
           relativeSubpath: exported.relativeSubpath,
@@ -305,8 +307,8 @@ export class WorkerCommitGateRunner implements AgentRunner {
           agentId: request.agentId,
         },
         checks,
-        timeoutMs: WORKER_POLICY.verifierTimeoutMs,
-        maxOutputBytes: WORKER_POLICY.verifierMaxOutputBytes,
+        timeoutMs: this.gateContract.policy.verifierTimeoutMs,
+        maxOutputBytes: this.gateContract.policy.verifierMaxOutputBytes,
       });
       observedChecks = verification.checks;
       this.throwIfCancelled(active);
@@ -342,9 +344,9 @@ export class WorkerCommitGateRunner implements AgentRunner {
         proposalId,
         baseView: prepared.baseView,
         manifestSchemaVersion: WORKER_MANIFEST_SCHEMA_VERSION,
-        policyHash: WORKER_GATE_POLICY_HASH,
+        policyHash: this.gateContract.policyHash,
         checkBundleHash: verification.environment.checkBundleHash,
-        checkSpecHash: WORKER_CHECK_SPEC_HASH,
+        checkSpecHash: this.gateContract.checkSpecHash,
         verifierImageDigest: verification.environment.imageDigest,
         verifierConfigHash: verification.environment.configHash,
         resourcePolicyHash: verification.environment.resourcePolicyHash ?? "unverified",
@@ -1081,7 +1083,10 @@ export class WorkerCommitGateRunner implements AgentRunner {
       baseHash: input.baseView.liveStateHash,
       candidateHash: input.proposalHash,
       finalHash: input.finalView.liveStateHash,
-      policyHash: WORKER_GATE_POLICY_HASH,
+      policyHash: this.gateContract.policyHash,
+      policyProfile: this.gateContract.profile,
+      policyVersion: this.gateContract.policyVersion,
+      checkSpecHash: this.gateContract.checkSpecHash,
       checks: input.checks.map((check) => ({
         id: check.id,
         status: check.status,
@@ -1130,7 +1135,7 @@ export class WorkerCommitGateRunner implements AgentRunner {
     reasonCodes: string[] = [],
   ): GateReceipt {
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
       runId: request.runId,
       agentId: request.agentId,
       phase: summary.decision === "COMMITTED" ? "TERMINAL" : "PENDING_DISPOSITION",
@@ -1142,6 +1147,9 @@ export class WorkerCommitGateRunner implements AgentRunner {
       patchHash: null,
       finalSnapshotHash: summary.finalHash,
       policyHash: summary.policyHash,
+      policyProfile: this.gateContract.profile,
+      policyVersion: this.gateContract.policyVersion,
+      checkSpecHash: this.gateContract.checkSpecHash,
       evidence: { static: summary.proposalId ? "complete" : "unavailable" },
       checks: summary.checks.map((check) => ({
         id: check.id,

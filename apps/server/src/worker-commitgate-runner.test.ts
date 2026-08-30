@@ -1,4 +1,4 @@
-import { readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { mkdtemp } from "node:fs/promises";
@@ -58,6 +58,7 @@ async function fixture(
     socketPath: path.join(root, "run", "worker.sock"),
     sourceRevision: "revision",
     requireRuntimeTeardownHandshake: true,
+    policyProfile: "deployment-protected",
   };
   const worker = new TransitionWorker(config);
   await worker.initialize();
@@ -68,7 +69,7 @@ async function fixture(
     generation: 1,
     sessionEpoch: 0,
     agentConfigVersion: 1,
-    policyVersion: 1,
+    policyVersion: 2,
     name: "Agent",
     instructions: "# trusted\n",
   });
@@ -121,7 +122,8 @@ async function fixture(
       hooks.onAgentRun?.();
       const candidate = path.join(config.inboxRoot, request.workspaceRef!.relativeSubpath);
       if (mode === "protected") {
-        await writeFile(path.join(candidate, "protected.txt"), "tampered\n");
+        await mkdir(path.join(candidate, "infra"), { recursive: true });
+        await writeFile(path.join(candidate, "infra", "production.yaml"), "replicas: 1\n");
       } else if (mode === "manifest-symlink") {
         await symlink("AGENTS.md", path.join(candidate, "agent-link"));
       } else if (mode === "manifest-io") {
@@ -187,6 +189,8 @@ async function fixture(
     authority,
     config.inboxRoot,
     "revision",
+    false,
+    "deployment-protected",
   );
   const head = initialized.head!;
   const request: RunnerRequest = {
@@ -201,7 +205,7 @@ async function fixture(
     stateGeneration: head.view.generation,
     expectedHeadVersionId: head.view.headVersionId,
     agentConfigVersion: 1,
-    policyVersion: 1,
+    policyVersion: 2,
     baseVersionedHash: head.view.versionedHash,
     basePlatformManagedHash: head.view.platformManagedHash,
     baseLiveStateHash: head.workspaceHash,
@@ -375,7 +379,8 @@ describe("WorkerCommitGateRunner", () => {
           "proposals",
           "agent",
           `proposal-${request.runId}`,
-          "protected.txt",
+          "infra",
+          "production.yaml",
         ),
         "utf8",
       ),
@@ -563,7 +568,7 @@ describe("WorkerCommitGateRunner", () => {
     const proof = await worker.getReceiptProof("agent", request.runId);
     expect(proof.schemaVersion).toBe(3);
     expect(proof?.receipt).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       decision: "CONFLICTED",
       baseViewId: request.baseViewId,
       baseGeneration: request.stateGeneration,
