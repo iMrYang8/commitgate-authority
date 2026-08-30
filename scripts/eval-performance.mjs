@@ -25,7 +25,15 @@ const timeoutMs = Number(process.env.COMMITGATE_BENCH_TIMEOUT_MS ?? "1200000");
 // image from the current source tree before collecting timings. A caller that
 // supplies COMMITGATE_TRANSITION_WORKER_IMAGE remains responsible for that
 // immutable image and the digest is still captured below.
-const buildArgs = ["build", "-f", "Dockerfile.transition-worker", "-t", image, "."];
+const buildArgs = [
+  "build",
+  "-f", "Dockerfile.transition-worker",
+  // Match Docker Compose's canonical image config so every evaluator binds
+  // the same product Worker digest instead of a label-only variant.
+  "--label", "com.docker.compose.image.builder=classic",
+  "-t", image,
+  ".",
+];
 const buildStarted = Date.now();
 const buildResult = explicitImage
   ? null

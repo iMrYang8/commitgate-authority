@@ -755,7 +755,11 @@ try {
   if (available.status !== 0) throw new Error(available.stderr || available.stdout || "container engine unavailable");
   if (!explicitWorkerImage) {
     const built = await command([
-      "build", "-f", "Dockerfile.transition-worker", "-t", image, ".",
+      "build", "-f", "Dockerfile.transition-worker",
+      // Keep the evaluator image byte-identical to the product Compose image;
+      // without this label Docker creates a config-only digest variant.
+      "--label", "com.docker.compose.image.builder=classic",
+      "-t", image, ".",
     ], { timeout: 10 * 60_000 });
     if (built.status !== 0) {
       throw new Error(built.stderr || built.stdout || "worker image build failed");
