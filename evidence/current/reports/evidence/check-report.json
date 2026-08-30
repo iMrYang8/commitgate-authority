@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "kind": "baseline-regression-check",
+  "generatedAt": "2026-08-30T13:00:59.581Z",
+  "node": "v25.6.1",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "testSummary": {
+    "commands": 4,
+    "passed": 327,
+    "failed": 0,
+    "skipped": 11,
+    "total": 338
+  },
+  "status": "verified",
+  "results": [
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "durationMs": 5179,
+      "status": "verified",
+      "testSummary": null
+    },
+    {
+      "command": "npm run test",
+      "exitCode": 0,
+      "durationMs": 11976,
+      "status": "verified",
+      "testSummary": {
+        "framework": "vitest",
+        "filesPassed": 48,
+        "filesFailed": 0,
+        "passed": 307,
+        "failed": 0,
+        "skipped": 11,
+        "total": 318
+      }
+    },
+    {
+      "command": "npm run test:evaluator-cleanup",
+      "exitCode": 0,
+      "durationMs": 454,
+      "status": "verified",
+      "testSummary": {
+        "framework": "node-test",
+        "filesPassed": null,
+        "filesFailed": null,
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "total": 4
+      }
+    },
+    {
+      "command": "npm run test:evidence-provenance",
+      "exitCode": 0,
+      "durationMs": 1508,
+      "status": "verified",
+      "testSummary": {
+        "framework": "node-test",
+        "filesPassed": null,
+        "filesFailed": null,
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "total": 3
+      }
+    },
+    {
+      "command": "npm run test:release-contracts",
+      "exitCode": 0,
+      "durationMs": 419,
+      "status": "verified",
+      "testSummary": {
+        "framework": "node-test",
+        "filesPassed": null,
+        "filesFailed": null,
+        "passed": 13,
+        "failed": 0,
+        "skipped": 0,
+        "total": 13
+      }
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 5355,
+      "status": "verified",
+      "testSummary": null
+    }
+  ]
+}

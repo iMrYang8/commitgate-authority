@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 2,
+  "kind": "real-provider-evaluation",
+  "generatedAt": "2026-08-30T13:09:54.722Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "openrouter",
+      "gateway": "https://openrouter.ai/api/v1",
+      "requestedModel": "openrouter/auto",
+      "resolvedModel": null,
+      "wireApi": "responses",
+      "accessMode": "relay",
+      "credentialConfigured": true,
+      "credentialsRecorded": false
+    }
+  },
+  "provider": {
+    "providerId": "openrouter",
+    "gateway": "https://openrouter.ai/api/v1",
+    "requestedModel": "openrouter/auto",
+    "resolvedModel": "deepseek/deepseek-v4-flash-0731",
+    "credentialsRecorded": false
+  },
+  "provenance": {
+    "realProviderRequest": true,
+    "realCodexContainer": true,
+    "productAuthorityTopology": false,
+    "browserAutomation": false,
+    "frontendAssetServed": false,
+    "credentialsRecorded": false,
+    "claimBoundary": "Provider/Responses compatibility E2E with a real Codex container and isolated in-process authority adapter; the default Worker/Broker product topology and clean-clone browser path are separate evidence."
+  },
+  "providerE2EVerified": "verified",
+  "scenario": [
+    {
+      "id": "provider-api-ready",
+      "status": "verified"
+    },
+    {
+      "id": "real-positive-commit",
+      "status": "verified",
+      "runId": "c6fdaf94-ed93-4570-bef6-ff83cc2ca384",
+      "baseViewId": "d03b1a9768f24e02f48ea3959b3292dfc5ec7c5e7976fe649bce90cff4ef59b5",
+      "nextViewId": "965b53d8a1a4d9a147f48afca14d739f838318f9c79350fe428693add4fa87ab",
+      "baseGeneration": 1,
+      "nextGeneration": 2,
+      "proposalId": "p-678c1b80acfe4dc0d01ff3d3ebf6701e282140805ea065e55a8a16f7f93ea6f5",
+      "proposalHash": "b4e5e3a576157a7cedf6ded02199ba3b6d2558f564fd6f12d206453011ec4de5",
+      "evaluationContextHash": "d9e8e52a720eb1de4580741a9f5f4e0f2872be9a800f38f4e8283615a5ca57f6",
+      "evidenceDigest": "03a9d760598b6a82b7f9e10125974fdec917d7bf43e6594faa798e1673fbd809",
+      "permitId": "k-7810a6d1-ce3e-4a1c-826b-99c202c252dd",
+      "permitState": "CONSUMED",
+      "decision": "COMMITTED",
+      "provider": {
+        "providerId": "openrouter",
+        "gateway": "http://model-relay:3100/v1",
+        "requestedModel": "openrouter/auto",
+        "resolvedModel": "deepseek/deepseek-v4-flash-0731"
+      },
+      "reason": null,
+      "checks": [
+        {
+          "id": "workspace-contract",
+          "status": "PASS",
+          "exitCode": 0,
+          "durationMs": 297,
+          "output": "workspace-contract: PASS\n",
+          "timedOut": false
+        }
+      ]
+    },
+    {
+      "id": "provider-identity-bound",
+      "status": "verified",
+      "provider": {
+        "providerId": "openrouter",
+        "gateway": "http://model-relay:3100/v1",
+        "requestedModel": "openrouter/auto",
+        "resolvedModel": "deepseek/deepseek-v4-flash-0731"
+      }
+    },
+    {
+      "id": "real-protected-quarantine",
+      "status": "verified",
+      "runId": "11633647-2ce4-480b-a03e-4f441d59dcc5",
+      "baseViewId": "965b53d8a1a4d9a147f48afca14d739f838318f9c79350fe428693add4fa87ab",
+      "nextViewId": "6db4104e910aee1ef63ef00d9e01a0b40d333800e3bef12e6f32305db05e75eb",
+      "baseGeneration": 2,
+      "nextGeneration": 2,
+      "proposalId": "p-a42ca94165a975c65ddb23b14af76601c49c115a6928a00f79ebbf064952ff8f",
+      "proposalHash": "ee5c7270b41fbb912b47025ae381795bec9ffec8d40c146d242b49d300950945",
+      "evaluationContextHash": null,
+      "evidenceDigest": null,
+      "permitId": null,
+      "permitState": null,
+      "decision": "QUARANTINED",
+      "provider": {
+        "providerId": "openrouter",
+        "gateway": "http://model-relay:3100/v1",
+        "requestedModel": "openrouter/auto",
+        "resolvedModel": "deepseek/deepseek-v4-flash-0731"
+      },
+      "artifactRetention": "destroyed",
+      "rejectedMarkerAbsentFromPersistent": true,
+      "protectedFixtureAbsentFromPersistent": true,
+      "sessionEpochAfterRejection": 1,
+      "threadCleared": true
+    },
+    {
+      "id": "fresh-session-follow-up",
+      "status": "verified",
+      "runId": "3ae71a1b-0767-41d4-88ac-80b20e09e8aa",
+      "baseViewId": "6db4104e910aee1ef63ef00d9e01a0b40d333800e3bef12e6f32305db05e75eb",
+      "nextViewId": "6b7bb55b133c3ab9626d04ad2949654c561a5a02923855c63fad20bcd68a2918",
+      "baseGeneration": 2,
+      "nextGeneration": 3,
+      "proposalId": "p-74fa2caef3658a6214ad941545f34ccbcd3b55186a97976936ba07f1ec685eb3",
+      "proposalHash": "b4e5e3a576157a7cedf6ded02199ba3b6d2558f564fd6f12d206453011ec4de5",
+      "evaluationContextHash": "39c6d034eba2bb417905cee5f3c3c7c42dac1e4e74efa80573d9db7f0252fc7c",
+      "evidenceDigest": "4f74ac5241eaef8ee69c2da2028e5ad629b59378bd962b12c20990d9e1105e77",
+      "permitId": "k-49138ab5-1171-4276-89e4-bc3c913cf412",
+      "permitState": "CONSUMED",
+      "decision": "COMMITTED",
+      "provider": {
+        "providerId": "openrouter",
+        "gateway": "http://model-relay:3100/v1",
+        "requestedModel": "openrouter/auto",
+        "resolvedModel": "google/gemini-3.7-flash"
+      }
+    },
+    {
+      "id": "manual-history-rollback",
+      "status": "verified",
+      "versionKind": "ROLLBACK",
+      "nextViewId": "2e83720fd33ea64822bc77bb3d49117361d50125acdd8a44db9075835e961014",
+      "nextGeneration": 4
+    }
+  ]
+}

@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 1,
+  "kind": "commitgate-linux-gate-overhead",
+  "generatedAt": "2026-08-30T13:05:40.367Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
+      "imageDigest": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "image": "commitgate-transition-worker:local",
+  "imageBuild": {
+    "performed": true,
+    "executable": "docker",
+    "arguments": [
+      "build",
+      "-f",
+      "Dockerfile.transition-worker",
+      "-t",
+      "commitgate-transition-worker:local",
+      "."
+    ],
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "durationMs": 35760,
+    "stderr": ""
+  },
+  "command": {
+    "executable": "docker",
+    "arguments": [
+      "run",
+      "--rm",
+      "--network",
+      "none",
+      "--read-only",
+      "--tmpfs",
+      "/tmp:rw,size=768m,nosuid,nodev",
+      "--env",
+      "COMMITGATE_BENCH_ITERATIONS=30",
+      "--env",
+      "COMMITGATE_BENCH_SIZES=4096,262144,1048576",
+      "--entrypoint",
+      "node",
+      "commitgate-transition-worker:local",
+      "apps/server/dist/transition-worker/benchmark.js"
+    ],
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "timeoutMs": 1200000
+  },
+  "durationMs": 69028,
+  "benchmark": {
+    "schemaVersion": 1,
+    "filesystemProfile": "linux-strong",
+    "manifestSchemaVersion": 2,
+    "measurementProfile": "worker-local-filesystem-protocol",
+    "verificationMeasurement": {
+      "mode": "manifest-and-fixed-file-deterministic-probe",
+      "brokerRpcIncluded": false,
+      "verifierContainerIncluded": false,
+      "trustedCheckBundleProcessIncluded": false,
+      "modelInferenceIncluded": false
+    },
+    "iterations": 30,
+    "sizes": [
+      4096,
+      262144,
+      1048576
+    ],
+    "results": [
+      {
+        "sizeBytes": 4096,
+        "iterations": 30,
+        "phases": {
+          "sealMs": {
+            "p50Ms": 152.329,
+            "p95Ms": 167.014
+          },
+          "exportMs": {
+            "p50Ms": 94.598,
+            "p95Ms": 144.885
+          },
+          "deterministicProbeMs": {
+            "p50Ms": 20.518,
+            "p95Ms": 37.022
+          },
+          "permitMs": {
+            "p50Ms": 15.692,
+            "p95Ms": 22.392
+          },
+          "promotionMs": {
+            "p50Ms": 229.594,
+            "p95Ms": 269.467
+          },
+          "totalGateMs": {
+            "p50Ms": 510.553,
+            "p95Ms": 631.603
+          }
+        }
+      },
+      {
+        "sizeBytes": 262144,
+        "iterations": 30,
+        "phases": {
+          "sealMs": {
+            "p50Ms": 155.234,
+            "p95Ms": 233.548
+          },
+          "exportMs": {
+            "p50Ms": 94.952,
+            "p95Ms": 147.025
+          },
+          "deterministicProbeMs": {
+            "p50Ms": 21.183,
+            "p95Ms": 33.258
+          },
+          "permitMs": {
+            "p50Ms": 15.492,
+            "p95Ms": 21.936
+          },
+          "promotionMs": {
+            "p50Ms": 233.654,
+            "p95Ms": 301.203
+          },
+          "totalGateMs": {
+            "p50Ms": 526.668,
+            "p95Ms": 710.163
+          }
+        }
+      },
+      {
+        "sizeBytes": 1048576,
+        "iterations": 30,
+        "phases": {
+          "sealMs": {
+            "p50Ms": 204.791,
+            "p95Ms": 253.044
+          },
+          "exportMs": {
+            "p50Ms": 132.975,
+            "p95Ms": 143.866
+          },
+          "deterministicProbeMs": {
+            "p50Ms": 30.189,
+            "p95Ms": 32.679
+          },
+          "permitMs": {
+            "p50Ms": 15.411,
+            "p95Ms": 23.827
+          },
+          "promotionMs": {
+            "p50Ms": 309.069,
+            "p95Ms": 367.989
+          },
+          "totalGateMs": {
+            "p50Ms": 699.41,
+            "p95Ms": 802.497
+          }
+        }
+      }
+    ]
+  },
+  "parseError": null,
+  "validation": {
+    "schemaAndOrder": true,
+    "workerImageDigest": true,
+    "productVerifierContainerMeasured": false
+  },
+  "stderr": "",
+  "claimBoundary": "Worker-local filesystem protocol microbenchmark only: seal, export, a manifest plus fixed-file deterministic probe, permit, and promotion under Linux-strong Manifest v2. It does not execute Runtime Broker RPC, launch the product Verifier container, or run the trusted-check bundle process. Model inference and network latency are also excluded. Therefore these numbers are not full end-to-end product gate latency; no arbitrary latency pass threshold is applied."
+}

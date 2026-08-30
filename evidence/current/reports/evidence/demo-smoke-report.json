@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "kind": "one-command-demo-smoke",
+  "generatedAt": "2026-08-30T13:06:20.400Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "baseUrl": "http://127.0.0.1:3000",
+  "startupTimeoutMs": 1200000,
+  "isolatedComposeProject": "commitgate-smoke-26526-1788095140781",
+  "checks": [
+    {
+      "id": "health",
+      "passed": true
+    },
+    {
+      "id": "system-api",
+      "passed": true
+    },
+    {
+      "id": "agents-api",
+      "passed": true
+    },
+    {
+      "id": "commitgate-ready",
+      "passed": true
+    },
+    {
+      "id": "verifier-ready",
+      "passed": true
+    },
+    {
+      "id": "worker-authority",
+      "passed": true
+    },
+    {
+      "id": "broker-runtime",
+      "passed": true
+    },
+    {
+      "id": "relay-model-access",
+      "passed": true
+    },
+    {
+      "id": "os-write-isolation",
+      "passed": true
+    },
+    {
+      "id": "manifest-v2",
+      "passed": true
+    },
+    {
+      "id": "linux-strong-filesystem",
+      "passed": true
+    },
+    {
+      "id": "deployment-policy-profile",
+      "passed": true
+    },
+    {
+      "id": "pre-run-receipt-key-anchor",
+      "passed": true
+    },
+    {
+      "id": "demo-agent-seeded",
+      "passed": true
+    },
+    {
+      "id": "authenticated-demo-status",
+      "passed": true,
+      "detail": {
+        "transitionAuthority": "worker",
+        "runtimeProvider": "broker",
+        "commitGateReady": true
+      }
+    },
+    {
+      "id": "live-topology-audit",
+      "passed": true,
+      "detail": "report: <REPO_ROOT>/eval/evidence/topology-report.json"
+    }
+  ],
+  "detail": "health=200 system=200 agents=200 commitGateReady=true runtime=broker modelAccess=relay authority=worker isolation=os-enforced manifest=v2 filesystem=linux-strong receiptKeyAnchor=present topology=verified"
+}

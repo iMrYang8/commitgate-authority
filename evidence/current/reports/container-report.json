@@ -1,0 +1,431 @@
+{
+  "schemaVersion": 2,
+  "kind": "container-verifier-evaluation",
+  "generatedAt": "2026-08-30T13:01:34.892Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "provenance": {
+    "realContainerExecution": true,
+    "realProviderRequest": false,
+    "image": "volc-agent-runtime:local",
+    "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+    "engine": "docker"
+  },
+  "structural": {
+    "networkNone": true,
+    "readOnlyRoot": true,
+    "capsDropped": true,
+    "noNewPrivileges": true,
+    "proposalReadOnly": true,
+    "trustedChecksReadOnly": true,
+    "scratchOnlyWritableMount": true,
+    "isolatedEnvironment": true,
+    "noProviderCredentialArgument": true,
+    "noCodexHome": true,
+    "noPersistentMount": true,
+    "noShellWrapper": true
+  },
+  "positive": {
+    "id": "isolated-contract",
+    "status": "PASS",
+    "exitCode": 0,
+    "durationMs": 374,
+    "output": "isolated-contract: PASS\n",
+    "timedOut": false
+  },
+  "negative": {
+    "id": "isolated-contract",
+    "status": "FAIL",
+    "exitCode": 1,
+    "durationMs": 358,
+    "output": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'tampered\\n'\n- 'ok\\n'\n\n    at file:///checks/isolated-contract.mjs:13:8 {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: 'tampered\\n',\n  expected: 'ok\\n',\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v22.23.2\n",
+    "timedOut": false
+  },
+  "agentIgnoredTmpfsIdentity": {
+    "runId": "ignored-tmpfs-identity-run",
+    "agentId": "ignored-tmpfs-identity-agent",
+    "configuredUser": "10001:20000",
+    "expectedUid": 10001,
+    "expectedGid": 20000,
+    "network": "none",
+    "networkNone": true,
+    "providerCredentialChecked": true,
+    "providerCredentialObserved": false,
+    "mounts": [
+      {
+        "path": ".git",
+        "uid": 10001,
+        "gid": 20000,
+        "mode": "700",
+        "identityMatches": true,
+        "writableByAgent": true,
+        "underlyingProbeAbsentAfterTeardown": true
+      },
+      {
+        "path": ".codex",
+        "uid": 10001,
+        "gid": 20000,
+        "mode": "700",
+        "identityMatches": true,
+        "writableByAgent": true,
+        "underlyingProbeAbsentAfterTeardown": true
+      },
+      {
+        "path": "node_modules",
+        "uid": 10001,
+        "gid": 20000,
+        "mode": "700",
+        "identityMatches": true,
+        "writableByAgent": true,
+        "underlyingProbeAbsentAfterTeardown": true
+      },
+      {
+        "path": "dist",
+        "uid": 10001,
+        "gid": 20000,
+        "mode": "700",
+        "identityMatches": true,
+        "writableByAgent": true,
+        "underlyingProbeAbsentAfterTeardown": true
+      },
+      {
+        "path": "coverage",
+        "uid": 10001,
+        "gid": 20000,
+        "mode": "700",
+        "identityMatches": true,
+        "writableByAgent": true,
+        "underlyingProbeAbsentAfterTeardown": true
+      }
+    ],
+    "candidateHashBefore": "084a7551d00ef442da0fdcceac8b8f097ca73cac8eec3ae9c9b80f7788119a37",
+    "candidateHashAfter": "084a7551d00ef442da0fdcceac8b8f097ca73cac8eec3ae9c9b80f7788119a37",
+    "candidateUnchangedAfterTeardown": true,
+    "containerRemoved": true,
+    "error": null,
+    "status": "verified"
+  },
+  "brokerCancellation": {
+    "fixtureImage": {
+      "reference": "commitgate-container-cancel-eval:21828",
+      "imageId": "sha256:3c30ce1f859d3097c4d88f05a1292d28738b3a80f3e277e3fc45d03e402ef12b"
+    },
+    "evidenceBoundary": {
+      "agentBinding": "agentId+runId+runLeaseId+sessionEpoch",
+      "verifierBinding": "agentId+runId (Verifier request has no lease/session fields)",
+      "verifierAdapter": "production DockerVerifierRunner with evaluator-only readonly bind fixtures",
+      "rpcTransport": "unix-rpc"
+    },
+    "agent": {
+      "runId": "cancel-agent-run",
+      "agentId": "cancel-agent",
+      "containerName": "launchpad-cancel-21828-cancel-agent",
+      "containerId": "d185d33eec2ee49a716afd79f0540c24fc94b1ffe43f70e6a98c427684407a5a",
+      "containerObservedRunning": true,
+      "wrongBindingRejected": true,
+      "cancelAccepted": true,
+      "promiseCancelled": true,
+      "cancellationErrorName": "RunCancelledError",
+      "forceRemoved": true,
+      "teardown": {
+        "containerExited": true,
+        "containerRemoved": true,
+        "mountsReleased": true,
+        "source": "runtime-attestation"
+      },
+      "error": null,
+      "status": "verified"
+    },
+    "verifier": {
+      "runId": "cancel-verifier-run",
+      "agentId": "cancel-verifier-agent",
+      "containerName": "commitgate-verify-cancel-21828-cancel-verifier-agent-cancel-verifier-run-wait-for-cancel",
+      "containerId": "3ca9f829d1d3432a9648bec4e6153dbe0519d455ddb22d7dd7d74d7c7d526dea",
+      "containerObservedRunning": true,
+      "wrongBindingRejected": true,
+      "cancelAccepted": true,
+      "promiseCancelled": true,
+      "cancellationErrorName": "RunCancelledError",
+      "forceRemoved": true,
+      "teardown": {
+        "containerExited": true,
+        "containerRemoved": true,
+        "mountsReleased": true,
+        "source": "runtime-attestation"
+      },
+      "error": null,
+      "status": "verified"
+    }
+  },
+  "brokerProcessKill": {
+    "agent": {
+      "workload": "agent",
+      "runId": "kill-agent-run",
+      "agentId": "kill-agent",
+      "containerName": "launchpad-cancel-21828-kill-agent",
+      "containerId": "f97ba7bc17721b4b524e49c0e745f4c7b75c0e75570faec670cc4bc4d35aa05b",
+      "containerObservedRunning": true,
+      "killSignal": "KILL",
+      "killAccepted": true,
+      "promiseRejected": true,
+      "errorName": "RuntimeBrokerFault",
+      "errorCode": "BROKER_RUNTIME_ERROR",
+      "errorMessage": "docker Runtime exited with code 137: agent-cancellation-fixture: ready",
+      "checkStatus": null,
+      "checkExitCode": null,
+      "passObserved": false,
+      "failClosed": true,
+      "forceRemoved": true,
+      "teardown": {
+        "containerExited": true,
+        "containerRemoved": true,
+        "mountsReleased": true,
+        "source": "runtime-attestation"
+      },
+      "error": null,
+      "status": "verified"
+    },
+    "verifier": {
+      "workload": "verifier",
+      "runId": "kill-verifier-run",
+      "agentId": "kill-verifier-agent",
+      "containerName": "commitgate-verify-cancel-21828-kill-verifier-agent-kill-verifier-run-wait-for-cancel",
+      "containerId": "24f12c33ae559f2a69f27493c5948766abd07e25eb2ae67026fcd6332ecf8710",
+      "containerObservedRunning": true,
+      "killSignal": "KILL",
+      "killAccepted": true,
+      "promiseRejected": false,
+      "errorName": null,
+      "errorCode": null,
+      "errorMessage": null,
+      "checkStatus": "ERROR",
+      "checkExitCode": 137,
+      "passObserved": false,
+      "failClosed": true,
+      "forceRemoved": true,
+      "teardown": {
+        "containerExited": true,
+        "containerRemoved": true,
+        "mountsReleased": true,
+        "source": "runtime-attestation"
+      },
+      "error": null,
+      "status": "verified"
+    },
+    "brokerRestartReconciliation": {
+      "point": "RUNTIME_BROKER_PROCESS_SIGKILL_ORPHAN_RECONCILIATION",
+      "workload": "agent",
+      "runId": "restart-orphan-run",
+      "agentId": "restart-orphan-agent",
+      "runLeaseId": "restart-orphan-lease",
+      "sessionEpoch": 11,
+      "scope": "ALL",
+      "containerName": "launchpad-cancel-21828-restart-orphan-agent",
+      "containerId": "d7bfe550922aa736ffedc896d81be1adf949bf1ebc7fff43e283e50563e5b521",
+      "broker": {
+        "launchMode": "separate-node-process",
+        "firstPid": 22295,
+        "firstReady": true,
+        "killSignal": "SIGKILL",
+        "killAccepted": true,
+        "firstExitCode": null,
+        "firstExitSignal": "SIGKILL",
+        "restartedPid": 22387,
+        "restartedReady": true
+      },
+      "exactBinding": {
+        "labels": {
+          "io.commitgate.runtime": "agent-runtime",
+          "io.commitgate.instance-id": "cancel-21828",
+          "io.commitgate.agent-id": "restart-orphan-agent",
+          "io.commitgate.run-id": "restart-orphan-run",
+          "io.commitgate.run-lease-id": "restart-orphan-lease",
+          "io.commitgate.session-epoch": "11"
+        },
+        "queryArguments": [
+          "container",
+          "ls",
+          "--all",
+          "--quiet",
+          "--filter",
+          "label=io.commitgate.runtime=agent-runtime",
+          "--filter",
+          "label=io.commitgate.instance-id=cancel-21828",
+          "--filter",
+          "label=io.commitgate.agent-id=restart-orphan-agent",
+          "--filter",
+          "label=io.commitgate.run-id=restart-orphan-run",
+          "--filter",
+          "label=io.commitgate.run-lease-id=restart-orphan-lease",
+          "--filter",
+          "label=io.commitgate.session-epoch=11"
+        ],
+        "matchingContainerIdsBeforeReconcile": [
+          "d7bfe550922a"
+        ],
+        "wrongLeaseQueryContainerIds": [],
+        "exactLabelsObserved": true
+      },
+      "orphan": {
+        "runningBeforeBrokerKill": true,
+        "runningAfterBrokerSigkill": true,
+        "sameContainerAfterBrokerSigkill": true
+      },
+      "reconciliation": {
+        "invokedThroughRestartedBrokerRpc": true,
+        "forceRemovedByReconcile": true,
+        "negativeQueryArguments": [
+          "container",
+          "ls",
+          "--all",
+          "--quiet",
+          "--filter",
+          "label=io.commitgate.runtime=agent-runtime",
+          "--filter",
+          "label=io.commitgate.instance-id=cancel-21828",
+          "--filter",
+          "label=io.commitgate.agent-id=restart-orphan-agent",
+          "--filter",
+          "label=io.commitgate.run-id=restart-orphan-run",
+          "--filter",
+          "label=io.commitgate.run-lease-id=restart-orphan-lease",
+          "--filter",
+          "label=io.commitgate.session-epoch=11"
+        ],
+        "remainingContainerIds": [],
+        "containerAbsentByInspect": true,
+        "attestation": {
+          "schemaVersion": 1,
+          "kind": "runtime-teardown",
+          "runId": "restart-orphan-run",
+          "agentId": "restart-orphan-agent",
+          "runLeaseId": "restart-orphan-lease",
+          "sessionEpoch": 11,
+          "scope": "ALL",
+          "containerExited": true,
+          "containerRemoved": true,
+          "mountsReleased": true,
+          "source": "broker-reconciliation",
+          "brokerAttestation": {
+            "schemaVersion": 1,
+            "algorithm": "HMAC-SHA256",
+            "keyId": "7f9a0ec493e340e4535e5453",
+            "mac": "745f0d0a97b0a1d0e5ef26a7fc5adbf59159070576e923151c73cbe8925be7a9"
+          }
+        }
+      },
+      "error": null,
+      "brokerLogTail": "{\"ready\":true,\"socket\":\"/var/folders/qm/mv9b1b7j18jg8m3kjn599dq40000gn/T/cg-broker-restart-21828.sock\"}\n{\"ready\":true,\"socket\":\"/var/folders/qm/mv9b1b7j18jg8m3kjn599dq40000gn/T/cg-broker-restart-21828.sock\"}\n",
+      "status": "verified"
+    }
+  },
+  "error": null,
+  "cancellationError": null,
+  "command": {
+    "executable": "docker",
+    "arguments": [
+      "run",
+      "--rm",
+      "--init",
+      "--name",
+      "commitgate-verify-eval-fixture-agent-container-eval-isolated-contract",
+      "--label",
+      "io.commitgate.runtime=verifier",
+      "--label",
+      "io.commitgate.agent-id=fixture-agent",
+      "--label",
+      "io.commitgate.run-id=container-eval",
+      "--label",
+      "io.commitgate.run-lease-id=container-eval",
+      "--label",
+      "io.commitgate.session-epoch=0",
+      "--label",
+      "io.commitgate.instance-id=eval",
+      "--network",
+      "none",
+      "--read-only",
+      "--security-opt",
+      "no-new-privileges",
+      "--cap-drop",
+      "ALL",
+      "--cpus",
+      "1",
+      "--memory",
+      "512m",
+      "--pids-limit",
+      "64",
+      "--user",
+      "501:20",
+      "--tmpfs",
+      "/tmp:rw,noexec,nosuid,nodev,size=16m,nr_inodes=1024",
+      "--tmpfs",
+      "/scratch:rw,nosuid,nodev,size=67108864,nr_inodes=4096",
+      "--mount",
+      "type=bind,src=<REPO>/eval/.container-21828/candidate,dst=/proposal,readonly",
+      "--mount",
+      "type=bind,src=<REPO>/eval/.container-21828/checks,dst=/checks,readonly",
+      "--workdir",
+      "/proposal",
+      "--entrypoint",
+      "/usr/bin/env",
+      "volc-agent-runtime:local",
+      "-i",
+      "HOME=/scratch",
+      "TMPDIR=/scratch",
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "NO_COLOR=1",
+      "node",
+      "/checks/isolated-contract.mjs"
+    ],
+    "note": "Temporary mount fixtures are recreated by npm run eval:container."
+  }
+}

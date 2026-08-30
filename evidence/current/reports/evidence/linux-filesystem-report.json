@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "kind": "linux-filesystem-closure",
+  "generatedAt": "2026-08-30T13:03:55.432Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
+      "imageDigest": "sha256:715bca4351b45deca5935ac1b256b6ab9e62a318d4ec644a2c450c323ae3cf0a",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "platform": "linux-container",
+  "passedTests": 40,
+  "tests": [
+    "transition-worker/filesystem.test.ts",
+    "transition-worker/rpc.test.ts",
+    "runtime-broker/rpc.test.ts",
+    "commitgate/manifest.test.ts"
+  ],
+  "output": "\n> @launchpad/server@1.0.0 test\n> vitest run --run src/transition-worker/filesystem.test.ts src/transition-worker/rpc.test.ts src/runtime-broker/rpc.test.ts src/commitgate/manifest.test.ts\n\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv4.1.10 \u001b[39m\u001b[90m/app/apps/server\u001b[39m\n\n \u001b[32m✓\u001b[39m src/commitgate/manifest.test.ts \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 45\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/transition-worker/filesystem.test.ts \u001b[2m(\u001b[22m\u001b[2m18 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 100\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/runtime-broker/rpc.test.ts \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 2797\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m fails closed when a bound orphan survives force removal \u001b[33m 2644\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/transition-worker/rpc.test.ts \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 11829\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m keeps 21 receipt projections below the RPC cap and reconstructs one v3 proof on demand \u001b[33m 11768\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m4 passed\u001b[39m\u001b[22m\u001b[90m (4)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m40 passed\u001b[39m\u001b[22m\u001b[90m (40)\u001b[39m\n\u001b[2m   Start at \u001b[22m 13:03:41\n\u001b[2m   Duration \u001b[22m 12.45s\u001b[2m (transform 597ms, setup 0ms, import 843ms, tests 14.77s, environment 0ms)\u001b[22m\n\n",
+  "evaluationRecords": [
+    {
+      "schemaVersion": 1,
+      "recordId": "linux-filesystem-closure",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "filesystem",
+      "runtimeImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "verifierImageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
+    }
+  ]
+}

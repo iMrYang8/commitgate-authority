@@ -1,0 +1,487 @@
+{
+  "schemaVersion": 3,
+  "kind": "documentation-contract-audit",
+  "generatedAt": "2026-08-30T13:16:37.633Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "auditOrigin": "project-defined",
+  "externallyIndependent": false,
+  "readOnlyCleanSource": true,
+  "method": "Project-defined semantic contract audit over a clean source checkout; checks protocol claim, timed demo, Provider-neutral evidence semantics and non-goal boundaries rather than file presence alone. It is not an external third-party review.",
+  "items": [
+    {
+      "id": "README",
+      "status": "verified",
+      "checks": [
+        {
+          "pattern": "Verified Workspace Transactions for AI Agents",
+          "matched": true
+        },
+        {
+          "pattern": "No evidence, no effect",
+          "matched": true
+        },
+        {
+          "pattern": "pre-effect admission transaction for\\s+filesystem state",
+          "matched": true
+        },
+        {
+          "pattern": "Responses-compatible Provider",
+          "matched": true
+        },
+        {
+          "pattern": "providerE2EVerified",
+          "matched": true
+        },
+        {
+          "pattern": "assigns no numeric score",
+          "matched": true
+        },
+        {
+          "pattern": "release browser report[\\s\\S]{0,180}\\*\\*12\\/12\\*\\*",
+          "matched": true
+        },
+        {
+          "pattern": "Editable source:[\\s\\S]{0,120}commitgate-architecture\\.drawio",
+          "matched": true
+        },
+        {
+          "pattern": "Worker-derived View",
+          "matched": true
+        },
+        {
+          "pattern": "pre-run TOFU",
+          "matched": true
+        },
+        {
+          "pattern": "30 seconds by[\\s\\S]{0,260}CANDIDATE_SCAN_TIME_BUDGET_EXCEEDED",
+          "matched": true
+        },
+        {
+          "pattern": "shared tmpfs[\\s\\S]{0,180}kernel byte and inode ceilings",
+          "matched": true
+        },
+        {
+          "pattern": "RUNTIME_BROKER_PROCESS_SIGKILL_ORPHAN_RECONCILIATION[\\s\\S]{0,420}exact-label reconciliation",
+          "matched": true
+        },
+        {
+          "pattern": "demo:verify-video[\\s\\S]{0,900}officialSubmissionReady[\\s\\S]{0,420}externalReviewVerified",
+          "matched": true
+        },
+        {
+          "pattern": "manual-secret-review[\\s\\S]{0,260}official submission",
+          "matched": true
+        },
+        {
+          "pattern": "audit:source-delivery[\\s\\S]{0,520}does not prove anonymous clone access",
+          "matched": true
+        },
+        {
+          "pattern": "fixed registry of ten effect-capable negative[\\s\\S]{0,420}assertion-backed[\\s\\S]{0,260}raw-hash fields `null`",
+          "matched": true
+        },
+        {
+          "pattern": "Transition Worker local-filesystem protocol[\\s\\S]{0,420}deterministicProbeMs[\\s\\S]{0,360}not be presented as Verifier latency",
+          "matched": true
+        }
+      ]
+    },
+    {
+      "id": "architecture",
+      "status": "verified",
+      "checks": [
+        {
+          "pattern": "No Evidence, No Effect",
+          "matched": true
+        },
+        {
+          "pattern": "Editable one-page diagram",
+          "matched": true
+        },
+        {
+          "pattern": "interface StateViewRef",
+          "matched": true
+        },
+        {
+          "pattern": "interface SealedProposal",
+          "matched": true
+        },
+        {
+          "pattern": "EvaluationContextHash",
+          "matched": true
+        },
+        {
+          "pattern": "one-shot `PromotionPermit`",
+          "matched": true
+        },
+        {
+          "pattern": "providerE2EVerified",
+          "matched": true
+        },
+        {
+          "pattern": "Worker-derived StateView",
+          "matched": true
+        },
+        {
+          "pattern": "pre-run TOFU",
+          "matched": true
+        },
+        {
+          "pattern": "wall-clock budget of 30 seconds",
+          "matched": true
+        },
+        {
+          "pattern": "shared\\s+tmpfs[\\s\\S]{0,220}kernel-enforced aggregate exchange budget",
+          "matched": true
+        },
+        {
+          "pattern": "RUNTIME_BROKER_PROCESS_SIGKILL_ORPHAN_RECONCILIATION[\\s\\S]{0,420}broker-reconciliation",
+          "matched": true
+        },
+        {
+          "pattern": "exact ten-item effect-capable negative-fixture[\\s\\S]{0,420}raw-hash fields remain `null`",
+          "matched": true
+        },
+        {
+          "pattern": "Transition Worker local-filesystem microbenchmark[\\s\\S]{0,360}not Verifier-container or end-to-end latency",
+          "matched": true
+        }
+      ]
+    },
+    {
+      "id": "three-minute-script",
+      "status": "verified",
+      "checks": [
+        {
+          "pattern": "## 0:00–0:20",
+          "matched": true
+        },
+        {
+          "pattern": "## 0:20–1:05",
+          "matched": true
+        },
+        {
+          "pattern": "## 1:05–1:45",
+          "matched": true
+        },
+        {
+          "pattern": "## 1:45–2:10",
+          "matched": true
+        },
+        {
+          "pattern": "## 2:10–2:30",
+          "matched": true
+        },
+        {
+          "pattern": "## 2:30–3:00",
+          "matched": true
+        },
+        {
+          "pattern": "npm run demo:verify-video",
+          "matched": true
+        },
+        {
+          "pattern": "POST \\/api\\/runs\\/:id\\/commitgate\\/promotion-attempts",
+          "matched": true
+        },
+        {
+          "pattern": "Candidate world:[\\s\\S]{0,100}Persistent world:",
+          "matched": true
+        },
+        {
+          "pattern": "No evidence, no effect",
+          "matched": true
+        },
+        {
+          "pattern": "Responses-compatible Provider",
+          "matched": true
+        },
+        {
+          "pattern": "process kill\\/restart",
+          "matched": true
+        },
+        {
+          "pattern": "officialSubmissionReady=true[\\s\\S]{0,220}externalReviewVerified",
+          "matched": true
+        }
+      ]
+    },
+    {
+      "id": "limitations",
+      "status": "verified",
+      "checks": [
+        {
+          "pattern": "filesystem effects under the authoritative Agent workspace",
+          "matched": true
+        },
+        {
+          "pattern": "process kill\\/restart recovery",
+          "matched": true
+        },
+        {
+          "pattern": "not power-loss durability",
+          "matched": true
+        },
+        {
+          "pattern": "Responses-compatible Provider",
+          "matched": true
+        },
+        {
+          "pattern": "providerE2EVerified",
+          "matched": true
+        },
+        {
+          "pattern": "checklist does not calculate an organizer or predicted score",
+          "matched": true
+        },
+        {
+          "pattern": "recorded Ark clean-clone report verified 12\\/12 product scenarios",
+          "matched": true
+        },
+        {
+          "pattern": "Worker[\\s\\S]{0,140}derives every next\\s+StateView",
+          "matched": true
+        },
+        {
+          "pattern": "pre-run TOFU anchor",
+          "matched": true
+        },
+        {
+          "pattern": "wall-clock limit \\(30[\\s\\S]{0,180}CANDIDATE_SCAN_TIME_BUDGET_EXCEEDED",
+          "matched": true
+        },
+        {
+          "pattern": "byte- and inode-bounded tmpfs",
+          "matched": true
+        },
+        {
+          "pattern": "RUNTIME_BROKER_PROCESS_SIGKILL_ORPHAN_RECONCILIATION[\\s\\S]{0,360}exact-label negative-query",
+          "matched": true
+        },
+        {
+          "pattern": "exact[\\s\\S]{0,80}ten-item effect-capable negative registry[\\s\\S]{0,360}seven CAS\\/cancellation observations[\\s\\S]{0,160}`null` raw-hash fields",
+          "matched": true
+        },
+        {
+          "pattern": "Worker-local[\\s\\S]{0,120}deterministic probe[\\s\\S]{0,340}not evidence for product[\\s\\S]{0,80}latency",
+          "matched": true
+        }
+      ]
+    },
+    {
+      "id": "deployment",
+      "status": "verified",
+      "checks": [
+        {
+          "pattern": "MODEL_PROVIDER=ark[\\s\\S]{0,200}MODEL_WIRE_API=responses",
+          "matched": true
+        },
+        {
+          "pattern": "Responses-compatible Provider",
+          "matched": true
+        },
+        {
+          "pattern": "RUNTIME_PROVIDER=broker[\\s\\S]{0,160}TRANSITION_AUTHORITY=worker",
+          "matched": true
+        },
+        {
+          "pattern": "signingKeyId=<24-hex public-key fingerprint>",
+          "matched": true
+        },
+        {
+          "pattern": "pre-run TOFU",
+          "matched": true
+        },
+        {
+          "pattern": "(?:default 30 seconds|\\u9ed8\\u8ba4 30 \\u79d2)[\\s\\S]{0,180}CANDIDATE_SCAN_TIME_BUDGET_EXCEEDED",
+          "matched": true
+        },
+        {
+          "pattern": "byte\\/inode[\\s\\S]{0,100}tmpfs[\\s\\S]{0,180}aggregate kernel cap",
+          "matched": true
+        },
+        {
+          "pattern": "caller-authored next View",
+          "matched": true
+        },
+        {
+          "pattern": "RUNTIME_BROKER_PROCESS_SIGKILL_ORPHAN_RECONCILIATION[\\s\\S]{0,420}精确 label",
+          "matched": true
+        },
+        {
+          "pattern": "evidence:checklist",
+          "matched": true
+        },
+        {
+          "pattern": "audit:source-delivery[\\s\\S]{0,620}(?:anonymous|匿名读取)",
+          "matched": true
+        },
+        {
+          "pattern": "Ed25519[\\s\\S]{0,260}可选",
+          "matched": true
+        },
+        {
+          "pattern": "officialSubmissionReady=true",
+          "matched": true
+        },
+        {
+          "pattern": "固定的 10 项 effect-capable[\\s\\S]{0,420}raw[\\s\\S]{0,20}hash 字段保持 `null`",
+          "matched": true
+        },
+        {
+          "pattern": "Transition Worker 本地文件系统协议[\\s\\S]{0,500}deterministicProbeMs[\\s\\S]{0,260}不得[\\s\\S]{0,120}Verifier latency",
+          "matched": true
+        }
+      ]
+    },
+    {
+      "id": "core-evidence-contracts",
+      "status": "verified",
+      "checks": [
+        {
+          "pattern": "broker-hmac-evidence:Runtime Broker[\\s\\S]{0,360}HMAC-SHA256[\\s\\S]{0,360}(?:Runtime teardown|Verifier)[\\s\\S]{0,240}(?:attestation|evidence)",
+          "matched": true
+        },
+        {
+          "pattern": "effect-disposition-proof:sealedProposalHash\\s*==\\s*verifierInputHash\\s*==\\s*promotionSourceHash\\s*==\\s*finalAuthoritativeHash[\\s\\S]{0,520}(?:authoritativeBeforeHash\\s*==\\s*authoritativeAfterHash|authoritativeAfterHash\\s*==\\s*authoritativeBeforeHash)",
+          "matched": true
+        },
+        {
+          "pattern": "opaque-ref-write-once-tombstone:opaque[\\s\\S]{0,260}write-?once[\\s\\S]{0,260}tombstone",
+          "matched": true
+        },
+        {
+          "pattern": "broker-durable-lifecycle-ledger:durable monotonic lifecycle ledger[\\s\\S]{0,360}AGENT_STARTED[\\s\\S]{0,120}AGENT_CLOSED[\\s\\S]{0,120}VERIFIER_STARTED[\\s\\S]{0,120}ALL_CLOSED[\\s\\S]{0,360}tombstone",
+          "matched": true
+        },
+        {
+          "pattern": "unique-demo-entrypoint:唯一启动命令\\s+`npm run demo`",
+          "matched": true
+        },
+        {
+          "pattern": "forbidden-alternative-demo-entrypoint:(?:primary|official|one-command|唯一|正式|默认)[^\\n]{0,100}(?:npm run dev|npm run start|docker(?:-compose| compose) up)",
+          "matched": true
+        }
+      ]
+    },
+    {
+      "id": "active-evidence-report-isolation",
+      "status": "verified",
+      "checks": [
+        {
+          "pattern": "active report paths are an exact allowlist; historical reports live under eval/history/<revision>/",
+          "matched": true,
+          "unexpected": []
+        }
+      ]
+    },
+    {
+      "id": "provider-neutral-language",
+      "status": "verified",
+      "checks": [
+        {
+          "pattern": "forbidden:Ark\\s+(?:is|as)\\s+the\\s+official",
+          "matched": true
+        },
+        {
+          "pattern": "forbidden:official\\s+(?:competition\\s+)?(?:Provider|path)[^\\n]{0,80}Ark",
+          "matched": true
+        },
+        {
+          "pattern": "forbidden:realModelArk",
+          "matched": true
+        }
+      ]
+    },
+    {
+      "id": "no-current-numeric-score",
+      "status": "verified",
+      "checks": [
+        {
+          "pattern": "forbidden:\\b76\\/100\\b",
+          "matched": true
+        },
+        {
+          "pattern": "forbidden:\\b82\\/100\\b",
+          "matched": true
+        },
+        {
+          "pattern": "forbidden:\\b91\\/100\\b",
+          "matched": true
+        },
+        {
+          "pattern": "forbidden:\\b94\\/100\\b",
+          "matched": true
+        },
+        {
+          "pattern": "forbidden:\\b94\\+(?![\\w/])",
+          "matched": true
+        }
+      ]
+    },
+    {
+      "id": "historical-score-isolation",
+      "status": "verified",
+      "checks": [
+        {
+          "pattern": "active eval/score-report.{json,md} absent",
+          "matched": true
+        },
+        {
+          "pattern": "legacy score reports archived below eval/history/<40-hex-revision>/",
+          "matched": true
+        }
+      ]
+    }
+  ]
+}

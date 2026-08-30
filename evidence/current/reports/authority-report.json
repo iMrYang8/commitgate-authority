@@ -1,0 +1,1387 @@
+{
+  "schemaVersion": 2,
+  "kind": "persistent-authority-static-audit",
+  "generatedAt": "2026-08-30T13:01:17.959Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "scannedRoot": "apps/server/src",
+  "scannedProductionFiles": 70,
+  "filesystemMutationCallsites": 214,
+  "inventory": [
+    {
+      "file": "apps/server/src/commitgate/atomic-json.ts",
+      "line": 5,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/atomic-json.ts",
+      "line": 8,
+      "operation": "writeFile",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/atomic-json.ts",
+      "line": 12,
+      "operation": "rename",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/coordinator.ts",
+      "line": 242,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/coordinator.ts",
+      "line": 243,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/coordinator.ts",
+      "line": 355,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/coordinator.ts",
+      "line": 381,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/coordinator.ts",
+      "line": 404,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/coordinator.ts",
+      "line": 420,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/coordinator.ts",
+      "line": 424,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/coordinator.ts",
+      "line": 506,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/coordinator.ts",
+      "line": 1362,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/coordinator.ts",
+      "line": 1363,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/file-ops.ts",
+      "line": 57,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/file-ops.ts",
+      "line": 58,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/file-ops.ts",
+      "line": 75,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/file-ops.ts",
+      "line": 80,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/file-ops.ts",
+      "line": 82,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/file-ops.ts",
+      "line": 84,
+      "operation": "copyFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/file-ops.ts",
+      "line": 85,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/file-ops.ts",
+      "line": 87,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/file-ops.ts",
+      "line": 88,
+      "operation": "symlink",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/file-ops.ts",
+      "line": 112,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/promotion-permit-store.ts",
+      "line": 130,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/promotion-permit-store.ts",
+      "line": 133,
+      "operation": "writeFile",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/receipt-store.ts",
+      "line": 268,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/recovery.ts",
+      "line": 47,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/recovery.ts",
+      "line": 148,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/recovery.ts",
+      "line": 186,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/recovery.ts",
+      "line": 210,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/recovery.ts",
+      "line": 269,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/rollback-permit-store.ts",
+      "line": 95,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/rollback-permit-store.ts",
+      "line": 98,
+      "operation": "writeFile",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/sealed-proposal-store.ts",
+      "line": 109,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/sealed-proposal-store.ts",
+      "line": 141,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/sealed-proposal-store.ts",
+      "line": 142,
+      "operation": "rename",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/sealed-proposal-store.ts",
+      "line": 165,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/sealed-proposal-store.ts",
+      "line": 167,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/sealed-proposal-store.ts",
+      "line": 289,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/sealed-proposal-store.ts",
+      "line": 406,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/sealed-proposal-store.ts",
+      "line": 408,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/sealed-proposal-store.ts",
+      "line": 413,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/sealed-proposal-store.ts",
+      "line": 418,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/sealed-proposal-store.ts",
+      "line": 423,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 137,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 149,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 157,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 163,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 172,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 174,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 179,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 184,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 300,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 325,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 329,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 336,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 337,
+      "operation": "rename",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 338,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 343,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/trusted-check-bundle.ts",
+      "line": 354,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/version-store.ts",
+      "line": 328,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/version-store.ts",
+      "line": 377,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/version-store.ts",
+      "line": 406,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/version-store.ts",
+      "line": 432,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/commitgate/workspace-transaction.ts",
+      "line": 193,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/workspace-transaction.ts",
+      "line": 194,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/workspace-transaction.ts",
+      "line": 195,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/workspace-transaction.ts",
+      "line": 196,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/workspace-transaction.ts",
+      "line": 258,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/workspace-transaction.ts",
+      "line": 267,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/workspace-transaction.ts",
+      "line": 288,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/workspace-transaction.ts",
+      "line": 332,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/workspace-transaction.ts",
+      "line": 355,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/commitgate/workspace-transaction.ts",
+      "line": 364,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/config.ts",
+      "line": 412,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/config.ts",
+      "line": 434,
+      "operation": "writeFile",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/config.ts",
+      "line": 438,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/container-codex-runner.ts",
+      "line": 428,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/container-codex-runner.ts",
+      "line": 429,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/container-codex-runner.ts",
+      "line": 470,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/container-codex-runner.ts",
+      "line": 471,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/container-codex-runner.ts",
+      "line": 481,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/container-codex-runner.ts",
+      "line": 500,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/container-codex-runner.ts",
+      "line": 508,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/container-codex-runner.ts",
+      "line": 638,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/model-provider.ts",
+      "line": 290,
+      "operation": "writeFile",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/model-provider.ts",
+      "line": 291,
+      "operation": "rename",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/model-provider.ts",
+      "line": 310,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/model-provider.ts",
+      "line": 311,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/model-provider.ts",
+      "line": 322,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/model-provider.ts",
+      "line": 326,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/model-provider.ts",
+      "line": 327,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/model-provider.ts",
+      "line": 336,
+      "operation": "copyFile",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/model-provider.ts",
+      "line": 337,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/model-provider.ts",
+      "line": 338,
+      "operation": "rename",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/model-provider.ts",
+      "line": 351,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/model-provider.ts",
+      "line": 360,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/runtime-broker/lifecycle-ledger.ts",
+      "line": 177,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/runtime-broker/lifecycle-ledger.ts",
+      "line": 180,
+      "operation": "writeFile",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/runtime-broker/lifecycle-ledger.ts",
+      "line": 185,
+      "operation": "rename",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/runtime-broker/main.ts",
+      "line": 17,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/runtime-broker/server.ts",
+      "line": 486,
+      "operation": "rm",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/runtime-broker/server.ts",
+      "line": 560,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/store.ts",
+      "line": 127,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/store.ts",
+      "line": 162,
+      "operation": "writeFile",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/store.ts",
+      "line": 166,
+      "operation": "rename",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/transition-log.ts",
+      "line": 93,
+      "operation": "mkdir",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/transition-log.ts",
+      "line": 97,
+      "operation": "writeFile",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/transition-log.ts",
+      "line": 102,
+      "operation": "rename",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/transition-log.ts",
+      "line": 103,
+      "operation": "chmod",
+      "classification": "non-authoritative-or-control-state"
+    },
+    {
+      "file": "apps/server/src/transition-worker/benchmark.ts",
+      "line": 28,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/benchmark.ts",
+      "line": 80,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/benchmark.ts",
+      "line": 81,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/benchmark.ts",
+      "line": 82,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/benchmark.ts",
+      "line": 93,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/evidence-blob-store.ts",
+      "line": 86,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/evidence-blob-store.ts",
+      "line": 87,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/evidence-blob-store.ts",
+      "line": 123,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/evidence-blob-store.ts",
+      "line": 132,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/evidence-blob-store.ts",
+      "line": 133,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/evidence-blob-store.ts",
+      "line": 143,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/evidence-blob-store.ts",
+      "line": 190,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/evidence-blob-store.ts",
+      "line": 196,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/filesystem.ts",
+      "line": 101,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/filesystem.ts",
+      "line": 102,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/filesystem.ts",
+      "line": 103,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/filesystem.ts",
+      "line": 565,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/filesystem.ts",
+      "line": 574,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/filesystem.ts",
+      "line": 575,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/filesystem.ts",
+      "line": 583,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/filesystem.ts",
+      "line": 594,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/filesystem.ts",
+      "line": 607,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/filesystem.ts",
+      "line": 618,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/filesystem.ts",
+      "line": 624,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/filesystem.ts",
+      "line": 636,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/projection.ts",
+      "line": 964,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/projection.ts",
+      "line": 967,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/projection.ts",
+      "line": 971,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/rpc.ts",
+      "line": 26,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/rpc.ts",
+      "line": 45,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/signing-key-store.ts",
+      "line": 30,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/signing-key-store.ts",
+      "line": 31,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/signing-key-store.ts",
+      "line": 42,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/signing-key-store.ts",
+      "line": 53,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/signing-key-store.ts",
+      "line": 59,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/signing-key-store.ts",
+      "line": 64,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/signing-key-store.ts",
+      "line": 65,
+      "operation": "chmod",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 420,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 421,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 422,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 423,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 488,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 652,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 653,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 654,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 659,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 664,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 755,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 1137,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 1145,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 1327,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 1330,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 1424,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 1437,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 1507,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 1693,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 1696,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 1699,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 1705,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 2708,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 2710,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 2781,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 2782,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 2784,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 2830,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 2831,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 2911,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 2993,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3051,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3121,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3132,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3141,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3184,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3192,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3245,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3266,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3425,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3435,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3447,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3449,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3512,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3517,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3533,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3535,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3538,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3546,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3551,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3557,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3828,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3923,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3925,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/transition-worker/worker.ts",
+      "line": 3962,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/workspace-transition-writer.ts",
+      "line": 127,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/workspace-transition-writer.ts",
+      "line": 129,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/workspace.ts",
+      "line": 14,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/workspace.ts",
+      "line": 15,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/workspace.ts",
+      "line": 19,
+      "operation": "mkdir",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/workspace.ts",
+      "line": 21,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/workspace.ts",
+      "line": 26,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/workspace.ts",
+      "line": 39,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/workspace.ts",
+      "line": 49,
+      "operation": "writeFile",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/workspace.ts",
+      "line": 51,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/workspace.ts",
+      "line": 53,
+      "operation": "rm",
+      "classification": "authority-implementation"
+    },
+    {
+      "file": "apps/server/src/workspace.ts",
+      "line": 91,
+      "operation": "rename",
+      "classification": "authority-implementation"
+    }
+  ],
+  "authoritySurface": [
+    {
+      "method": "createAgentWorkspace",
+      "status": "verified"
+    },
+    {
+      "method": "materializeCandidate",
+      "status": "verified"
+    },
+    {
+      "method": "sealProposal",
+      "status": "verified"
+    },
+    {
+      "method": "regeneratePlatformState",
+      "status": "verified"
+    },
+    {
+      "method": "archiveAgent",
+      "status": "verified"
+    },
+    {
+      "method": "applyPromotion",
+      "status": "verified"
+    },
+    {
+      "method": "applyRollback",
+      "status": "verified"
+    },
+    {
+      "method": "recoverTransition",
+      "status": "verified"
+    },
+    {
+      "method": "applyRepair",
+      "status": "verified"
+    }
+  ],
+  "unauthorizedPersistentWriteCount": 0,
+  "violations": [],
+  "method": "Static callsite inventory plus explicit checks for raw persistent-path writes, WorkspaceManager mutation bypasses, transaction construction, and startup recovery outside WorkspaceTransitionWriter.",
+  "limitation": "This source audit is a mechanical CI fence, not an OS permission proof. P1 requires an independently mounted worker volume and UID evidence."
+}

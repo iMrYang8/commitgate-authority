@@ -1,0 +1,1020 @@
+{
+  "schemaVersion": 2,
+  "kind": "commitgate-protocol-evaluation",
+  "generatedAt": "2026-08-30T13:01:03.967Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "durationMs": 3810,
+  "command": {
+    "executable": "npm",
+    "arguments": [
+      "run",
+      "test",
+      "-w",
+      "@launchpad/server",
+      "--",
+      "src/state-view.test.ts",
+      "src/store.test.ts",
+      "src/agent-service.test.ts",
+      "src/app.test.ts",
+      "src/commitgate/protocol.test.ts",
+      "src/commitgate/effect-proof.test.ts",
+      "src/commitgate/rollback-permit-store.test.ts",
+      "src/commitgate/manifest.test.ts",
+      "src/commitgate/coordinator.test.ts",
+      "src/commitgate/verifier-runner.test.ts",
+      "src/commitgate/version-store.test.ts",
+      "src/commitgate/workspace-transaction.test.ts",
+      "src/worker-commitgate-runner.test.ts",
+      "src/transition-worker/worker.test.ts",
+      "--reporter=json",
+      "--outputFile=<REPO_ROOT>/eval/evidence/protocol-vitest.json"
+    ],
+    "exitCode": 0,
+    "status": "verified"
+  },
+  "tests": {
+    "files": 14,
+    "total": 112,
+    "passed": 111,
+    "failed": 0
+  },
+  "claims": [
+    {
+      "id": "view-generation-aba-fence",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "StateView fences an ABA even when the live hash returns to H0",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/state-view.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "sealed-proposal-single-source",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "sealed state protocol never re-reads the original candidate after sealing",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/protocol.test.ts"
+        },
+        {
+          "test": "sealed state protocol rejects a sealed proposal whose payload root regains write permission",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/protocol.test.ts"
+        },
+        {
+          "test": "sealed state protocol prevents an Agent PID1-exit background late-write from changing the sealed proposal or promotion source",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/protocol.test.ts"
+        },
+        {
+          "test": "Docker verifier isolation mounts an immutable proposal and checks bundle with an isolated scratch",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/verifier-runner.test.ts"
+        },
+        {
+          "test": "TransitionWorker promotes only a sealed proposal with a one-shot permit and rebuilds HEAD",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "one-shot-promotion-permit",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "sealed state protocol durably rejects replay of a claimed promotion permit",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/protocol.test.ts"
+        },
+        {
+          "test": "dedicated rollback permit moves ISSUED to CONSUMING to CONSUMED and rejects permit replay",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/rollback-permit-store.test.ts"
+        },
+        {
+          "test": "TransitionWorker promotes only a sealed proposal with a one-shot permit and rebuilds HEAD",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "permit-evidence-completeness",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "sealed state protocol refuses to mint a permit for partial, failing, or wrong-input evidence",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/protocol.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "transaction-capability-replay",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "WorkspaceTransaction rename-swap recovery cannot reuse the same consumed capability for a no-op promotion",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/workspace-transaction.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "one-shot-rollback-permit",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "dedicated rollback permit moves ISSUED to CONSUMING to CONSUMED and rejects permit replay",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/rollback-permit-store.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "rollback-import-toctou",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "WorkspaceTransaction rename-swap recovery rejects a rollback snapshot changed during import before any swap",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/workspace-transaction.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "evaluation-context-binding",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "Docker verifier isolation binds actual image identity, verifier config, resources and check content",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/verifier-runner.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "manifest-v2-link-rejection",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "canonical manifest and path policy rejects authoritative symlinks and hardlinks",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/manifest.test.ts"
+        },
+        {
+          "test": "trusted check bundle rejects symlinks and hardlinks transitively",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/verifier-runner.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "manifest-v2-path-collision",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "canonical manifest and path policy rejects case-fold and Unicode-normalization path aliases",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/manifest.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "database-v3-migration",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "JsonStore migrates a version 1 database without inventing gate evidence",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/store.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "sealed-commit",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "CommitGateRunner promotes a valid candidate and records INITIAL plus AGENT_COMMIT",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/coordinator.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "view-cas-conflict",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "CommitGateRunner detects a persistent-state conflict during independent verification",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/coordinator.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "terminal-decision-semantics",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "CommitGateRunner quarantines protected changes, preserves persistent state, and resets thread",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/coordinator.test.ts"
+        },
+        {
+          "test": "CommitGateRunner stores an ABORTED receipt when the wrapped runner fails",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/coordinator.test.ts"
+        },
+        {
+          "test": "CommitGateRunner writes a minimum ABORTED receipt when prepare infrastructure fails",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/coordinator.test.ts"
+        },
+        {
+          "test": "TransitionWorker recovers a durable cancellation into one ABORTED receipt and an idempotent fresh View",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "append-only-rollback",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "VersionStore creates append-only events, preserves managed state, and removes ephemeral state",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/version-store.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "message-authority-fence",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "Agent lifecycle persists a playground conversation",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/agent-service.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "worker-product-commit",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "WorkerCommitGateRunner commits through proposal, evidence, permit and Worker generation CAS",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/worker-commitgate-runner.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "worker-product-noncommit",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "WorkerCommitGateRunner quarantines a protected-path change without advancing workspace generation",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/worker-commitgate-runner.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "worker-cas-conflict-decision",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "TransitionWorker durably conflicts an H0 proposal after H1 wins without changing workspace, generation, or versions",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker.test.ts"
+        },
+        {
+          "test": "TransitionWorker durably classifies a stale promotion workspace hash as CONFLICTED",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker.test.ts"
+        },
+        {
+          "test": "WorkerCommitGateRunner maps a stale Worker View CAS to one durable CONFLICTED disposition before finalize",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/worker-commitgate-runner.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "worker-cancellation-fence",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "WorkerCommitGateRunner makes cancellation authoritative before verifier",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/worker-commitgate-runner.test.ts"
+        },
+        {
+          "test": "WorkerCommitGateRunner makes cancellation authoritative before permit",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/worker-commitgate-runner.test.ts"
+        },
+        {
+          "test": "WorkerCommitGateRunner makes cancellation authoritative before promotion",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/worker-commitgate-runner.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "explicit-non-effect-proof",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "effect disposition proof proves no persistent effect for QUARANTINED",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/effect-proof.test.ts"
+        },
+        {
+          "test": "effect disposition proof proves no persistent effect for CONFLICTED",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/effect-proof.test.ts"
+        },
+        {
+          "test": "effect disposition proof proves no persistent effect for ABORTED",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/effect-proof.test.ts"
+        }
+      ]
+    }
+  ],
+  "evaluationRecords": [
+    {
+      "schemaVersion": 1,
+      "recordId": "view-generation-aba-fence",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "sealed-proposal-single-source",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "one-shot-promotion-permit",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "permit-evidence-completeness",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "transaction-capability-replay",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "one-shot-rollback-permit",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "rollback-import-toctou",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "evaluation-context-binding",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "manifest-v2-link-rejection",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "manifest-v2-path-collision",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "database-v3-migration",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "sealed-commit",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "view-cas-conflict",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "terminal-decision-semantics",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "append-only-rollback",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "message-authority-fence",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "worker-product-commit",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "worker-product-noncommit",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "worker-cas-conflict-decision",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "worker-cancellation-fence",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "explicit-non-effect-proof",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "protocol",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    }
+  ],
+  "parseError": null,
+  "evidenceFiles": [
+    "eval/evidence/protocol-vitest.json"
+  ],
+  "claimBoundary": "Only named passing tests count as verified. Missing mechanical evidence is unverified; a matching failing test or failed command is failed."
+}

@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "kind": "architecture-artifact-audit",
+  "generatedAt": "2026-08-30T13:01:18.374Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "artifacts": {
+    "drawio": {
+      "path": "docs/commitgate-architecture.drawio",
+      "sha256": "440de656dfbc6c617366ecd82a56a1214f2cba1f49508ff60dde0de7f0e118a7"
+    },
+    "svg": {
+      "path": "docs/commitgate-architecture.svg",
+      "sha256": "258a5507216551a66a638b14188224ea026af79934e831c16913a96253ccd30c"
+    },
+    "submissionDrawio": {
+      "path": "<SUBMISSION_ROOT>/04_演示与提交/CommitGate_No_Evidence_No_Effect_Architecture.drawio",
+      "sha256": "440de656dfbc6c617366ecd82a56a1214f2cba1f49508ff60dde0de7f0e118a7"
+    },
+    "submissionSvg": {
+      "path": "<SUBMISSION_ROOT>/04_演示与提交/CommitGate_No_Evidence_No_Effect_Architecture.svg",
+      "sha256": "258a5507216551a66a638b14188224ea026af79934e831c16913a96253ccd30c"
+    }
+  },
+  "checks": [
+    {
+      "id": "native-drawio-xml",
+      "status": "verified"
+    },
+    {
+      "id": "unique-cell-ids",
+      "status": "verified"
+    },
+    {
+      "id": "valid-edge-references-and-geometry",
+      "status": "verified"
+    },
+    {
+      "id": "vertices-within-page-bounds",
+      "status": "verified"
+    },
+    {
+      "id": "reviewer-flow-nodes-present",
+      "status": "verified"
+    },
+    {
+      "id": "svg-embeds-exact-editable-source",
+      "status": "verified"
+    },
+    {
+      "id": "submission-drawio-byte-identical",
+      "status": "verified"
+    },
+    {
+      "id": "submission-svg-byte-identical",
+      "status": "verified"
+    },
+    {
+      "id": "core-invariant-visible",
+      "status": "verified"
+    }
+  ],
+  "claimBoundary": "Checks XML structure, edge references, embedded editable source and byte-identical release copies; it does not constitute an external design review."
+}

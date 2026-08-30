@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 3,
+  "kind": "offline-terminal-receipt-proof-set-verification",
+  "generatedAt": "2026-08-30T13:14:51.912Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "proofSet": {
+    "path": "eval/evidence/terminal-receipt-proof-bundles.json",
+    "sha256": "6e5868faa8a3d57850cf85f9a4a074686d30fe61aaa7aef5f9a6e18828563719",
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "signingKeyId": "689028738aab9fc0057c770e",
+    "expectedSigningKeyId": "689028738aab9fc0057c770e",
+    "proofCount": 6,
+    "requiredLabels": [
+      "positive-commit",
+      "protected-path-quarantine",
+      "provider-or-verifier-abort",
+      "fresh-follow-up-commit",
+      "second-agent-commit",
+      "manual-rollback"
+    ],
+    "labels": [
+      "positive-commit",
+      "protected-path-quarantine",
+      "provider-or-verifier-abort",
+      "fresh-follow-up-commit",
+      "manual-rollback",
+      "second-agent-commit"
+    ],
+    "structureValid": true,
+    "identityUnique": true,
+    "contractReason": null
+  },
+  "records": [
+    {
+      "label": "positive-commit",
+      "expectedDecision": "COMMITTED",
+      "declaredExpectedDecision": "COMMITTED",
+      "observedDecision": "COMMITTED",
+      "receiptId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "runId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "signingKeyId": "689028738aab9fc0057c770e",
+      "receiptHash": "9695d1c4253b715a61df77c23b0552800c5787c11fd90ed3dd6b1050e07f3b6b",
+      "eventDigest": "212add01595c88d0cd57ce690298f384580a4d387b342dea46c2c575ae70949b",
+      "bundleSchemaVersion": 3,
+      "eventChainLength": 15,
+      "fullEventChainValid": true,
+      "rollbackTargetVersionId": null,
+      "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "status": "verified",
+      "verification": {
+        "valid": true,
+        "reason": null,
+        "cryptographicAndSemantic": {
+          "valid": true,
+          "reason": null
+        },
+        "setBindings": {
+          "valid": true
+        }
+      }
+    },
+    {
+      "label": "protected-path-quarantine",
+      "expectedDecision": "QUARANTINED",
+      "declaredExpectedDecision": "QUARANTINED",
+      "observedDecision": "QUARANTINED",
+      "receiptId": "a4269259-2721-468e-a157-8d98e1c890d0",
+      "runId": "a4269259-2721-468e-a157-8d98e1c890d0",
+      "transitionId": "a4269259-2721-468e-a157-8d98e1c890d0",
+      "signingKeyId": "689028738aab9fc0057c770e",
+      "receiptHash": "79ea63b49139118282249f67dd9940c0958bfc98102ac9849175fbda12fb2a0b",
+      "eventDigest": "99539cf44f6d22fb0f8640253036c97b6f1721a2155986280bd1d6b329b1fe2d",
+      "bundleSchemaVersion": 3,
+      "eventChainLength": 25,
+      "fullEventChainValid": true,
+      "rollbackTargetVersionId": null,
+      "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "status": "verified",
+      "verification": {
+        "valid": true,
+        "reason": null,
+        "cryptographicAndSemantic": {
+          "valid": true,
+          "reason": null
+        },
+        "setBindings": {
+          "valid": true
+        }
+      }
+    },
+    {
+      "label": "provider-or-verifier-abort",
+      "expectedDecision": "ABORTED",
+      "declaredExpectedDecision": "ABORTED",
+      "observedDecision": "ABORTED",
+      "receiptId": "d11cbb23-d125-44d9-844f-034bbcfc362f",
+      "runId": "d11cbb23-d125-44d9-844f-034bbcfc362f",
+      "transitionId": "d11cbb23-d125-44d9-844f-034bbcfc362f",
+      "signingKeyId": "689028738aab9fc0057c770e",
+      "receiptHash": "5447298502800a62c478bb250d43757503d2f59ffc07ad7df430969593f1438e",
+      "eventDigest": "bdd110576a8971837dd20fb9dc6ca0ff584d247ad74baa04ffb813fb571186a5",
+      "bundleSchemaVersion": 3,
+      "eventChainLength": 30,
+      "fullEventChainValid": true,
+      "rollbackTargetVersionId": null,
+      "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "status": "verified",
+      "verification": {
+        "valid": true,
+        "reason": null,
+        "cryptographicAndSemantic": {
+          "valid": true,
+          "reason": null
+        },
+        "setBindings": {
+          "valid": true
+        }
+      }
+    },
+    {
+      "label": "fresh-follow-up-commit",
+      "expectedDecision": "COMMITTED",
+      "declaredExpectedDecision": "COMMITTED",
+      "observedDecision": "COMMITTED",
+      "receiptId": "5ba72469-17ec-4cee-9f72-5e7e164b3483",
+      "runId": "5ba72469-17ec-4cee-9f72-5e7e164b3483",
+      "transitionId": "5ba72469-17ec-4cee-9f72-5e7e164b3483",
+      "signingKeyId": "689028738aab9fc0057c770e",
+      "receiptHash": "036d86d5a4dd2a63455f28ff2276d0d7babdf41b1c827f783b809d6429eaacfb",
+      "eventDigest": "cd6db7c7642b8fcc0e9516fbd5d4023ab4b076c00811eab4574095b65ee80abc",
+      "bundleSchemaVersion": 3,
+      "eventChainLength": 44,
+      "fullEventChainValid": true,
+      "rollbackTargetVersionId": null,
+      "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "status": "verified",
+      "verification": {
+        "valid": true,
+        "reason": null,
+        "cryptographicAndSemantic": {
+          "valid": true,
+          "reason": null
+        },
+        "setBindings": {
+          "valid": true
+        }
+      }
+    },
+    {
+      "label": "manual-rollback",
+      "expectedDecision": "COMMITTED",
+      "declaredExpectedDecision": "COMMITTED",
+      "observedDecision": "COMMITTED",
+      "receiptId": "rollback-12dbe377-58e4-40b0-9da5-f825dc4c6bbd",
+      "runId": "rollback-12dbe377-58e4-40b0-9da5-f825dc4c6bbd",
+      "transitionId": "rollback-12dbe377-58e4-40b0-9da5-f825dc4c6bbd",
+      "signingKeyId": "689028738aab9fc0057c770e",
+      "receiptHash": "9e1db95299497350b4681a19d0bc223703bf1c9cf2a0a89dcfed22ad1871221a",
+      "eventDigest": "6e6ca05bf072a385932e5205608a200b72b57afa3b5856ceb592aaa47fc96f77",
+      "bundleSchemaVersion": 3,
+      "eventChainLength": 55,
+      "fullEventChainValid": true,
+      "rollbackTargetVersionId": "8c8f3b3a-c159-461c-9877-08045768277d",
+      "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "status": "verified",
+      "verification": {
+        "valid": true,
+        "reason": null,
+        "cryptographicAndSemantic": {
+          "valid": true,
+          "reason": null
+        },
+        "setBindings": {
+          "valid": true
+        }
+      }
+    },
+    {
+      "label": "second-agent-commit",
+      "expectedDecision": "COMMITTED",
+      "declaredExpectedDecision": "COMMITTED",
+      "observedDecision": "COMMITTED",
+      "receiptId": "049417a3-6416-447d-aaaf-de6c188fc8da",
+      "runId": "049417a3-6416-447d-aaaf-de6c188fc8da",
+      "transitionId": "049417a3-6416-447d-aaaf-de6c188fc8da",
+      "signingKeyId": "689028738aab9fc0057c770e",
+      "receiptHash": "9ff15459ba312206b32fa4b279d19cead6e3e50a868806f6456b9e221e248d07",
+      "eventDigest": "8ce152075d244e70f7eae7741549ccd0555248d946ab7c99fe50e6fdcee54f1d",
+      "bundleSchemaVersion": 3,
+      "eventChainLength": 15,
+      "fullEventChainValid": true,
+      "rollbackTargetVersionId": null,
+      "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "status": "verified",
+      "verification": {
+        "valid": true,
+        "reason": null,
+        "cryptographicAndSemantic": {
+          "valid": true,
+          "reason": null
+        },
+        "setBindings": {
+          "valid": true
+        }
+      }
+    }
+  ],
+  "verification": {
+    "valid": true,
+    "reason": null,
+    "allTerminalReceiptsVerified": true,
+    "proofSetContractValid": true,
+    "trustAnchor": {
+      "valid": true,
+      "expectedSigningKeyId": "689028738aab9fc0057c770e"
+    }
+  },
+  "claimBoundary": "Verifies every terminal receipt observed by the frozen browser scenario. This finite fixture set is not a claim about unobserved runs."
+}

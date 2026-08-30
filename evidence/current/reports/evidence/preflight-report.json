@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "kind": "demo-preflight",
+  "generatedAt": "2026-08-30T13:18:33.136Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "ark",
+      "gateway": "https://ark.cn-beijing.volces.com/api/v3",
+      "requestedModel": "ep-20260827113223-gbxqh",
+      "resolvedModel": null,
+      "wireApi": "responses",
+      "accessMode": "direct",
+      "credentialConfigured": true,
+      "credentialsRecorded": false
+    }
+  },
+  "credentialIndependentReady": true,
+  "providerReady": true,
+  "providerId": "ark",
+  "checks": [
+    {
+      "id": "node-22-plus",
+      "status": "verified",
+      "detail": "v25.6.1"
+    },
+    {
+      "id": "npm",
+      "status": "verified",
+      "detail": "11.9.0"
+    },
+    {
+      "id": "container-engine",
+      "status": "verified",
+      "detail": "29.2.1"
+    },
+    {
+      "id": "runtime-image",
+      "status": "verified",
+      "detail": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003"
+    },
+    {
+      "id": "pinned-starter-base",
+      "status": "verified",
+      "detail": "8d0bd4f14ad1e453d984149aebcdd0bcb4f74178; informational provenance only"
+    },
+    {
+      "id": "checkout-mode",
+      "status": "verified",
+      "detail": "release/commitgate-final"
+    },
+    {
+      "id": "implementation-tracked",
+      "status": "verified",
+      "detail": "CommitGate core, evidence-checklist, and Demo-auth scripts are bound to the source identity"
+    },
+    {
+      "id": "source-tree-clean",
+      "status": "verified",
+      "detail": "source files match the captured tree hash"
+    },
+    {
+      "id": "trusted-checks",
+      "status": "verified",
+      "detail": "eval/trusted-checks/workspace-contract.mjs, eval/trusted-checks/workspace-sanity.mjs"
+    },
+    {
+      "id": "local-secret-file-ignored",
+      "status": "verified",
+      "detail": ".env.local"
+    },
+    {
+      "id": "model-provider-credentials",
+      "status": "verified",
+      "detail": "ark/ep-20260827113223-gbxqh; credential value not recorded"
+    }
+  ]
+}

@@ -1,0 +1,466 @@
+{
+  "schemaVersion": 3,
+  "receipt": {
+    "schemaVersion": 3,
+    "receiptId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+    "runId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+    "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+    "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+    "decision": "COMMITTED",
+    "baseViewId": "3e7201f3c8d4e80da4f57b24652e30850c679be5c7522cc96301cfe9310abaff",
+    "finalViewId": "73ffcbaa1c39d710959622c16aeff64c12e0c0648ddf85a4461403d4ccf758dc",
+    "baseGeneration": 1,
+    "nextGeneration": 2,
+    "baseWorkspaceHash": "e309a68975579197a4a955374b989cae4127b15d76e11335de259d303355470b",
+    "finalWorkspaceHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+    "proposalId": "proposal-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+    "proposalArtifactHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+    "verifierInputHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+    "promotionSourceHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+    "evaluationContextHash": "4146203aa27c5f07dff9be8e4c90f53e145aa39d987f38f0be57890f04dac666",
+    "evidenceDigest": "0c43d9b6662a24c2b40134c1354b8ab73a5f56a9411801e43aa9d5e95d0ffdd3",
+    "permitId": "permit-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+    "permitState": "CONSUMED",
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "dispositionBaseViewId": "3e7201f3c8d4e80da4f57b24652e30850c679be5c7522cc96301cfe9310abaff",
+    "dispositionBaseGeneration": 1,
+    "dispositionBaseWorkspaceHash": "e309a68975579197a4a955374b989cae4127b15d76e11335de259d303355470b",
+    "policyProfile": "deployment-protected",
+    "policyVersion": 2,
+    "policyHash": "6c367c8139aa5bd0bd8f0df5c8b8849d17ab0d0949690baa96449bde002d1b91",
+    "checkSpecHash": "778851525947fbd5cde5c21036b18db858bfeccd65cb452ea23c527cc7cd1577"
+  },
+  "proof": {
+    "schemaVersion": 2,
+    "receiptHash": "9695d1c4253b715a61df77c23b0552800c5787c11fd90ed3dd6b1050e07f3b6b",
+    "runId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+    "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+    "decision": "COMMITTED",
+    "logSequence": 15,
+    "previousDigest": "88703e86c4c55c369e776570bc9ad1f07e7e3d4a05f95562e78b481325dd2d35",
+    "eventDigest": "212add01595c88d0cd57ce690298f384580a4d387b342dea46c2c575ae70949b",
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "signingKeyId": "689028738aab9fc0057c770e",
+    "signatureAlgorithm": "Ed25519",
+    "signature": "te34SMpLuGWHTnxUh_uvbbht09U9I3Vz2XhVYfytyDvtzu4VYofSUHgjIoh2x7Y417GcZzQpwW-R2ToxvyVoCA"
+  },
+  "terminalEvent": {
+    "schemaVersion": 1,
+    "eventId": "64f2cef1-31c0-47dd-87e9-a21be5340dd7",
+    "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+    "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+    "sequence": 15,
+    "type": "TRANSITION_ACKNOWLEDGED",
+    "previousDigest": "88703e86c4c55c369e776570bc9ad1f07e7e3d4a05f95562e78b481325dd2d35",
+    "payload": {
+      "versionId": "8c8f3b3a-c159-461c-9877-08045768277d",
+      "snapshotId": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+      "receiptId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29"
+    },
+    "createdAt": "2026-08-30T13:12:24.588Z",
+    "digest": "212add01595c88d0cd57ce690298f384580a4d387b342dea46c2c575ae70949b"
+  },
+  "predecessorEvent": {
+    "schemaVersion": 1,
+    "eventId": "01e0ac56-0b33-4f6c-aefd-1f4ba757d940",
+    "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+    "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+    "sequence": 14,
+    "type": "WORKSPACE_APPLIED",
+    "previousDigest": "fecb4ca2095d630b66eecd40944ceca484d46e902b47b2effa790cd2ded15035",
+    "payload": {
+      "view": {
+        "schemaVersion": 1,
+        "viewId": "73ffcbaa1c39d710959622c16aeff64c12e0c0648ddf85a4461403d4ccf758dc",
+        "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+        "headVersionId": "8c8f3b3a-c159-461c-9877-08045768277d",
+        "generation": 2,
+        "versionedHash": "a0f0d29d846d29415e1d2e6b2cd5dad11ebc1d21bdbc083441dcac95feda1587",
+        "platformManagedHash": "d0e8272c3644e03b4286d1604b2762d5c8df9a4e84b86ebbffbd9b0ba9803306",
+        "liveStateHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+        "sessionEpoch": 0,
+        "agentConfigVersion": 1,
+        "policyVersion": 2
+      },
+      "workspaceHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7"
+    },
+    "createdAt": "2026-08-30T13:12:24.582Z",
+    "digest": "88703e86c4c55c369e776570bc9ad1f07e7e3d4a05f95562e78b481325dd2d35"
+  },
+  "eventChain": [
+    {
+      "schemaVersion": 1,
+      "eventId": "c68c367a-14c1-4c07-b2ba-fdd757397ec8",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "initialize-5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "sequence": 1,
+      "type": "AGENT_INITIALIZATION_PREPARED",
+      "previousDigest": null,
+      "payload": {
+        "view": {
+          "schemaVersion": 1,
+          "viewId": "3e7201f3c8d4e80da4f57b24652e30850c679be5c7522cc96301cfe9310abaff",
+          "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+          "headVersionId": "initial-07c6a52c-1064-4c08-9658-fbfe04cd0a93",
+          "generation": 1,
+          "versionedHash": "85cbd1c6c81c0c4f152b9c2583c759d33cc09196ea8dd278f929eac00c5e5105",
+          "platformManagedHash": "d0e8272c3644e03b4286d1604b2762d5c8df9a4e84b86ebbffbd9b0ba9803306",
+          "liveStateHash": "e309a68975579197a4a955374b989cae4127b15d76e11335de259d303355470b",
+          "sessionEpoch": 0,
+          "agentConfigVersion": 1,
+          "policyVersion": 2
+        },
+        "workspaceHash": "e309a68975579197a4a955374b989cae4127b15d76e11335de259d303355470b",
+        "versionId": "initial-07c6a52c-1064-4c08-9658-fbfe04cd0a93"
+      },
+      "createdAt": "2026-08-30T13:11:56.910Z",
+      "digest": "65cbe07d48dd54c618d3de09917874abd29b75bb682ebb3e7b65bc79f2a7388c"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "9f5e3be9-fc40-40da-a75e-d2b302df8eda",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "initialize-5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "sequence": 2,
+      "type": "AGENT_INITIALIZED",
+      "previousDigest": "65cbe07d48dd54c618d3de09917874abd29b75bb682ebb3e7b65bc79f2a7388c",
+      "payload": {
+        "view": {
+          "schemaVersion": 1,
+          "viewId": "3e7201f3c8d4e80da4f57b24652e30850c679be5c7522cc96301cfe9310abaff",
+          "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+          "headVersionId": "initial-07c6a52c-1064-4c08-9658-fbfe04cd0a93",
+          "generation": 1,
+          "versionedHash": "85cbd1c6c81c0c4f152b9c2583c759d33cc09196ea8dd278f929eac00c5e5105",
+          "platformManagedHash": "d0e8272c3644e03b4286d1604b2762d5c8df9a4e84b86ebbffbd9b0ba9803306",
+          "liveStateHash": "e309a68975579197a4a955374b989cae4127b15d76e11335de259d303355470b",
+          "sessionEpoch": 0,
+          "agentConfigVersion": 1,
+          "policyVersion": 2
+        },
+        "workspaceHash": "e309a68975579197a4a955374b989cae4127b15d76e11335de259d303355470b",
+        "versionId": "initial-07c6a52c-1064-4c08-9658-fbfe04cd0a93",
+        "snapshotId": "e309a68975579197a4a955374b989cae4127b15d76e11335de259d303355470b",
+        "recovered": true
+      },
+      "createdAt": "2026-08-30T13:11:57.068Z",
+      "digest": "35f88202addf4b4af264d50273d480376d3f5690db8a0fbebbd8ac7387d2d1ac"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "23fc2878-d2dc-4e89-abf3-a0f564334d76",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 3,
+      "type": "TRANSITION_PREPARED",
+      "previousDigest": "35f88202addf4b4af264d50273d480376d3f5690db8a0fbebbd8ac7387d2d1ac",
+      "payload": {
+        "kind": "AGENT_COMMIT",
+        "runId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "runLeaseId": "47cdf6ea-ff41-45ca-bccc-5b166e1065ba",
+        "baseViewId": "3e7201f3c8d4e80da4f57b24652e30850c679be5c7522cc96301cfe9310abaff",
+        "baseWorkspaceHash": "e309a68975579197a4a955374b989cae4127b15d76e11335de259d303355470b",
+        "baseGeneration": 1,
+        "sessionEpoch": 0,
+        "candidateVolumeId": "candidate-4bfb0519-d308-4549-b6c8-0c95c32b6d29"
+      },
+      "createdAt": "2026-08-30T13:11:57.775Z",
+      "digest": "1a75121a93b007ba2431389d737c89070deae1cabef00b02c19cd2cd40735850"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "d8223e95-7c53-4588-ba84-fdf8b386eff7",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 4,
+      "type": "RUNTIME_TEARDOWN_RECORDED",
+      "previousDigest": "1a75121a93b007ba2431389d737c89070deae1cabef00b02c19cd2cd40735850",
+      "payload": {
+        "schemaVersion": 1,
+        "kind": "runtime-teardown",
+        "runId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+        "runLeaseId": "47cdf6ea-ff41-45ca-bccc-5b166e1065ba",
+        "sessionEpoch": 0,
+        "scope": "AGENT",
+        "containerExited": true,
+        "containerRemoved": true,
+        "mountsReleased": true,
+        "source": "runtime-attestation",
+        "resolvedModel": "doubao-seed-evolving-latest-version",
+        "brokerAttestation": {
+          "schemaVersion": 1,
+          "algorithm": "HMAC-SHA256",
+          "keyId": "0291b8d373490f291c633363",
+          "mac": "b05b6d14f30cb3ef41557394cc339dc1a737d308416444bcd304ee299dba4f8f"
+        },
+        "digest": "6c2e2e7c013bdbbe17dc8dfbbcf5d021b001d9b4e118ccdab851e85056a56b2c"
+      },
+      "createdAt": "2026-08-30T13:12:22.550Z",
+      "digest": "ff48c74c8e584042f63fc5a44769cf311764f38fe4b940f9b8859820d06f2439"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "0d2232fb-e71f-447b-8501-a659aaf9f38f",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 5,
+      "type": "PROPOSAL_SEAL_PREPARED",
+      "previousDigest": "ff48c74c8e584042f63fc5a44769cf311764f38fe4b940f9b8859820d06f2439",
+      "payload": {
+        "proposalId": "proposal-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "baseViewId": "3e7201f3c8d4e80da4f57b24652e30850c679be5c7522cc96301cfe9310abaff",
+        "artifactHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+        "manifestHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+        "changedPathsDigest": "eab2baa9160978c1e043d64f9ba8521c22d1c215dbc71f75d525b1bbe36309be",
+        "runtimeTeardownDigest": "6c2e2e7c013bdbbe17dc8dfbbcf5d021b001d9b4e118ccdab851e85056a56b2c",
+        "changedPaths": [
+          "candidate-test-runner.mjs",
+          "package.json",
+          "result.txt",
+          "services",
+          "services/checkout",
+          "services/checkout/config.json"
+        ],
+        "staticFailures": [],
+        "sourceVolumeId": "candidate-4bfb0519-d308-4549-b6c8-0c95c32b6d29"
+      },
+      "createdAt": "2026-08-30T13:12:22.972Z",
+      "digest": "2e29e3aee14c5d301fb10c7ba82c9f6d2090dec2d28ea415331001504ec8260e"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "ac71c489-539e-42d1-953d-28da843c429e",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 6,
+      "type": "PROPOSAL_SEALED",
+      "previousDigest": "2e29e3aee14c5d301fb10c7ba82c9f6d2090dec2d28ea415331001504ec8260e",
+      "payload": {
+        "proposalId": "proposal-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "baseViewId": "3e7201f3c8d4e80da4f57b24652e30850c679be5c7522cc96301cfe9310abaff",
+        "artifactHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+        "manifestHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+        "changedPathsDigest": "eab2baa9160978c1e043d64f9ba8521c22d1c215dbc71f75d525b1bbe36309be",
+        "runtimeTeardownDigest": "6c2e2e7c013bdbbe17dc8dfbbcf5d021b001d9b4e118ccdab851e85056a56b2c",
+        "changedPaths": [
+          "candidate-test-runner.mjs",
+          "package.json",
+          "result.txt",
+          "services",
+          "services/checkout",
+          "services/checkout/config.json"
+        ],
+        "staticFailures": [],
+        "sourceVolumeId": "candidate-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "sourceDestroyed": true,
+        "recovered": true
+      },
+      "createdAt": "2026-08-30T13:12:23.081Z",
+      "digest": "16de827a7f9e502870742769224c8823d5839440a694c18bc06386cbd6990c20"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "cfba3ad1-64ef-4db2-a205-c5254b339dbc",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 7,
+      "type": "PROPOSAL_EXPORT_PREPARED",
+      "previousDigest": "16de827a7f9e502870742769224c8823d5839440a694c18bc06386cbd6990c20",
+      "payload": {
+        "proposalId": "proposal-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "exportVolumeId": "verify-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "artifactHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7"
+      },
+      "createdAt": "2026-08-30T13:12:23.288Z",
+      "digest": "64c1b01d5c5af8ecf4d2bf1f0232638a23eef15fcf140e4fd74b75e5cffc1b39"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "b49af249-ee36-46bd-85fb-ccb7e69bfaee",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 8,
+      "type": "PROPOSAL_EXPORTED",
+      "previousDigest": "64c1b01d5c5af8ecf4d2bf1f0232638a23eef15fcf140e4fd74b75e5cffc1b39",
+      "payload": {
+        "proposalId": "proposal-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "exportVolumeId": "verify-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "artifactHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+        "recovered": true
+      },
+      "createdAt": "2026-08-30T13:12:23.376Z",
+      "digest": "d4dcd36d0ea1dd193953a31588445b55ea9eee1ce95453029ba72c45720457fa"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "c9a429f8-e236-472b-9ad1-636b2a7c74a9",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 9,
+      "type": "RUNTIME_TEARDOWN_RECORDED",
+      "previousDigest": "d4dcd36d0ea1dd193953a31588445b55ea9eee1ce95453029ba72c45720457fa",
+      "payload": {
+        "schemaVersion": 1,
+        "kind": "runtime-teardown",
+        "runId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+        "runLeaseId": "47cdf6ea-ff41-45ca-bccc-5b166e1065ba",
+        "sessionEpoch": 0,
+        "scope": "ALL",
+        "containerExited": true,
+        "containerRemoved": true,
+        "mountsReleased": true,
+        "source": "runtime-attestation",
+        "resolvedModel": "doubao-seed-evolving-latest-version",
+        "brokerAttestation": {
+          "schemaVersion": 1,
+          "algorithm": "HMAC-SHA256",
+          "keyId": "0291b8d373490f291c633363",
+          "mac": "4b729ed0fcc2a55eff831f3175f2181402049f231f9eb7d8c2df3fc4166afbe1"
+        },
+        "digest": "86261c95d3dc967935306bdb428dc763db5b9b8fa10ef173e23943864a8743a3"
+      },
+      "createdAt": "2026-08-30T13:12:23.874Z",
+      "digest": "5d1dd041505cce0bf7354760a1e6bcdc92b471d2e4800be98a569700226eaf1d"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "e1048f21-303c-4881-aa88-15af73ec5da1",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 10,
+      "type": "EVIDENCE_RECORDED",
+      "previousDigest": "5d1dd041505cce0bf7354760a1e6bcdc92b471d2e4800be98a569700226eaf1d",
+      "payload": {
+        "schemaVersion": 2,
+        "proposalId": "proposal-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "evaluationContextHash": "4146203aa27c5f07dff9be8e4c90f53e145aa39d987f38f0be57890f04dac666",
+        "evidenceDigest": "0c43d9b6662a24c2b40134c1354b8ab73a5f56a9411801e43aa9d5e95d0ffdd3",
+        "verifierInputHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+        "checkResultsHash": "f4de3c83ab48aa65e025f41050c93601919c7095fcda1e306e38bbf4bd12b750",
+        "coverage": "complete",
+        "requiredChecksPassed": true,
+        "checkCount": 1,
+        "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+        "policyHash": "6c367c8139aa5bd0bd8f0df5c8b8849d17ab0d0949690baa96449bde002d1b91",
+        "brokerAttestationDigest": "2853df87d98ecd4078addc183e53885493df9fe6279db90d42bfe8288a653a20",
+        "evidenceBlobHash": "cca93bb300e1be2dadcd0ff9f3d1c2d78d0675c76dc57a6b57666830e02f4615",
+        "evidenceBlobSize": 2193
+      },
+      "createdAt": "2026-08-30T13:12:23.893Z",
+      "digest": "46ef7edf7ea4f814d75a2bc1f4300043ddca7f6b3d19f5efe253872a7713a983"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "cb3cb9bf-55a3-46cb-80a5-bfbf4778fff3",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 11,
+      "type": "PERMIT_ISSUED",
+      "previousDigest": "46ef7edf7ea4f814d75a2bc1f4300043ddca7f6b3d19f5efe253872a7713a983",
+      "payload": {
+        "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+        "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "permitId": "permit-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "proposalId": "proposal-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "baseViewId": "3e7201f3c8d4e80da4f57b24652e30850c679be5c7522cc96301cfe9310abaff",
+        "targetArtifactHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+        "evaluationContextHash": "4146203aa27c5f07dff9be8e4c90f53e145aa39d987f38f0be57890f04dac666",
+        "evidenceDigest": "0c43d9b6662a24c2b40134c1354b8ab73a5f56a9411801e43aa9d5e95d0ffdd3",
+        "expiresAt": "2026-08-30T13:13:23.898Z"
+      },
+      "createdAt": "2026-08-30T13:12:23.908Z",
+      "digest": "88eb8149348ba01c162edc40547a2858b6d6da6ba5dff16dff3393e8664ebb07"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "23110e43-2a2b-45f4-b427-a1da58b49c51",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 12,
+      "type": "PERMIT_CONSUMING",
+      "previousDigest": "88eb8149348ba01c162edc40547a2858b6d6da6ba5dff16dff3393e8664ebb07",
+      "payload": {
+        "permitId": "permit-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "proposalId": "proposal-4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "nextView": {
+          "schemaVersion": 1,
+          "viewId": "73ffcbaa1c39d710959622c16aeff64c12e0c0648ddf85a4461403d4ccf758dc",
+          "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+          "headVersionId": "8c8f3b3a-c159-461c-9877-08045768277d",
+          "generation": 2,
+          "versionedHash": "a0f0d29d846d29415e1d2e6b2cd5dad11ebc1d21bdbc083441dcac95feda1587",
+          "platformManagedHash": "d0e8272c3644e03b4286d1604b2762d5c8df9a4e84b86ebbffbd9b0ba9803306",
+          "liveStateHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "sessionEpoch": 0,
+          "agentConfigVersion": 1,
+          "policyVersion": 2
+        },
+        "versionId": "8c8f3b3a-c159-461c-9877-08045768277d",
+        "receiptId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+        "targetArtifactHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7"
+      },
+      "createdAt": "2026-08-30T13:12:24.055Z",
+      "digest": "58d17e9ef81b16b2a80f8213787e3dee0e48af536e61c86231f5544ff4eafd93"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "edc139d7-df91-4d53-95b0-e3d693c83e72",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 13,
+      "type": "BACKUP_CREATED",
+      "previousDigest": "58d17e9ef81b16b2a80f8213787e3dee0e48af536e61c86231f5544ff4eafd93",
+      "payload": {
+        "baseWorkspaceHash": "e309a68975579197a4a955374b989cae4127b15d76e11335de259d303355470b"
+      },
+      "createdAt": "2026-08-30T13:12:24.270Z",
+      "digest": "fecb4ca2095d630b66eecd40944ceca484d46e902b47b2effa790cd2ded15035"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "01e0ac56-0b33-4f6c-aefd-1f4ba757d940",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 14,
+      "type": "WORKSPACE_APPLIED",
+      "previousDigest": "fecb4ca2095d630b66eecd40944ceca484d46e902b47b2effa790cd2ded15035",
+      "payload": {
+        "view": {
+          "schemaVersion": 1,
+          "viewId": "73ffcbaa1c39d710959622c16aeff64c12e0c0648ddf85a4461403d4ccf758dc",
+          "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+          "headVersionId": "8c8f3b3a-c159-461c-9877-08045768277d",
+          "generation": 2,
+          "versionedHash": "a0f0d29d846d29415e1d2e6b2cd5dad11ebc1d21bdbc083441dcac95feda1587",
+          "platformManagedHash": "d0e8272c3644e03b4286d1604b2762d5c8df9a4e84b86ebbffbd9b0ba9803306",
+          "liveStateHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "sessionEpoch": 0,
+          "agentConfigVersion": 1,
+          "policyVersion": 2
+        },
+        "workspaceHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7"
+      },
+      "createdAt": "2026-08-30T13:12:24.582Z",
+      "digest": "88703e86c4c55c369e776570bc9ad1f07e7e3d4a05f95562e78b481325dd2d35"
+    },
+    {
+      "schemaVersion": 1,
+      "eventId": "64f2cef1-31c0-47dd-87e9-a21be5340dd7",
+      "agentId": "5b8d6d4f-d24f-4b1b-9a91-f82de420d674",
+      "transitionId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+      "sequence": 15,
+      "type": "TRANSITION_ACKNOWLEDGED",
+      "previousDigest": "88703e86c4c55c369e776570bc9ad1f07e7e3d4a05f95562e78b481325dd2d35",
+      "payload": {
+        "versionId": "8c8f3b3a-c159-461c-9877-08045768277d",
+        "snapshotId": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+        "receiptId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29"
+      },
+      "createdAt": "2026-08-30T13:12:24.588Z",
+      "digest": "212add01595c88d0cd57ce690298f384580a4d387b342dea46c2c575ae70949b"
+    }
+  ],
+  "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEASHvYIyOqn7qzBr7YEC21qEh1VP5vgF0D283Uiza8Vsg=\n-----END PUBLIC KEY-----\n"
+}

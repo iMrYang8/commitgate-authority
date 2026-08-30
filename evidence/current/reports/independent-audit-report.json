@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 3,
+  "kind": "project-defined-clean-worktree-replay",
+  "generatedAt": "2026-08-30T13:16:38.601Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "auditOrigin": "project-defined",
+  "externallyIndependent": false,
+  "cleanClone": true,
+  "readOnlySource": true,
+  "cloneRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+  "cloneSourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+  "results": [
+    {
+      "id": "clean-local-clone",
+      "status": "verified",
+      "command": "git clone --local --no-hardlinks --no-checkout <REPO_ROOT> <REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo",
+      "exitCode": 0,
+      "durationMs": 16851,
+      "stdoutTail": "",
+      "stderrTail": "Cloning into '<REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo'...\nwarning: source repository is shallow, ignoring --local\nwarning: --local is ignored\n"
+    },
+    {
+      "id": "checkout-source-revision",
+      "status": "verified",
+      "command": "git checkout --detach ec5802407473eefd0be6bd17afc39de106024093",
+      "exitCode": 0,
+      "durationMs": 412,
+      "stdoutTail": "",
+      "stderrTail": "HEAD is now at ec58024 docs: clarify official video review gate\n"
+    },
+    {
+      "id": "clone-identity",
+      "status": "verified"
+    },
+    {
+      "id": "npm-ci",
+      "status": "verified",
+      "command": "npm ci",
+      "exitCode": 0,
+      "durationMs": 2717,
+      "stdoutTail": "\nadded 200 packages in 3s\n\n54 packages are looking for funding\n  run `npm fund` for details\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "baseline-check",
+      "status": "verified",
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 32711,
+      "stdoutTail": "lhost:80\",\"remoteAddress\":\"127.0.0.1\"},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1788095742862,\"pid\":33792,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-5\",\"res\":{\"statusCode\":409},\"responseTime\":2.9267919999999776,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1788095742879,\"pid\":33792,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":503},\"responseTime\":0.9574579999999742,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1788095742879,\"pid\":33792,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-2\",\"req\":{\"method\":\"GET\",\"url\":\"/api/auth\",\"host\":\"localhost:80\",\"remoteAddress\":\"127.0.0.1\"},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1788095742879,\"pid\":33792,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":200},\"responseTime\":0.15575000000001182,\"msg\":\"request completed\"}\n\n Test Files  48 passed (48)\n      Tests  311 passed | 7 skipped (318)\n   Start at  21:15:38\n   Duration  14.30s (transform 2.75s, setup 0ms, import 6.73s, tests 52.98s, environment 6ms)\n\n\n> volc-agent-launchpad@1.0.0 test:evaluator-cleanup\n> node --import tsx --test scripts/evaluator-temp-cleanup.test.ts\n\n✔ removes nested readonly trusted-check payload directories (11.637208ms)\n✔ does not traverse a symlink inside the evaluator temp tree (4.157333ms)\n✔ unlinks a symlink temp root without touching its target (4.098667ms)\n✔ rejects roots outside the evaluator temp namespace (1.013291ms)\nℹ tests 4\nℹ suites 0\nℹ pass 4\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 228.706\n\n> volc-agent-launchpad@1.0.0 test:evidence-provenance\n> node --test scripts/evidence-utils.test.mjs\n\n✔ source and evidence revisions remain distinct without report self-reference (883.745916ms)\n✔ a validated release manifest provides fail-closed provenance without .git (276.136083ms)\n✔ a source archive without Git or a release manifest is rejected (17.972208ms)\nℹ tests 3\nℹ suites 0\nℹ pass 3\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1312.212875\n\n> volc-agent-launchpad@1.0.0 test:release-contracts\n> node --test scripts/release-contracts.test.mjs\n\n✔ terminal proof-set labels have fixed semantics and unique terminal identities (2.414625ms)\n✔ browser report byte-binds the proof set and pre-run signing-key anchor (0.174875ms)\n✔ active Provider status ignores legacy official/competition/alternate flags (0.062208ms)\n✔ invariant release contract requires every fixed negative fixture and preserves evidence modes (1.783084ms)\n✔ performance release contract is Worker-only and rejects verifier-latency relabeling (0.436584ms)\n✔ browser checklist and release audit share the exact 12-step evidence contract (2.090458ms)\n✔ external video review requires the exact video, reviewer, key anchor and signature (13.427125ms)\n✔ active evidence inventory rejects stale report files outside the release allowlist (10.627458ms)\n✔ active Provider report selection is source-bound and ambiguity fails closed (3.450875ms)\n✔ source-delivery byte binding covers every Compose Dockerfile (0.456042ms)\n✔ real Provider evaluator binds its frozen source revision into its isolated API (1.17825ms)\n✔ real Provider compatibility and browser frontend remain separate contracts (0.185792ms)\n✔ Docker recovery evaluator exercises the frozen product Worker image (0.995375ms)\nℹ tests 13\nℹ suites 0\nℹ pass 13\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 156.443125\n\n> volc-agent-launchpad@1.0.0 build\n> npm run build -w @launchpad/web && npm run build -w @launchpad/server\n\n\n> @launchpad/web@1.0.0 build\n> tsc -b && vite build\n\nvite v7.3.6 building client environment for production...\ntransforming...\n✓ 30 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   0.52 kB │ gzip:  0.33 kB\ndist/assets/index-igf32z2X.css   20.93 kB │ gzip:  5.57 kB\ndist/assets/index-Wy_YK5bk.js   225.42 kB │ gzip: 69.00 kB\n✓ built in 642ms\n\n> @launchpad/server@1.0.0 build\n> tsc -p tsconfig.json\n\ncheck report: <REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/evidence/check-report.json\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "read-only-source-files",
+      "status": "verified",
+      "fileCount": 217
+    },
+    {
+      "id": "protocol",
+      "status": "verified",
+      "command": "npm run eval:protocol",
+      "exitCode": 0,
+      "durationMs": 4164,
+      "stdoutTail": ",\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1788095764211,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":413},\"responseTime\":0.3019160000000056,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1788095764216,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":0.9379579999999805,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1788095764217,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-2\",\"req\":{\"method\":\"GET\",\"url\":\"/api/runs/22222222-2222-4222-8222-222222222222/commitgate\",\"host\":\"localhost:80\",\"remoteAddress\":\"127.0.0.1\"},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1788095764217,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":200},\"responseTime\":0.29358400000000984,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1788095764218,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-3\",\"req\":{\"method\":\"GET\",\"url\":\"/api/runs/22222222-2222-4222-8222-222222222222/commitgate/proof\",\"host\":\"localhost:80\",\"remoteAddress\":\"127.0.0.1\"},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1788095764218,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-3\",\"res\":{\"statusCode\":200},\"responseTime\":0.3438340000000153,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1788095764218,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-4\",\"req\":{\"method\":\"POST\",\"url\":\"/api/runs/22222222-2222-4222-8222-222222222222/commitgate/promotion-attempts\",\"host\":\"localhost:80\",\"remoteAddress\":\"127.0.0.1\"},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1788095764220,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-4\",\"res\":{\"statusCode\":409},\"responseTime\":1.7030829999999924,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1788095764220,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-5\",\"req\":{\"method\":\"POST\",\"url\":\"/api/agents/11111111-1111-4111-8111-111111111111/rollbacks\",\"host\":\"localhost:80\",\"remoteAddress\":\"127.0.0.1\"},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1788095764229,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-1\",\"req\":{\"method\":\"POST\",\"url\":\"/api/agents\",\"host\":\"localhost:80\",\"remoteAddress\":\"127.0.0.1\"},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1788095764222,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-5\",\"res\":{\"statusCode\":409},\"responseTime\":1.9694170000000213,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1788095764229,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":503},\"responseTime\":0.19295899999997346,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1788095764230,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-2\",\"req\":{\"method\":\"GET\",\"url\":\"/api/auth\",\"host\":\"localhost:80\",\"remoteAddress\":\"127.0.0.1\"},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1788095764230,\"pid\":36388,\"hostname\":\"iMryang-MacBook-Air.local\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":200},\"responseTime\":0.24874999999997272,\"msg\":\"request completed\"}\nJSON report written to <REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/evidence/protocol-vitest.json\nverified   view-generation-aba-fence\nverified   sealed-proposal-single-source\nverified   one-shot-promotion-permit\nverified   permit-evidence-completeness\nverified   transaction-capability-replay\nverified   one-shot-rollback-permit\nverified   rollback-import-toctou\nverified   evaluation-context-binding\nverified   manifest-v2-link-rejection\nverified   manifest-v2-path-collision\nverified   database-v3-migration\nverified   sealed-commit\nverified   view-cas-conflict\nverified   terminal-decision-semantics\nverified   append-only-rollback\nverified   message-authority-fence\nverified   worker-product-commit\nverified   worker-product-noncommit\nverified   worker-cas-conflict-decision\nverified   worker-cancellation-fence\nverified   explicit-non-effect-proof\nverified: protocol report: <REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/protocol-report.json\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "adversarial",
+      "status": "verified",
+      "command": "npm run eval:adversarial",
+      "exitCode": 0,
+      "durationMs": 3062,
+      "stdoutTail": "\n> volc-agent-launchpad@1.0.0 eval:adversarial\n> node scripts/eval-suite.mjs adversarial\n\n\n> @launchpad/server@1.0.0 test\n> vitest run src/commitgate/robustness.test.ts src/commitgate/coordinator.test.ts src/commitgate/manifest.test.ts src/commitgate/verifier-runner.test.ts src/commitgate/receipt-store.test.ts src/commitgate/protocol.test.ts src/container-codex-runner.test.ts src/config.test.ts src/model-relay-server.test.ts src/transition-worker/worker-policy.test.ts src/runtime-broker/attestation.test.ts src/transition-worker/broker-attestation.test.ts src/transition-worker/opaque-ref-binding.test.ts --reporter=json --outputFile=<REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/evidence/adversarial-vitest.json\n\nJSON report written to <REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/evidence/adversarial-vitest.json\nverified   path-budget-canary-platform\nverified   malformed-evidence-fail-closed\nverified   candidate-mutation-detected\nverified   candidate-test-runner-bypass\nverified   trusted-bundle-link-rejection\nverified   verifier-clean-environment\nverified   cumulative-verifier-budget\nverified   relay-only-network\nverified   relay-capability-forwarding\nverified   session-home-isolation\nverified   late-write-after-runtime\nverified   sealed-source-tamper\nverified   ignored-path-dos\nverified   receipt-redaction\nverified   worker-owned-permit-policy\nverified   broker-authenticated-runtime-evidence\nverified   worker-owned-opaque-exchange-refs\nverified: adversarial report: <REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/adversarial-report.json\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "recovery",
+      "status": "verified",
+      "command": "npm run eval:recovery",
+      "exitCode": 0,
+      "durationMs": 13403,
+      "stdoutTail": "\n> volc-agent-launchpad@1.0.0 eval:recovery\n> node scripts/eval-suite.mjs recovery\n\n\n> @launchpad/server@1.0.0 test\n> vitest run src/commitgate-service.test.ts src/commitgate/robustness.test.ts src/commitgate/workspace-transaction.test.ts src/commitgate/version-store.test.ts src/transition-log.test.ts src/transition-worker/filesystem.test.ts src/transition-worker/rpc.test.ts src/transition-worker/worker.test.ts src/transition-worker/worker-terminal-recovery.test.ts src/transition-worker/authority-intent-recovery.test.ts src/transition-worker/evidence-blob-store.test.ts src/transition-worker/signing-key-store.test.ts src/transition-worker/runtime-teardown-handshake.test.ts src/research/receipt-proof.test.ts src/agent-service-worker-admission-recovery.test.ts src/runtime-broker/rpc.test.ts src/runtime-broker/lifecycle-ledger.test.ts src/transition-worker/receipt-proof-projection-size.test.ts src/worker-commitgate-runner.test.ts --reporter=json --outputFile=<REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/evidence/recovery-vitest.json\n\nJSON report written to <REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/evidence/recovery-vitest.json\nverified   rename-swap-rollback\nverified   ambiguous-recovery-lock\nverified   pending-promotion-recovery\nverified   database-projection-rollback\nverified   rollback-crash-recovery\nverified   immutable-transition-chain\nverified   transition-tamper-detection\nverified   repair-expected-state-cas\nverified   stale-callback-fence\nverified   terminal-callback-fence\nverified   recovery-message-disposition\nverified   queued-follow-up-view-rebind\nverified   rollback-full-crash-matrix\nverified   worker-one-shot-promotion\nverified   worker-noop-rollback-generation\nverified   worker-rollback-target-binding\nverified   worker-rpc-wire-path-confinement\nverified   worker-filesystem-closure\nverified   worker-cancellation-race\nverified   receipt-proof-cryptographic-integrity\nverified   worker-atomic-noncommit-terminal\nverified   worker-preterminal-abort-recovery\nverified   worker-durable-intent-recovery\nverified   worker-evidence-blob-integrity\nverified   worker-signing-key-confinement\nverified   worker-product-admission-gap-recovery\nverified   worker-broker-mount-release-handshake\nverified   broker-orphan-reconciliation-fail-closed\nverified   broker-durable-lifecycle-tombstone\nverified   receipt-proof-projection-bounded\nverified: recovery report: <REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/recovery-report.json\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "authority",
+      "status": "verified",
+      "command": "npm run audit:authority",
+      "exitCode": 0,
+      "durationMs": 644,
+      "stdoutTail": "\n> volc-agent-launchpad@1.0.0 audit:authority\n> node scripts/audit-authority.mjs\n\nverified: 214 mutation callsite(s), 0 unauthorized persistent write point(s)\nverified   writer.createAgentWorkspace\nverified   writer.materializeCandidate\nverified   writer.sealProposal\nverified   writer.regeneratePlatformState\nverified   writer.archiveAgent\nverified   writer.applyPromotion\nverified   writer.applyRollback\nverified   writer.recoverTransition\nverified   writer.applyRepair\nauthority report: <REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/authority-report.json\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "container",
+      "status": "verified",
+      "command": "npm run eval:container",
+      "exitCode": 0,
+      "durationMs": 10887,
+      "stdoutTail": "\n> volc-agent-launchpad@1.0.0 eval:container\n> node --import tsx scripts/eval-container.ts\n\ncontainer report: <REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/container-report.json\npositive trusted check: PASS\nnegative trusted check: FAIL\nagent ignored tmpfs identity: verified\nagent cancellation: verified\nverifier cancellation: verified\nagent unexpected SIGKILL: verified\nverifier unexpected SIGKILL: verified\nbroker SIGKILL orphan reconciliation: verified\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "secrets",
+      "status": "verified",
+      "command": "npm run check:secrets",
+      "exitCode": 0,
+      "durationMs": 2532,
+      "stdoutTail": "\n> volc-agent-launchpad@1.0.0 check:secrets\n> node scripts/check-secrets.mjs\n\nverified: 0 secret finding(s)\nsecret report: <REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/evidence/secret-report.json\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "documentation",
+      "status": "verified",
+      "command": "npm run audit:documentation",
+      "exitCode": 0,
+      "durationMs": 641,
+      "stdoutTail": "\n> volc-agent-launchpad@1.0.0 audit:documentation\n> node scripts/review-documentation.mjs\n\nverified   README\nverified   architecture\nverified   three-minute-script\nverified   limitations\nverified   deployment\nverified   core-evidence-contracts\nverified   active-evidence-report-isolation\nverified   provider-neutral-language\nverified   no-current-numeric-score\nverified   historical-score-isolation\nverified: documentation review: <REPO_ROOT>/.local/commitgate-independent-0JVdBi/repo/eval/evidence/documentation-review.json\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "source-unchanged-after-audit",
+      "status": "verified",
+      "before": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "after": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5"
+    }
+  ],
+  "copiedEvidenceDirectory": "eval/independent/ec5802407473",
+  "claimBoundary": "This team-authored script ran commands from a separate no-hardlink clone. Tracked application, script and documentation files were made read-only before protocol/adversarial/recovery/container/authority/secret evaluation. It is not an external independent audit."
+}

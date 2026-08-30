@@ -1,0 +1,859 @@
+{
+  "schemaVersion": 2,
+  "kind": "commitgate-adversarial-evaluation",
+  "generatedAt": "2026-08-30T13:01:06.851Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": null,
+      "imageDigest": null,
+      "status": "unverified",
+      "reason": "permission denied while trying to connect to the docker API at unix://<HOME>/.colima/default/docker.sock"
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "durationMs": 2627,
+  "command": {
+    "executable": "npm",
+    "arguments": [
+      "run",
+      "test",
+      "-w",
+      "@launchpad/server",
+      "--",
+      "src/commitgate/robustness.test.ts",
+      "src/commitgate/coordinator.test.ts",
+      "src/commitgate/manifest.test.ts",
+      "src/commitgate/verifier-runner.test.ts",
+      "src/commitgate/receipt-store.test.ts",
+      "src/commitgate/protocol.test.ts",
+      "src/container-codex-runner.test.ts",
+      "src/config.test.ts",
+      "src/model-relay-server.test.ts",
+      "src/transition-worker/worker-policy.test.ts",
+      "src/runtime-broker/attestation.test.ts",
+      "src/transition-worker/broker-attestation.test.ts",
+      "src/transition-worker/opaque-ref-binding.test.ts",
+      "--reporter=json",
+      "--outputFile=<REPO_ROOT>/eval/evidence/adversarial-vitest.json"
+    ],
+    "exitCode": 0,
+    "status": "verified"
+  },
+  "tests": {
+    "files": 13,
+    "total": 113,
+    "passed": 112,
+    "failed": 0
+  },
+  "claims": [
+    {
+      "id": "path-budget-canary-platform",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "CommitGate fail-closed robustness rejects file budgets, canaries, and platform-managed edits together",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/robustness.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "malformed-evidence-fail-closed",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "CommitGate fail-closed robustness aborts on missing verifier exit evidence",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/robustness.test.ts"
+        },
+        {
+          "test": "CommitGate fail-closed robustness aborts PASS without exit zero and duplicate results as broken evidence",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/robustness.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "candidate-mutation-detected",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "CommitGate fail-closed robustness aborts when the verifier image or trusted context drifts after checks",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/robustness.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "candidate-test-runner-bypass",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "CommitGateRunner uses trusted check exit evidence rather than candidate-authored scripts",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/coordinator.test.ts"
+        },
+        {
+          "test": "Docker verifier isolation rejects candidate-controlled and shell-wrapped check entrypoints",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/verifier-runner.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "trusted-bundle-link-rejection",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "trusted check bundle rejects symlinks and hardlinks transitively",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/verifier-runner.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "verifier-clean-environment",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "Docker verifier isolation mounts an immutable proposal and checks bundle with an isolated scratch",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/verifier-runner.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "cumulative-verifier-budget",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "Docker verifier isolation accounts timeout and output across the whole verifier run",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/verifier-runner.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "relay-only-network",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "Container Codex runner supports a relay-only internal network without passing upstream credentials",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/container-codex-runner.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "relay-capability-forwarding",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "minimal Model Relay keeps the Provider key at the relay, enforces scope, and rejects a revoked run capability",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/model-relay-server.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "session-home-isolation",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "model provider configuration isolates session homes by Agent and epoch and retires the previous epoch",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/config.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "late-write-after-runtime",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "sealed state protocol prevents an Agent PID1-exit background late-write from changing the sealed proposal or promotion source",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/protocol.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "sealed-source-tamper",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "sealed state protocol never re-reads the original candidate after sealing",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/protocol.test.ts"
+        },
+        {
+          "test": "CommitGate fail-closed robustness promotes sealed bytes even if the obsolete candidate path is recreated and modified",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/robustness.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "ignored-path-dos",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "Container Codex runner fails closed against scratch byte and file-count DoS with kernel tmpfs quotas",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/container-codex-runner.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "receipt-redaction",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "receipt redaction redacts per-run Model Relay capabilities",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/receipt-store.test.ts"
+        },
+        {
+          "test": "CommitGate fail-closed robustness redacts credential-shaped verifier output in persisted receipts",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/commitgate/robustness.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "worker-owned-permit-policy",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "TransitionWorker-owned authorization contract rejects a protected proposal even when the caller submits self-consistent PASS evidence",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker-policy.test.ts"
+        },
+        {
+          "test": "TransitionWorker-owned authorization contract rejects a missing trusted-check set",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker-policy.test.ts"
+        },
+        {
+          "test": "TransitionWorker-owned authorization contract rejects a extra trusted-check set",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker-policy.test.ts"
+        },
+        {
+          "test": "TransitionWorker-owned authorization contract rejects a wrong trusted-check set",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker-policy.test.ts"
+        },
+        {
+          "test": "TransitionWorker-owned authorization contract rejects a caller-selected policy",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker-policy.test.ts"
+        },
+        {
+          "test": "TransitionWorker-owned authorization contract rejects a caller-selected check specification",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker-policy.test.ts"
+        },
+        {
+          "test": "TransitionWorker-owned authorization contract rejects an unpinned trusted-check bundle",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker-policy.test.ts"
+        },
+        {
+          "test": "TransitionWorker-owned authorization contract rejects an unpinned Verifier image",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker-policy.test.ts"
+        },
+        {
+          "test": "TransitionWorker-owned authorization contract rejects an unpinned Verifier config",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker-policy.test.ts"
+        },
+        {
+          "test": "TransitionWorker-owned authorization contract rejects an unpinned resource policy",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/worker-policy.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "broker-authenticated-runtime-evidence",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "Broker-authenticated Runtime and Verifier facts rejects caller-forged all-true teardown and PASS evidence",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/broker-attestation.test.ts"
+        },
+        {
+          "test": "Broker attestation envelope rejects payload tampering and the wrong key",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/runtime-broker/attestation.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "worker-owned-opaque-exchange-refs",
+      "status": "verified",
+      "evidence": [
+        {
+          "test": "TransitionWorker opaque exchange-ref binding derives candidate-${runId}, rejects caller-selected refs, and tombstones cross-Agent reuse",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/opaque-ref-binding.test.ts"
+        },
+        {
+          "test": "TransitionWorker opaque exchange-ref binding seals only the transition's durable candidate and never adopts an unbound export",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/opaque-ref-binding.test.ts"
+        },
+        {
+          "test": "TransitionWorker opaque exchange-ref binding exports only verify-${runId} and cannot overwrite another run's export",
+          "status": "passed",
+          "file": "<REPO_ROOT>/apps/server/src/transition-worker/opaque-ref-binding.test.ts"
+        }
+      ]
+    }
+  ],
+  "evaluationRecords": [
+    {
+      "schemaVersion": 1,
+      "recordId": "path-budget-canary-platform",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "malformed-evidence-fail-closed",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "candidate-mutation-detected",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "candidate-test-runner-bypass",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "trusted-bundle-link-rejection",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "verifier-clean-environment",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "cumulative-verifier-budget",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "relay-only-network",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "relay-capability-forwarding",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "session-home-isolation",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "late-write-after-runtime",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "sealed-source-tamper",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "ignored-path-dos",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "receipt-redaction",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "worker-owned-permit-policy",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "broker-authenticated-runtime-evidence",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    },
+    {
+      "schemaVersion": 1,
+      "recordId": "worker-owned-opaque-exchange-refs",
+      "revision": "ec5802407473eefd0be6bd17afc39de106024093",
+      "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+      "runId": null,
+      "provider": "not-applicable",
+      "model": null,
+      "baseViewId": null,
+      "finalViewId": null,
+      "baseGeneration": null,
+      "nextGeneration": null,
+      "proposalId": null,
+      "evidenceDigest": null,
+      "evaluationContextHash": null,
+      "permitId": null,
+      "permitState": null,
+      "policyProfile": null,
+      "policyVersion": null,
+      "policyHash": null,
+      "checkSpecHash": null,
+      "eventSequence": null,
+      "eventDigest": null,
+      "decision": null,
+      "exitStatus": 0,
+      "surface": "adversarial",
+      "runtimeImageDigest": null,
+      "verifierImageDigest": null
+    }
+  ],
+  "parseError": null,
+  "evidenceFiles": [
+    "eval/evidence/adversarial-vitest.json"
+  ],
+  "claimBoundary": "Only named passing tests count as verified. Missing mechanical evidence is unverified; a matching failing test or failed command is failed."
+}

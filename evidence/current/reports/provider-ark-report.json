@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 2,
+  "kind": "real-provider-evaluation",
+  "generatedAt": "2026-08-30T13:08:41.671Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "ark",
+      "gateway": "https://ark.cn-beijing.volces.com/api/v3",
+      "requestedModel": "ep-20260827113223-gbxqh",
+      "resolvedModel": null,
+      "wireApi": "responses",
+      "accessMode": "relay",
+      "credentialConfigured": true,
+      "credentialsRecorded": false
+    }
+  },
+  "provider": {
+    "providerId": "ark",
+    "gateway": "https://ark.cn-beijing.volces.com/api/v3",
+    "requestedModel": "ep-20260827113223-gbxqh",
+    "resolvedModel": "doubao-seed-evolving-latest-version",
+    "credentialsRecorded": false
+  },
+  "provenance": {
+    "realProviderRequest": true,
+    "realCodexContainer": true,
+    "productAuthorityTopology": false,
+    "browserAutomation": false,
+    "frontendAssetServed": false,
+    "credentialsRecorded": false,
+    "claimBoundary": "Provider/Responses compatibility E2E with a real Codex container and isolated in-process authority adapter; the default Worker/Broker product topology and clean-clone browser path are separate evidence."
+  },
+  "providerE2EVerified": "verified",
+  "scenario": [
+    {
+      "id": "provider-api-ready",
+      "status": "verified"
+    },
+    {
+      "id": "real-positive-commit",
+      "status": "verified",
+      "runId": "edfaf97c-a743-4a97-b581-f348cb180608",
+      "baseViewId": "89aea580244de224d30c60ad9b36d849da38736e592609d05edf90d7ff7d385c",
+      "nextViewId": "9e8276e7c2462d6d110014486da5afe8fce1506901f13826ca6861adedbc4a34",
+      "baseGeneration": 1,
+      "nextGeneration": 2,
+      "proposalId": "p-7c11ddfe811593cea1eb11f463b022d52cdcf8b1a3e292cd17b687a118b476ef",
+      "proposalHash": "b4e5e3a576157a7cedf6ded02199ba3b6d2558f564fd6f12d206453011ec4de5",
+      "evaluationContextHash": "0a2950eb0842f0656c0ee00f0d2bfafcbd339e1a088dccc138a27d8a16575ba0",
+      "evidenceDigest": "4b130332c5d2331830ea26ebf409f7100bb88d3b031520456b8d6db7df7f7c07",
+      "permitId": "k-679334b2-7088-4a2c-a0ac-9e74d8d442ce",
+      "permitState": "CONSUMED",
+      "decision": "COMMITTED",
+      "provider": {
+        "providerId": "ark",
+        "gateway": "http://model-relay:3100/v1",
+        "requestedModel": "ep-20260827113223-gbxqh",
+        "resolvedModel": "doubao-seed-evolving-latest-version"
+      },
+      "reason": null,
+      "checks": [
+        {
+          "id": "workspace-contract",
+          "status": "PASS",
+          "exitCode": 0,
+          "durationMs": 361,
+          "output": "workspace-contract: PASS\n",
+          "timedOut": false
+        }
+      ]
+    },
+    {
+      "id": "provider-identity-bound",
+      "status": "verified",
+      "provider": {
+        "providerId": "ark",
+        "gateway": "http://model-relay:3100/v1",
+        "requestedModel": "ep-20260827113223-gbxqh",
+        "resolvedModel": "doubao-seed-evolving-latest-version"
+      }
+    },
+    {
+      "id": "real-protected-quarantine",
+      "status": "verified",
+      "runId": "6f1e0f3e-92dc-49d5-96d3-d051dab1e7fe",
+      "baseViewId": "9e8276e7c2462d6d110014486da5afe8fce1506901f13826ca6861adedbc4a34",
+      "nextViewId": "02a98e1a482d92044707aeac0c8b299d3f8f354f183c835cb4f8f7e8f826951d",
+      "baseGeneration": 2,
+      "nextGeneration": 2,
+      "proposalId": "p-ef55342b18d1e809a5c8a589cd3e7f4448e2cb7c4d28a88eb462a52756d0de54",
+      "proposalHash": "ee5c7270b41fbb912b47025ae381795bec9ffec8d40c146d242b49d300950945",
+      "evaluationContextHash": null,
+      "evidenceDigest": null,
+      "permitId": null,
+      "permitState": null,
+      "decision": "QUARANTINED",
+      "provider": {
+        "providerId": "ark",
+        "gateway": "http://model-relay:3100/v1",
+        "requestedModel": "ep-20260827113223-gbxqh",
+        "resolvedModel": "doubao-seed-evolving-latest-version"
+      },
+      "artifactRetention": "destroyed",
+      "rejectedMarkerAbsentFromPersistent": true,
+      "protectedFixtureAbsentFromPersistent": true,
+      "sessionEpochAfterRejection": 1,
+      "threadCleared": true
+    },
+    {
+      "id": "fresh-session-follow-up",
+      "status": "verified",
+      "runId": "0452d528-693b-433a-8708-fa23f9cec3f8",
+      "baseViewId": "02a98e1a482d92044707aeac0c8b299d3f8f354f183c835cb4f8f7e8f826951d",
+      "nextViewId": "0491a78de42506803698209b6b8bd095b096a839b6ebfddd06586ab99d70eb0b",
+      "baseGeneration": 2,
+      "nextGeneration": 3,
+      "proposalId": "p-0c7cb412662256e74f214c46faf8e839d0542e3227bd54a165b423ced83280bb",
+      "proposalHash": "b4e5e3a576157a7cedf6ded02199ba3b6d2558f564fd6f12d206453011ec4de5",
+      "evaluationContextHash": "03c5b49534149568816369ef303f8c3791113b07f2c358ccd785bb1ee1c06be2",
+      "evidenceDigest": "17e3c38301b251b5f930af6b1db4bc2c013964c115d0028a003dc361a82c103d",
+      "permitId": "k-acd58bcf-c2c9-48fc-bdae-744a8adc34b9",
+      "permitState": "CONSUMED",
+      "decision": "COMMITTED",
+      "provider": {
+        "providerId": "ark",
+        "gateway": "http://model-relay:3100/v1",
+        "requestedModel": "ep-20260827113223-gbxqh",
+        "resolvedModel": "doubao-seed-evolving-latest-version"
+      }
+    },
+    {
+      "id": "manual-history-rollback",
+      "status": "verified",
+      "versionKind": "ROLLBACK",
+      "nextViewId": "eab24dff0b29f5848568c3f965b857c0d9c359edd101f243ec0afdc28674264d",
+      "nextGeneration": 4
+    }
+  ]
+}

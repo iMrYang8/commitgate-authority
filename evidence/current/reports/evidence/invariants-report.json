@@ -1,0 +1,751 @@
+{
+  "schemaVersion": 3,
+  "kind": "commitgate-invariant-evaluation",
+  "generatedAt": "2026-08-30T13:14:52.314Z",
+  "status": "verified",
+  "source": {
+    "sourceRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "headRevision": "ec5802407473eefd0be6bd17afc39de106024093",
+    "sourceTreeHash": "83759627b88bb47d17b66192c9b6fa430c9616871d1ba0672c1a54c35ab1b5f5",
+    "sourceFileCount": 233,
+    "workingTreeCleanAtCapture": true,
+    "provenanceMode": "git"
+  },
+  "executionIdentity": {
+    "schemaVersion": 2,
+    "containerEngine": "docker",
+    "runtimeImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "verifierImage": {
+      "reference": "volc-agent-runtime:local",
+      "imageId": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "imageDigest": "sha256:7183256645e332e75495728ba6380e35458b19ccbf5c9a9a9db252e66e748003",
+      "status": "verified",
+      "reason": null
+    },
+    "workerImage": {
+      "reference": "commitgate-transition-worker:local",
+      "imageId": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "imageDigest": "sha256:4b433c8a861fc8d15af412fecb63c618c513c78e4e4a50e98060a6c3748adf02",
+      "status": "verified",
+      "reason": null
+    },
+    "brokerImage": {
+      "reference": "commitgate-runtime-broker:local",
+      "imageId": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "imageDigest": "sha256:814a718672ce6d90e9f39269e2eea4a9aca756c872a3105b5b2a8b05557f6214",
+      "status": "verified",
+      "reason": null
+    },
+    "provider": {
+      "providerId": "not-applicable",
+      "gateway": null,
+      "requestedModel": null,
+      "resolvedModel": null,
+      "wireApi": null,
+      "accessMode": null,
+      "credentialConfigured": false,
+      "credentialsRecorded": false
+    }
+  },
+  "effectCapableNegativeFixtureRegistry": [
+    {
+      "id": "browser-protected-quarantined",
+      "sourceKind": "browser-step",
+      "sourceReport": "browser",
+      "sourceId": "browser-protected-quarantined",
+      "expectedOutcome": "QUARANTINED",
+      "evidenceMode": "raw-hash"
+    },
+    {
+      "id": "browser-provider-or-verifier-aborted",
+      "sourceKind": "browser-step",
+      "sourceReport": "browser",
+      "sourceId": "browser-provider-or-verifier-aborted",
+      "expectedOutcome": "ABORTED",
+      "evidenceMode": "raw-hash"
+    },
+    {
+      "id": "browser-stale-permit-replay",
+      "sourceKind": "browser-step",
+      "sourceReport": "browser",
+      "sourceId": "stale-permit-replay-rejected",
+      "expectedOutcome": "PERMIT_REPLAY",
+      "evidenceMode": "raw-hash"
+    },
+    {
+      "id": "worker-h0-h1-view-cas-conflicted",
+      "sourceKind": "claim-test",
+      "sourceReport": "protocol",
+      "sourceId": "worker-cas-conflict-decision",
+      "testPattern": "durably conflicts an H0 proposal after H1 wins without changing workspace, generation, or versions$",
+      "expectedOutcome": "CONFLICTED",
+      "evidenceMode": "assertion-backed",
+      "assertionContract": "Vitest asserts the stale H0 proposal becomes CONFLICTED while the winning H1 workspace hash, generation, and versions remain unchanged."
+    },
+    {
+      "id": "worker-workspace-cas-conflicted",
+      "sourceKind": "claim-test",
+      "sourceReport": "protocol",
+      "sourceId": "worker-cas-conflict-decision",
+      "testPattern": "durably classifies a stale promotion workspace hash as CONFLICTED$",
+      "expectedOutcome": "CONFLICTED",
+      "evidenceMode": "assertion-backed",
+      "assertionContract": "Vitest asserts a stale workspace-hash promotion becomes CONFLICTED while authoritative workspace hash, generation, and versions remain unchanged."
+    },
+    {
+      "id": "worker-runner-view-cas-conflicted",
+      "sourceKind": "claim-test",
+      "sourceReport": "protocol",
+      "sourceId": "worker-cas-conflict-decision",
+      "testPattern": "maps a stale Worker View CAS to one durable CONFLICTED disposition before finalize$",
+      "expectedOutcome": "CONFLICTED",
+      "evidenceMode": "assertion-backed",
+      "assertionContract": "Vitest asserts one durable CONFLICTED receipt and equality of the disposition-time Worker HEAD hash before and after Runner finalization."
+    },
+    {
+      "id": "worker-cancel-before-verifier",
+      "sourceKind": "claim-test",
+      "sourceReport": "protocol",
+      "sourceId": "worker-cancellation-fence",
+      "testPattern": "makes cancellation authoritative before verifier$",
+      "expectedOutcome": "ABORTED",
+      "evidenceMode": "assertion-backed",
+      "assertionContract": "Vitest asserts accepted cancellation, an ABORTED terminal receipt, unchanged Worker workspace hash and generation, and no new version."
+    },
+    {
+      "id": "worker-cancel-before-permit",
+      "sourceKind": "claim-test",
+      "sourceReport": "protocol",
+      "sourceId": "worker-cancellation-fence",
+      "testPattern": "makes cancellation authoritative before permit$",
+      "expectedOutcome": "ABORTED",
+      "evidenceMode": "assertion-backed",
+      "assertionContract": "Vitest asserts accepted cancellation, an ABORTED terminal receipt, unchanged Worker workspace hash and generation, and no new version."
+    },
+    {
+      "id": "worker-cancel-before-promotion",
+      "sourceKind": "claim-test",
+      "sourceReport": "protocol",
+      "sourceId": "worker-cancellation-fence",
+      "testPattern": "makes cancellation authoritative before promotion$",
+      "expectedOutcome": "ABORTED",
+      "evidenceMode": "assertion-backed",
+      "assertionContract": "Vitest asserts accepted cancellation, an ABORTED terminal receipt, unchanged Worker workspace hash and generation, and no new version."
+    },
+    {
+      "id": "worker-cancel-before-permit-consumption",
+      "sourceKind": "claim-test",
+      "sourceReport": "recovery",
+      "sourceId": "worker-cancellation-race",
+      "testPattern": "fences an accepted run cancellation before permit consumption$",
+      "expectedOutcome": "ABORTED",
+      "evidenceMode": "assertion-backed",
+      "assertionContract": "Vitest asserts accepted Worker cancellation, an ABORTED terminal receipt, unchanged generation, and no new version."
+    }
+  ],
+  "metrics": [
+    {
+      "id": "false-commit-rate",
+      "status": "verified",
+      "value": 0,
+      "unit": "false-commits/fixed-effect-capable-negative-fixture",
+      "numerator": 0,
+      "denominator": 10,
+      "evidence": [
+        {
+          "id": "browser-protected-quarantined",
+          "expectedOutcome": "QUARANTINED",
+          "observedOutcome": "QUARANTINED",
+          "runId": "a4269259-2721-468e-a157-8d98e1c890d0",
+          "evidenceMode": "raw-hash",
+          "rawHashesObserved": true,
+          "authoritativeBeforeHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "authoritativeAfterHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "hashEqualityAssertion": null,
+          "assertionTest": null,
+          "assertionClaimId": null,
+          "assertionContract": null,
+          "falseCommit": false,
+          "status": "verified"
+        },
+        {
+          "id": "browser-provider-or-verifier-aborted",
+          "expectedOutcome": "ABORTED",
+          "observedOutcome": "ABORTED",
+          "runId": "d11cbb23-d125-44d9-844f-034bbcfc362f",
+          "evidenceMode": "raw-hash",
+          "rawHashesObserved": true,
+          "authoritativeBeforeHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "authoritativeAfterHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "hashEqualityAssertion": null,
+          "assertionTest": null,
+          "assertionClaimId": null,
+          "assertionContract": null,
+          "falseCommit": false,
+          "status": "verified"
+        },
+        {
+          "id": "browser-stale-permit-replay",
+          "expectedOutcome": "PERMIT_REPLAY",
+          "observedOutcome": "PERMIT_REPLAY",
+          "runId": null,
+          "evidenceMode": "raw-hash",
+          "rawHashesObserved": true,
+          "authoritativeBeforeHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "authoritativeAfterHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "hashEqualityAssertion": null,
+          "assertionTest": null,
+          "assertionClaimId": null,
+          "assertionContract": null,
+          "falseCommit": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-h0-h1-view-cas-conflicted",
+          "expectedOutcome": "CONFLICTED",
+          "observedOutcome": null,
+          "runId": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "TransitionWorker durably conflicts an H0 proposal after H1 wins without changing workspace, generation, or versions",
+          "assertionClaimId": "worker-cas-conflict-decision",
+          "assertionContract": "Vitest asserts the stale H0 proposal becomes CONFLICTED while the winning H1 workspace hash, generation, and versions remain unchanged.",
+          "falseCommit": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-workspace-cas-conflicted",
+          "expectedOutcome": "CONFLICTED",
+          "observedOutcome": null,
+          "runId": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "TransitionWorker durably classifies a stale promotion workspace hash as CONFLICTED",
+          "assertionClaimId": "worker-cas-conflict-decision",
+          "assertionContract": "Vitest asserts a stale workspace-hash promotion becomes CONFLICTED while authoritative workspace hash, generation, and versions remain unchanged.",
+          "falseCommit": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-runner-view-cas-conflicted",
+          "expectedOutcome": "CONFLICTED",
+          "observedOutcome": null,
+          "runId": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "WorkerCommitGateRunner maps a stale Worker View CAS to one durable CONFLICTED disposition before finalize",
+          "assertionClaimId": "worker-cas-conflict-decision",
+          "assertionContract": "Vitest asserts one durable CONFLICTED receipt and equality of the disposition-time Worker HEAD hash before and after Runner finalization.",
+          "falseCommit": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-cancel-before-verifier",
+          "expectedOutcome": "ABORTED",
+          "observedOutcome": null,
+          "runId": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "WorkerCommitGateRunner makes cancellation authoritative before verifier",
+          "assertionClaimId": "worker-cancellation-fence",
+          "assertionContract": "Vitest asserts accepted cancellation, an ABORTED terminal receipt, unchanged Worker workspace hash and generation, and no new version.",
+          "falseCommit": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-cancel-before-permit",
+          "expectedOutcome": "ABORTED",
+          "observedOutcome": null,
+          "runId": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "WorkerCommitGateRunner makes cancellation authoritative before permit",
+          "assertionClaimId": "worker-cancellation-fence",
+          "assertionContract": "Vitest asserts accepted cancellation, an ABORTED terminal receipt, unchanged Worker workspace hash and generation, and no new version.",
+          "falseCommit": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-cancel-before-promotion",
+          "expectedOutcome": "ABORTED",
+          "observedOutcome": null,
+          "runId": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "WorkerCommitGateRunner makes cancellation authoritative before promotion",
+          "assertionClaimId": "worker-cancellation-fence",
+          "assertionContract": "Vitest asserts accepted cancellation, an ABORTED terminal receipt, unchanged Worker workspace hash and generation, and no new version.",
+          "falseCommit": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-cancel-before-permit-consumption",
+          "expectedOutcome": "ABORTED",
+          "observedOutcome": null,
+          "runId": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "TransitionWorker fences an accepted run cancellation before permit consumption",
+          "assertionClaimId": "worker-cancellation-race",
+          "assertionContract": "Vitest asserts accepted Worker cancellation, an ABORTED terminal receipt, unchanged generation, and no new version.",
+          "falseCommit": false,
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "id": "rejected-run-persistent-mutation-rate",
+      "status": "verified",
+      "value": 0,
+      "unit": "mutations/fixed-effect-capable-negative-fixture",
+      "numerator": 0,
+      "denominator": 10,
+      "evidence": [
+        {
+          "id": "browser-protected-quarantined",
+          "expectedOutcome": "QUARANTINED",
+          "observedOutcome": "QUARANTINED",
+          "evidenceMode": "raw-hash",
+          "rawHashesObserved": true,
+          "authoritativeBeforeHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "authoritativeAfterHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "beforeGeneration": 2,
+          "afterGeneration": 2,
+          "hashEqualityAssertion": null,
+          "assertionTest": null,
+          "assertionClaimId": null,
+          "assertionContract": null,
+          "persistentMutation": false,
+          "status": "verified"
+        },
+        {
+          "id": "browser-provider-or-verifier-aborted",
+          "expectedOutcome": "ABORTED",
+          "observedOutcome": "ABORTED",
+          "evidenceMode": "raw-hash",
+          "rawHashesObserved": true,
+          "authoritativeBeforeHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "authoritativeAfterHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "beforeGeneration": 2,
+          "afterGeneration": 2,
+          "hashEqualityAssertion": null,
+          "assertionTest": null,
+          "assertionClaimId": null,
+          "assertionContract": null,
+          "persistentMutation": false,
+          "status": "verified"
+        },
+        {
+          "id": "browser-stale-permit-replay",
+          "expectedOutcome": "PERMIT_REPLAY",
+          "observedOutcome": "PERMIT_REPLAY",
+          "evidenceMode": "raw-hash",
+          "rawHashesObserved": true,
+          "authoritativeBeforeHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "authoritativeAfterHash": "de8ed2091652a28bf4a1374bb247be44e990094677d39f7e9453aa24e415f6b7",
+          "beforeGeneration": 2,
+          "afterGeneration": 2,
+          "hashEqualityAssertion": null,
+          "assertionTest": null,
+          "assertionClaimId": null,
+          "assertionContract": null,
+          "persistentMutation": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-h0-h1-view-cas-conflicted",
+          "expectedOutcome": "CONFLICTED",
+          "observedOutcome": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "beforeGeneration": null,
+          "afterGeneration": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "TransitionWorker durably conflicts an H0 proposal after H1 wins without changing workspace, generation, or versions",
+          "assertionClaimId": "worker-cas-conflict-decision",
+          "assertionContract": "Vitest asserts the stale H0 proposal becomes CONFLICTED while the winning H1 workspace hash, generation, and versions remain unchanged.",
+          "persistentMutation": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-workspace-cas-conflicted",
+          "expectedOutcome": "CONFLICTED",
+          "observedOutcome": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "beforeGeneration": null,
+          "afterGeneration": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "TransitionWorker durably classifies a stale promotion workspace hash as CONFLICTED",
+          "assertionClaimId": "worker-cas-conflict-decision",
+          "assertionContract": "Vitest asserts a stale workspace-hash promotion becomes CONFLICTED while authoritative workspace hash, generation, and versions remain unchanged.",
+          "persistentMutation": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-runner-view-cas-conflicted",
+          "expectedOutcome": "CONFLICTED",
+          "observedOutcome": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "beforeGeneration": null,
+          "afterGeneration": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "WorkerCommitGateRunner maps a stale Worker View CAS to one durable CONFLICTED disposition before finalize",
+          "assertionClaimId": "worker-cas-conflict-decision",
+          "assertionContract": "Vitest asserts one durable CONFLICTED receipt and equality of the disposition-time Worker HEAD hash before and after Runner finalization.",
+          "persistentMutation": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-cancel-before-verifier",
+          "expectedOutcome": "ABORTED",
+          "observedOutcome": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "beforeGeneration": null,
+          "afterGeneration": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "WorkerCommitGateRunner makes cancellation authoritative before verifier",
+          "assertionClaimId": "worker-cancellation-fence",
+          "assertionContract": "Vitest asserts accepted cancellation, an ABORTED terminal receipt, unchanged Worker workspace hash and generation, and no new version.",
+          "persistentMutation": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-cancel-before-permit",
+          "expectedOutcome": "ABORTED",
+          "observedOutcome": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "beforeGeneration": null,
+          "afterGeneration": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "WorkerCommitGateRunner makes cancellation authoritative before permit",
+          "assertionClaimId": "worker-cancellation-fence",
+          "assertionContract": "Vitest asserts accepted cancellation, an ABORTED terminal receipt, unchanged Worker workspace hash and generation, and no new version.",
+          "persistentMutation": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-cancel-before-promotion",
+          "expectedOutcome": "ABORTED",
+          "observedOutcome": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "beforeGeneration": null,
+          "afterGeneration": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "WorkerCommitGateRunner makes cancellation authoritative before promotion",
+          "assertionClaimId": "worker-cancellation-fence",
+          "assertionContract": "Vitest asserts accepted cancellation, an ABORTED terminal receipt, unchanged Worker workspace hash and generation, and no new version.",
+          "persistentMutation": false,
+          "status": "verified"
+        },
+        {
+          "id": "worker-cancel-before-permit-consumption",
+          "expectedOutcome": "ABORTED",
+          "observedOutcome": null,
+          "evidenceMode": "assertion-backed",
+          "rawHashesObserved": false,
+          "authoritativeBeforeHash": null,
+          "authoritativeAfterHash": null,
+          "beforeGeneration": null,
+          "afterGeneration": null,
+          "hashEqualityAssertion": true,
+          "assertionTest": "TransitionWorker fences an accepted run cancellation before permit consumption",
+          "assertionClaimId": "worker-cancellation-race",
+          "assertionContract": "Vitest asserts accepted Worker cancellation, an ABORTED terminal receipt, unchanged generation, and no new version.",
+          "persistentMutation": false,
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "id": "receipt-validation-rate",
+      "status": "verified",
+      "value": 1,
+      "unit": "verified/terminal-receipt-proof",
+      "numerator": 5,
+      "denominator": 5,
+      "evidence": [
+        {
+          "id": "offline-terminal-receipt-proof:positive-commit",
+          "receiptId": "4bfb0519-d308-4549-b6c8-0c95c32b6d29",
+          "signingKeyId": "689028738aab9fc0057c770e",
+          "terminalEventDigest": "212add01595c88d0cd57ce690298f384580a4d387b342dea46c2c575ae70949b",
+          "status": "verified"
+        },
+        {
+          "id": "offline-terminal-receipt-proof:protected-path-quarantine",
+          "receiptId": "a4269259-2721-468e-a157-8d98e1c890d0",
+          "signingKeyId": "689028738aab9fc0057c770e",
+          "terminalEventDigest": "99539cf44f6d22fb0f8640253036c97b6f1721a2155986280bd1d6b329b1fe2d",
+          "status": "verified"
+        },
+        {
+          "id": "offline-terminal-receipt-proof:provider-or-verifier-abort",
+          "receiptId": "d11cbb23-d125-44d9-844f-034bbcfc362f",
+          "signingKeyId": "689028738aab9fc0057c770e",
+          "terminalEventDigest": "bdd110576a8971837dd20fb9dc6ca0ff584d247ad74baa04ffb813fb571186a5",
+          "status": "verified"
+        },
+        {
+          "id": "offline-terminal-receipt-proof:fresh-follow-up-commit",
+          "receiptId": "5ba72469-17ec-4cee-9f72-5e7e164b3483",
+          "signingKeyId": "689028738aab9fc0057c770e",
+          "terminalEventDigest": "cd6db7c7642b8fcc0e9516fbd5d4023ab4b076c00811eab4574095b65ee80abc",
+          "status": "verified"
+        },
+        {
+          "id": "offline-terminal-receipt-proof:manual-rollback",
+          "receiptId": "rollback-12dbe377-58e4-40b0-9da5-f825dc4c6bbd",
+          "signingKeyId": "689028738aab9fc0057c770e",
+          "terminalEventDigest": "6e6ca05bf072a385932e5205608a200b72b57afa3b5856ceb592aaa47fc96f77",
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "id": "crash-recovery-invariant-pass-rate",
+      "status": "verified",
+      "value": 1,
+      "unit": "verified/docker-process-fault-point",
+      "numerator": 11,
+      "denominator": 11,
+      "evidence": [
+        {
+          "id": "prepared-recovers-aborted",
+          "faultPoint": "TRANSITION_PREPARED",
+          "decision": "ABORTED",
+          "status": "verified"
+        },
+        {
+          "id": "sealed-recovers-aborted",
+          "faultPoint": "PROPOSAL_SEALED",
+          "decision": "ABORTED",
+          "status": "verified"
+        },
+        {
+          "id": "evidenced-recovers-aborted",
+          "faultPoint": "EVIDENCE_RECORDED",
+          "decision": "ABORTED",
+          "status": "verified"
+        },
+        {
+          "id": "permit-issued-recovers-aborted",
+          "faultPoint": "PERMIT_ISSUED",
+          "decision": "ABORTED",
+          "status": "verified"
+        },
+        {
+          "id": "permit-consuming-rolls-back",
+          "faultPoint": "PERMIT_CONSUMING",
+          "decision": "ABORTED",
+          "status": "verified"
+        },
+        {
+          "id": "backup-created-rolls-back",
+          "faultPoint": "BACKUP_CREATED",
+          "decision": "ABORTED",
+          "status": "verified"
+        },
+        {
+          "id": "workspace-applied-recovers-forward",
+          "faultPoint": "WORKSPACE_APPLIED",
+          "decision": "COMMITTED",
+          "status": "verified"
+        },
+        {
+          "id": "rollback-applied-recovers-forward",
+          "faultPoint": "ROLLBACK_APPLIED",
+          "decision": "COMMITTED",
+          "status": "verified"
+        },
+        {
+          "id": "ack-durable-and-cleaned",
+          "faultPoint": "TRANSITION_ACKNOWLEDGED",
+          "decision": "COMMITTED",
+          "status": "verified"
+        },
+        {
+          "id": "rollback-ack-durable-and-cleaned",
+          "faultPoint": "TRANSITION_ACKNOWLEDGED",
+          "decision": "COMMITTED",
+          "status": "verified"
+        },
+        {
+          "id": "api-projection-pending",
+          "faultPoint": "API_PROJECTION_PENDING",
+          "decision": null,
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "id": "conflict-detection-rate",
+      "status": "verified",
+      "value": 1,
+      "unit": "passed/explicit-conflict-assertion",
+      "numerator": 4,
+      "denominator": 4,
+      "evidence": [
+        {
+          "id": "view-cas-conflict:1",
+          "status": "verified",
+          "test": "CommitGateRunner detects a persistent-state conflict during independent verification"
+        },
+        {
+          "id": "worker-cas-conflict-decision:1",
+          "status": "verified",
+          "test": "TransitionWorker durably conflicts an H0 proposal after H1 wins without changing workspace, generation, or versions"
+        },
+        {
+          "id": "worker-cas-conflict-decision:2",
+          "status": "verified",
+          "test": "TransitionWorker durably classifies a stale promotion workspace hash as CONFLICTED"
+        },
+        {
+          "id": "worker-cas-conflict-decision:3",
+          "status": "verified",
+          "test": "WorkerCommitGateRunner maps a stale Worker View CAS to one durable CONFLICTED disposition before finalize"
+        }
+      ]
+    },
+    {
+      "id": "cancellation-safety-rate",
+      "status": "verified",
+      "value": 1,
+      "unit": "passed/cancellation-fence-or-container-observation",
+      "numerator": 7,
+      "denominator": 7,
+      "evidence": [
+        {
+          "id": "worker-cancellation-fence:1",
+          "status": "verified",
+          "test": "WorkerCommitGateRunner makes cancellation authoritative before verifier"
+        },
+        {
+          "id": "worker-cancellation-fence:2",
+          "status": "verified",
+          "test": "WorkerCommitGateRunner makes cancellation authoritative before permit"
+        },
+        {
+          "id": "worker-cancellation-fence:3",
+          "status": "verified",
+          "test": "WorkerCommitGateRunner makes cancellation authoritative before promotion"
+        },
+        {
+          "id": "worker-cancellation-race:1",
+          "status": "verified",
+          "test": "TransitionWorker fences an accepted run cancellation before permit consumption"
+        },
+        {
+          "id": "worker-cancellation-race:2",
+          "status": "verified",
+          "test": "TransitionWorker returns TOO_LATE after the permit enters CONSUMING"
+        },
+        {
+          "id": "broker-agent-container-cancellation",
+          "status": "verified"
+        },
+        {
+          "id": "broker-verifier-container-cancellation",
+          "status": "verified"
+        }
+      ]
+    }
+  ],
+  "adversarialCoverage": [
+    {
+      "id": "path-budget-canary-platform",
+      "status": "verified",
+      "assertions": 1
+    },
+    {
+      "id": "malformed-evidence-fail-closed",
+      "status": "verified",
+      "assertions": 2
+    },
+    {
+      "id": "candidate-mutation-detected",
+      "status": "verified",
+      "assertions": 1
+    },
+    {
+      "id": "candidate-test-runner-bypass",
+      "status": "verified",
+      "assertions": 2
+    },
+    {
+      "id": "trusted-bundle-link-rejection",
+      "status": "verified",
+      "assertions": 1
+    },
+    {
+      "id": "verifier-clean-environment",
+      "status": "verified",
+      "assertions": 1
+    },
+    {
+      "id": "late-write-after-runtime",
+      "status": "verified",
+      "assertions": 1
+    },
+    {
+      "id": "sealed-source-tamper",
+      "status": "verified",
+      "assertions": 2
+    },
+    {
+      "id": "ignored-path-dos",
+      "status": "verified",
+      "assertions": 1
+    },
+    {
+      "id": "worker-owned-permit-policy",
+      "status": "verified",
+      "assertions": 10
+    }
+  ],
+  "claimBoundary": "Rates are results over one fixed, finite effect-capable negative-fixture registry, not universal probabilities. Browser quarantine, abort, and permit replay carry observed raw before/after hashes. CONFLICTED and accepted-cancellation fixtures are explicitly assertion-backed: their revision-bound Vitest cases compare authoritative state, but this report leaves raw hash fields null rather than inventing hash values. Missing registry evidence fails the contract. Broader adversarial coverage remains separate and does not inflate these denominators."
+}
