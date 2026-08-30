@@ -11,6 +11,7 @@ const evidenceDir = path.join(root, "eval", "evidence");
 const engine = process.env.CONTAINER_ENGINE || "docker";
 const image = process.env.CONTAINER_RUNTIME_IMAGE || "volc-agent-runtime:local";
 const pinned = "8d0bd4f14ad1e453d984149aebcdd0bcb4f74178";
+const sanitizedSourceCopy = process.env.COMMITGATE_SANITIZED_SOURCE_COPY === "1";
 const source = await evidenceProvenance(root);
 
 function command(name, args) {
@@ -35,7 +36,14 @@ const inspect = command(engine, ["image", "inspect", image, "--format", "{{.Id}}
 add("runtime-image", inspect.status === 0, inspect.stdout.trim() || `${image} is not built`);
 
 const base = command("git", ["rev-list", "--max-parents=0", "HEAD"]);
-add("pinned-starter-base", base.status === 0 && base.stdout.trim() === pinned, base.stdout.trim());
+add(
+  "pinned-starter-base",
+  base.status === 0 && base.stdout.trim() === pinned,
+  sanitizedSourceCopy
+    ? `${base.stdout.trim()}; sanitized source copy explicitly declared`
+    : base.stdout.trim(),
+  !sanitizedSourceCopy,
+);
 
 const branch = command("git", ["branch", "--show-current"]);
 add(
