@@ -149,7 +149,8 @@ services:
       MODEL_RELAY_TOKEN_FILE: /run/secrets/relay_token
       BROKER_ATTESTATION_KEY_FILE: /run/secrets/broker_attestation_key
     secrets:
-      - relay_token
+      - source: relay_token_broker
+        target: relay_token
       - broker_attestation_key
     volumes:
       - exchange:/var/lib/commitgate/exchange
@@ -192,7 +193,8 @@ services:
       MODEL_RELAY_TOKEN_FILE: /run/secrets/relay_token
     secrets:
       - model_api_key
-      - relay_token
+      - source: relay_token_relay
+        target: relay_token
     networks:
       agent-relay:
         aliases: [model-relay]
@@ -260,7 +262,8 @@ services:
       COMMITGATE_SOURCE_REVISION: ${COMMITGATE_SOURCE_REVISION:?Set COMMITGATE_SOURCE_REVISION to the frozen 40-hex source commit}
     secrets:
       - app_auth_token
-      - relay_token
+      - source: relay_token_api
+        target: relay_token
     ports:
       - "127.0.0.1:${PUBLIC_PORT:-3000}:3000"
     volumes:
@@ -324,8 +327,12 @@ volumes:
 secrets:
   model_api_key:
     file: ./.demo-state/secrets/model_api_key
-  relay_token:
-    file: ./.demo-state/secrets/relay_token
+  relay_token_relay:
+    file: ./.demo-state/secrets/relay_token_relay
+  relay_token_broker:
+    file: ./.demo-state/secrets/relay_token_broker
+  relay_token_api:
+    file: ./.demo-state/secrets/relay_token_api
   app_auth_token:
     file: ./.demo-state/secrets/app_auth_token
   broker_attestation_key:

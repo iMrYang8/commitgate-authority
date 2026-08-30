@@ -95,10 +95,31 @@ write_secrets() {
   auth_token="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(24).toString("base64url"))')"
   broker_attestation_key="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(48).toString("base64url"))')"
   printf '%s' "$MODEL_API_KEY" > "$secret_dir/model_api_key"
-  printf '%s' "$relay_token" > "$secret_dir/relay_token"
+  # Docker Compose file-backed secrets preserve host ownership on native
+  # Linux. Give each runtime UID an owner-only copy of the shared relay
+  # capability instead of weakening the files to world/group-readable mode.
+  printf '%s' "$relay_token" > "$secret_dir/relay_token_relay"
+  printf '%s' "$relay_token" > "$secret_dir/relay_token_broker"
+  printf '%s' "$relay_token" > "$secret_dir/relay_token_api"
   printf '%s' "$auth_token" > "$secret_dir/app_auth_token"
   printf '%s' "$broker_attestation_key" > "$secret_dir/broker_attestation_key"
-  chmod 600 "$secret_dir/model_api_key" "$secret_dir/relay_token" "$secret_dir/app_auth_token" "$secret_dir/broker_attestation_key"
+  chmod 600 \
+    "$secret_dir/model_api_key" \
+    "$secret_dir/relay_token_relay" \
+    "$secret_dir/relay_token_broker" \
+    "$secret_dir/relay_token_api" \
+    "$secret_dir/app_auth_token" \
+    "$secret_dir/broker_attestation_key"
+  # Root inside this one-shot helper changes only the ownership of the six
+  # launcher-created secret files. The directory remains owned by the caller,
+  # so cleanup does not require host privileges. Docker Desktop may virtualize
+  # the chown; native Linux uses the exact service UIDs below.
+  docker run --rm \
+    --network none \
+    --volume "$secret_dir:/secrets" \
+    --entrypoint sh \
+    busybox:1.36 \
+    -ec 'chown 10002:10002 /secrets/model_api_key /secrets/relay_token_relay; chown 10001:10001 /secrets/relay_token_broker /secrets/broker_attestation_key; chown 1000:1000 /secrets/relay_token_api /secrets/app_auth_token; chmod 0600 /secrets/*'
 }
 
 remove_runtime_secrets() {
@@ -107,7 +128,9 @@ remove_runtime_secrets() {
   # in the working tree; .env.local remains the user-controlled source.
   rm -f \
     "$secret_dir/model_api_key" \
-    "$secret_dir/relay_token" \
+    "$secret_dir/relay_token_relay" \
+    "$secret_dir/relay_token_broker" \
+    "$secret_dir/relay_token_api" \
     "$secret_dir/app_auth_token" \
     "$secret_dir/broker_attestation_key"
   rmdir "$secret_dir" >/dev/null 2>&1 || true
