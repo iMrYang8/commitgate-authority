@@ -1,5 +1,5 @@
 import { execFile, spawn, type ChildProcess } from "node:child_process";
-import { mkdir, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, mkdir, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -13,7 +13,14 @@ import {
 import { computeCheckSpecHash } from "../apps/server/src/commitgate/trusted-check-bundle.js";
 import type { VerifierInput } from "../apps/server/src/commitgate/types.js";
 import { loadConfig, writeCodexConfig } from "../apps/server/src/config.js";
-import { containerName } from "../apps/server/src/container-codex-runner.js";
+import {
+  BOUNDED_ROOT_IGNORED_PATHS,
+  buildContainerRunArgs,
+  containerName,
+} from "../apps/server/src/container-codex-runner.js";
+import {
+  prepareCodexSessionHome,
+} from "../apps/server/src/model-provider.js";
 import { RuntimeBrokerRunner } from "../apps/server/src/runtime-broker/client.js";
 import {
   RuntimeBroker,
@@ -149,6 +156,33 @@ type BrokerRestartReconciliationObservation = {
   };
   error: string | null;
   brokerLogTail: string;
+};
+
+type IgnoredTmpfsIdentityObservation = {
+  status: "verified" | "failed" | "unverified";
+  runId: string;
+  agentId: string;
+  configuredUser: string;
+  expectedUid: number | null;
+  expectedGid: number | null;
+  network: "none";
+  networkNone: boolean;
+  providerCredentialChecked: boolean;
+  providerCredentialObserved: boolean;
+  mounts: Array<{
+    path: string;
+    uid: number | null;
+    gid: number | null;
+    mode: string | null;
+    identityMatches: boolean;
+    writableByAgent: boolean;
+    underlyingProbeAbsentAfterTeardown: boolean;
+  }>;
+  candidateHashBefore: string | null;
+  candidateHashAfter: string | null;
+  candidateUnchangedAfterTeardown: boolean;
+  containerRemoved: boolean;
+  error: string | null;
 };
 
 function isContainerEnvironmentUnavailable(reason: string): boolean {
@@ -626,6 +660,235 @@ async function evaluateBrokerProcessRestart(input: {
       error && isContainerEnvironmentUnavailable(error)
         ? "unverified"
         : brokerRestartStatus(observation),
+  };
+}
+
+/**
+ * Exercises the exact Agent `docker run` arguments without starting Codex or
+ * contacting a model Provider. Docker otherwise mounts a pre-existing 0700
+ * tmpfs target as root:root, which makes the non-root Agent fail before it can
+ * inspect the workspace. The regression proof therefore checks the effective
+ * in-container identity, an actual write by the configured Agent user, and the
+ * absence of every probe in the underlying candidate after `--rm` teardown.
+ */
+async function evaluateIgnoredTmpfsIdentity(): Promise<IgnoredTmpfsIdentityObservation> {
+  const runId = "ignored-tmpfs-identity-run";
+  const agentId = "ignored-tmpfs-identity-agent";
+  const fixtureRoot = path.join(tempRoot, "ignored-tmpfs-identity");
+  const workspace = path.join(fixtureRoot, "candidate");
+  const codexHome = path.join(fixtureRoot, "codex-home");
+  const instanceId = `ignored-tmpfs-${process.pid}`;
+  // Exercise the product Runtime identity by default, while still honoring an
+  // explicit evaluator override for alternate deployment UID/GID mappings.
+  let configuredUser = process.env.CONTAINER_USER?.trim() || "10001:20000";
+  let expectedUid: number | null = null;
+  let expectedGid: number | null = null;
+  let networkNone = false;
+  let providerCredentialChecked = false;
+  let providerCredentialObserved = false;
+  let candidateHashBefore: string | null = null;
+  let candidateHashAfter: string | null = null;
+  let containerRemoved = false;
+  let error: string | null = null;
+  const observed = new Map<string, {
+    uid: number | null;
+    gid: number | null;
+    mode: string | null;
+    writable: boolean;
+  }>();
+
+  const containerEnvironment: NodeJS.ProcessEnv = { ...process.env };
+  for (const name of [
+    "MODEL_API_KEY",
+    "ARK_API_KEY",
+    "OPENAI_API_KEY",
+    "OPENROUTER_API_KEY",
+    "MODEL_RELAY_TOKEN",
+  ]) delete containerEnvironment[name];
+
+  let name = "unverified";
+  try {
+    // The bind fixture is owned by the host evaluator, so allow the configured
+    // container user to traverse it. Writes under test occur only in tmpfs.
+    await mkdir(workspace, { recursive: true, mode: 0o755 });
+    await chmod(workspace, 0o755);
+    await writeFile(path.join(workspace, "value.txt"), "authoritative fixture\n", {
+      encoding: "utf8",
+      mode: 0o644,
+    });
+    for (const relative of BOUNDED_ROOT_IGNORED_PATHS) {
+      const target = path.join(workspace, relative);
+      await mkdir(target, { mode: 0o700 });
+      await chmod(target, 0o700);
+    }
+
+    const config = loadConfig({
+      NODE_ENV: "test",
+      PROCESS_ROLE: "runtime-broker",
+      RUNTIME_PROVIDER: "container",
+      TRANSITION_AUTHORITY: "in-process",
+      COMMITGATE_ENABLED: "false",
+      CONTAINER_ENGINE: engine,
+      CONTAINER_RUNTIME_IMAGE: image,
+      CONTAINER_AGENT_NETWORK: "none",
+      CONTAINER_CPU_LIMIT: "1",
+      CONTAINER_MEMORY_LIMIT: "256m",
+      CONTAINER_PIDS_LIMIT: "64",
+      CONTAINER_AGENT_SCRATCH_BYTES: String(32 * 1024 * 1024),
+      CONTAINER_AGENT_SCRATCH_FILES: "1024",
+      CONTAINER_AGENT_IGNORED_BYTES: String(5 * 1024 * 1024),
+      CONTAINER_AGENT_IGNORED_FILES: "640",
+      CODEX_HOME: codexHome,
+      RUNTIME_INSTANCE_ID: instanceId,
+      MODEL_ACCESS_MODE: "direct",
+      MODEL_ID: "no-provider-invoked",
+      CONTAINER_USER: configuredUser,
+    });
+    configuredUser = config.containerUser;
+    const [uidText, gidText] = configuredUser.split(":");
+    expectedUid = /^\d+$/.test(uidText ?? "") ? Number(uidText) : null;
+    expectedGid = /^\d+$/.test(gidText ?? "") ? Number(gidText) : null;
+    if (expectedUid === null || expectedGid === null) {
+      throw new Error("Evaluator requires a numeric configured Agent uid:gid");
+    }
+
+    await writeCodexConfig(config);
+    await prepareCodexSessionHome(config, { agentId, sessionEpoch: 0 }, false);
+    candidateHashBefore = (await buildWorkerManifest(workspace)).hash;
+    const request: RunnerRequest = {
+      runId,
+      agentId,
+      workspacePath: workspace,
+      prompt: "local mount identity probe; no model invocation",
+      threadId: null,
+      runLeaseId: "ignored-tmpfs-identity-lease",
+      sessionEpoch: 0,
+    };
+    name = containerName(agentId, instanceId);
+    const runArguments = buildContainerRunArgs(request, config);
+    const networkIndex = runArguments.indexOf("--network");
+    networkNone = networkIndex >= 0 && runArguments[networkIndex + 1] === "none";
+    const imageIndex = runArguments.indexOf(image);
+    if (imageIndex < 0) throw new Error("Agent Runtime image argument is missing");
+    runArguments.splice(
+      imageIndex + 1,
+      runArguments.length,
+      "sh",
+      "-ec",
+      [
+        'if env | grep -Eq "^(MODEL_API_KEY|ARK_API_KEY|OPENAI_API_KEY|OPENROUTER_API_KEY|MODEL_RELAY_TOKEN)="; then echo "provider|present"; else echo "provider|absent"; fi',
+        ...BOUNDED_ROOT_IGNORED_PATHS.flatMap((relative) => [
+          `stat -c 'mount|${relative}|%u|%g|%a' '/workspace/${relative}'`,
+          `printf 'ephemeral probe\\n' > '/workspace/${relative}/.commitgate-tmpfs-probe'`,
+          `test -f '/workspace/${relative}/.commitgate-tmpfs-probe'`,
+          `echo 'write|${relative}|ok'`,
+        ]),
+      ].join("\n"),
+    );
+    const execution = await execFileAsync(engine, runArguments, {
+      cwd: root,
+      env: containerEnvironment,
+      encoding: "utf8",
+      timeout: 30_000,
+      maxBuffer: 1 * 1024 * 1024,
+    });
+    for (const line of execution.stdout.trim().split(/\r?\n/)) {
+      const [kind, relative, first, second, third] = line.split("|");
+      if (kind === "provider") {
+        providerCredentialChecked = true;
+        providerCredentialObserved = relative === "present";
+        continue;
+      }
+      if (!relative || !BOUNDED_ROOT_IGNORED_PATHS.includes(
+        relative as (typeof BOUNDED_ROOT_IGNORED_PATHS)[number],
+      )) continue;
+      const current = observed.get(relative) ?? {
+        uid: null,
+        gid: null,
+        mode: null,
+        writable: false,
+      };
+      if (kind === "mount") {
+        current.uid = /^\d+$/.test(first ?? "") ? Number(first) : null;
+        current.gid = /^\d+$/.test(second ?? "") ? Number(second) : null;
+        current.mode = third ?? null;
+      } else if (kind === "write") {
+        current.writable = first === "ok";
+      }
+      observed.set(relative, current);
+    }
+    containerRemoved = (await waitForContainer(name, false, 10_000)) === null;
+    candidateHashAfter = (await buildWorkerManifest(workspace)).hash;
+  } catch (reason) {
+    error = reason instanceof Error ? reason.message : String(reason);
+  } finally {
+    await execFileAsync(engine, ["rm", "--force", name], { timeout: 8_000 })
+      .catch(() => undefined);
+  }
+
+  const mounts = await Promise.all(BOUNDED_ROOT_IGNORED_PATHS.map(async (relative) => {
+    const metadata = observed.get(relative) ?? {
+      uid: null,
+      gid: null,
+      mode: null,
+      writable: false,
+    };
+    const underlyingProbeAbsentAfterTeardown = await stat(
+      path.join(workspace, relative, ".commitgate-tmpfs-probe"),
+    ).then(() => false, (reason: NodeJS.ErrnoException) => reason.code === "ENOENT");
+    return {
+      path: relative,
+      uid: metadata.uid,
+      gid: metadata.gid,
+      mode: metadata.mode,
+      identityMatches:
+        metadata.uid === expectedUid &&
+        metadata.gid === expectedGid &&
+        metadata.mode === "700",
+      writableByAgent: metadata.writable,
+      underlyingProbeAbsentAfterTeardown,
+    };
+  }));
+  const candidateUnchangedAfterTeardown =
+    candidateHashBefore !== null &&
+    candidateHashAfter !== null &&
+    candidateHashBefore === candidateHashAfter;
+  const observation = {
+    runId,
+    agentId,
+    configuredUser,
+    expectedUid,
+    expectedGid,
+    network: "none" as const,
+    networkNone,
+    providerCredentialChecked,
+    providerCredentialObserved,
+    mounts,
+    candidateHashBefore,
+    candidateHashAfter,
+    candidateUnchangedAfterTeardown,
+    containerRemoved,
+    error,
+  };
+  return {
+    ...observation,
+    status:
+      error && isContainerEnvironmentUnavailable(error)
+        ? "unverified"
+        : error === null &&
+            networkNone &&
+            providerCredentialChecked &&
+            !providerCredentialObserved &&
+            mounts.length === BOUNDED_ROOT_IGNORED_PATHS.length &&
+            mounts.every((mount) =>
+              mount.identityMatches &&
+              mount.writableByAgent &&
+              mount.underlyingProbeAbsentAfterTeardown
+            ) &&
+            candidateUnchangedAfterTeardown &&
+            containerRemoved
+          ? "verified"
+          : "failed",
   };
 }
 
@@ -1309,6 +1572,7 @@ let negative = null;
 let error: string | null = null;
 let imageId: string | null = null;
 let cancellationError: string | null = null;
+const ignoredTmpfsIdentity = await evaluateIgnoredTmpfsIdentity();
 const unavailableCancellation = (
   kind: "agent" | "verifier",
   reason: string | null,
@@ -1486,6 +1750,8 @@ try {
 const environmentUnavailable = Boolean(
   ((error || cancellationError) &&
     isContainerEnvironmentUnavailable(`${error ?? ""}\n${cancellationError ?? ""}`)) ||
+    (ignoredTmpfsIdentity.status === "unverified" &&
+      isContainerEnvironmentUnavailable(ignoredTmpfsIdentity.error ?? "")) ||
     (brokerProcessKill.brokerRestartReconciliation.status === "unverified" &&
       isContainerEnvironmentUnavailable(
         brokerProcessKill.brokerRestartReconciliation.error ?? "",
@@ -1497,6 +1763,7 @@ const status =
   Object.values(structural).every(Boolean) &&
   positive?.status === "PASS" &&
   negative?.status === "FAIL" &&
+  ignoredTmpfsIdentity.status === "verified" &&
   brokerCancellation.agent.status === "verified" &&
   brokerCancellation.verifier.status === "verified" &&
   brokerProcessKill.agent.status === "verified" &&
@@ -1523,6 +1790,7 @@ const report = {
   structural,
   positive,
   negative,
+  agentIgnoredTmpfsIdentity: ignoredTmpfsIdentity,
   brokerCancellation,
   brokerProcessKill,
   error,
@@ -1542,6 +1810,7 @@ await rm(tempRoot, { recursive: true, force: true });
 console.log(`container report: ${reportPath}`);
 if (positive) console.log(`positive trusted check: ${positive.status}`);
 if (negative) console.log(`negative trusted check: ${negative.status}`);
+console.log(`agent ignored tmpfs identity: ${ignoredTmpfsIdentity.status}`);
 console.log(`agent cancellation: ${brokerCancellation.agent.status}`);
 console.log(`verifier cancellation: ${brokerCancellation.verifier.status}`);
 console.log(`agent unexpected SIGKILL: ${brokerProcessKill.agent.status}`);

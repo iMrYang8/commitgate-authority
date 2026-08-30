@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
+import { hashSealedTrustedCheckBundleSource } from "../commitgate/trusted-check-bundle.js";
 
 const repositoryRoot = path.resolve(import.meta.dirname, "../../../..");
 
@@ -43,8 +44,11 @@ describe("Worker evidence pin derivation bootstrap", () => {
       );
       expect(result.status, result.stderr).toBe(0);
       const pins = JSON.parse(result.stdout) as Record<string, unknown>;
+      const expectedBundleHash = await hashSealedTrustedCheckBundleSource(
+        path.join(repositoryRoot, "eval", "trusted-checks"),
+      );
       expect(pins).toEqual({
-        COMMITGATE_EXPECTED_CHECK_BUNDLE_HASH: expect.stringMatching(/^[a-f0-9]{64}$/),
+        COMMITGATE_EXPECTED_CHECK_BUNDLE_HASH: expectedBundleHash,
         COMMITGATE_EXPECTED_VERIFIER_IMAGE_DIGEST: `sha256:${"a".repeat(64)}`,
         COMMITGATE_EXPECTED_VERIFIER_CONFIG_HASH: expect.stringMatching(/^[a-f0-9]{64}$/),
         COMMITGATE_EXPECTED_RESOURCE_POLICY_HASH: expect.stringMatching(/^[a-f0-9]{64}$/),

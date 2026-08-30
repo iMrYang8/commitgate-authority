@@ -60,6 +60,11 @@ describe("Container Codex runner", () => {
     expect(args.join(" ")).toContain("/workspace/.codex:rw,nosuid,nodev");
     expect(args.join(" ")).toContain("/workspace/dist:rw,nosuid,nodev");
     expect(args.join(" ")).toContain("/workspace/coverage:rw,nosuid,nodev");
+    for (const relative of BOUNDED_ROOT_IGNORED_PATHS) {
+      expect(args).toContain(
+        `/workspace/${relative}:rw,nosuid,nodev,size=13421772,nr_inodes=819,uid=501,gid=20,mode=0700`,
+      );
+    }
     expect(args).toContain("HOME=/scratch");
     expect(args).toContain("TMPDIR=/scratch");
     expect(args).toContain("NPM_CONFIG_CACHE=/scratch/cache/npm");
@@ -121,10 +126,30 @@ describe("Container Codex runner", () => {
     ]);
     for (const relative of BOUNDED_ROOT_IGNORED_PATHS) {
       expect(args).toContain(
-        `/workspace/${relative}:rw,nosuid,nodev,size=1048576,nr_inodes=128`,
+        `/workspace/${relative}:rw,nosuid,nodev,size=1048576,nr_inodes=128,uid=${process.getuid?.() ?? 1000},gid=${process.getgid?.() ?? 1000},mode=0700`,
       );
     }
     expect(args).toContain("--read-only");
+  });
+
+  it("fails closed when ignored tmpfs ownership cannot be derived from a numeric uid:gid", () => {
+    const config = loadConfig({
+      NODE_ENV: "test",
+      RUNTIME_PROVIDER: "container",
+      CONTAINER_USER: "node",
+    });
+    expect(() =>
+      buildContainerRunArgs(
+        {
+          runId: "opaque-user",
+          agentId: "agent",
+          workspacePath: "/tmp/workspace",
+          prompt: "run",
+          threadId: null,
+        },
+        config,
+      ),
+    ).toThrow("CONTAINER_USER_NUMERIC_UID_GID_REQUIRED");
   });
 
   it("requires the configured production relay network to be engine-reported internal", () => {

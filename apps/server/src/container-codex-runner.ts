@@ -34,6 +34,20 @@ const execFileAsync = promisify(execFile);
  */
 export const BOUNDED_ROOT_IGNORED_PATHS = DEFAULT_IGNORED_EPHEMERAL_NAMES;
 
+function tmpfsOwnership(containerUser: string): string {
+  const [uid, gid, extra] = containerUser.split(":");
+  if (
+    extra !== undefined ||
+    !uid ||
+    !gid ||
+    !/^\d+$/.test(uid) ||
+    !/^\d+$/.test(gid)
+  ) {
+    throw new Error("CONTAINER_USER_NUMERIC_UID_GID_REQUIRED");
+  }
+  return `uid=${uid},gid=${gid},mode=0700`;
+}
+
 interface ActiveContainer {
   child: ChildProcess;
   containerName: string;
@@ -119,6 +133,13 @@ export function buildContainerRunArgs(
       config.containerAgentIgnoredFiles / BOUNDED_ROOT_IGNORED_PATHS.length,
     ),
   );
+  // Docker inherits an existing tmpfs target's mode but mounts it as root
+  // unless ownership is explicit. Worker-owned ignored mountpoints are 0700,
+  // so omitting uid/gid makes the non-root Agent fail before Codex can even
+  // inspect `/workspace/.codex`. Bind every ephemeral tmpfs to the same
+  // numeric identity that owns the candidate; the underlying empty directory
+  // remains Worker-owned after teardown and therefore stays manifest-safe.
+  const ignoredTmpfsOwnership = tmpfsOwnership(config.containerUser);
   return [
     "run",
     "--rm",
@@ -160,7 +181,7 @@ export function buildContainerRunArgs(
     "/tmp:rw,nosuid,nodev,size=67108864,nr_inodes=2048",
     ...BOUNDED_ROOT_IGNORED_PATHS.flatMap((relative) => [
       "--tmpfs",
-      `/workspace/${relative}:rw,nosuid,nodev,size=${ignoredBytesPerMount},nr_inodes=${ignoredFilesPerMount}`,
+      `/workspace/${relative}:rw,nosuid,nodev,size=${ignoredBytesPerMount},nr_inodes=${ignoredFilesPerMount},${ignoredTmpfsOwnership}`,
     ]),
     "--env",
     "MODEL_API_KEY",

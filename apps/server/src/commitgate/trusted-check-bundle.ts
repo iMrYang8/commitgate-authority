@@ -81,6 +81,14 @@ function readonlyFileMode(sourceMode: number): number {
   return sourceMode & 0o111 ? 0o555 : 0o444;
 }
 
+function descriptorHash(
+  entries: TrustedCheckBundleDescriptor["entries"],
+): string {
+  return createHash("sha256")
+    .update(JSON.stringify({ schemaVersion: 1 as const, entries }))
+    .digest("hex");
+}
+
 async function copyTrustedFile(
   source: string,
   destination: string,
@@ -245,10 +253,29 @@ export async function describeTrustedCheckBundle(
   const unsigned = { schemaVersion: 1 as const, entries };
   return {
     ...unsigned,
-    hash: createHash("sha256")
-      .update(JSON.stringify(unsigned))
-      .digest("hex"),
+    hash: descriptorHash(entries),
   };
+}
+
+/**
+ * Predicts the identity that TrustedCheckBundleStore.seal() will assign to a
+ * mutable administrator source tree. Sealing deliberately normalizes every
+ * directory and file to readonly modes, so the source descriptor hash is not
+ * necessarily the sealed payload hash even when every byte is identical.
+ *
+ * Launcher evidence pins must use this value: the Worker validates the exact
+ * immutable bundle mounted by the Broker, not the mutable source directory.
+ */
+export async function hashSealedTrustedCheckBundleSource(
+  root: string,
+): Promise<string> {
+  const source = await describeTrustedCheckBundle(path.resolve(root));
+  assertTrustedCheckBundleDescriptor(source);
+  const normalizedEntries = source.entries.map((entry) => ({
+    ...entry,
+    mode: entry.type === "dir" ? 0o555 : readonlyFileMode(entry.mode),
+  }));
+  return descriptorHash(normalizedEntries);
 }
 
 /**

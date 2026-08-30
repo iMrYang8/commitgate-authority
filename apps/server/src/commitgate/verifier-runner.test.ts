@@ -26,6 +26,7 @@ import {
 } from "./verifier-runner.js";
 import {
   describeTrustedCheckBundle,
+  hashSealedTrustedCheckBundleSource,
   TrustedCheckBundleStore,
 } from "./trusted-check-bundle.js";
 import type { VerifierInput } from "./types.js";
@@ -463,8 +464,11 @@ describe("trusted check bundle", () => {
     await mkdir(source);
     await writeFile(path.join(source, "check.mjs"), "first\n");
     const bundleStore = new TrustedCheckBundleStore(source, store);
+    const expectedSealedHash = await hashSealedTrustedCheckBundleSource(source);
     const first = await bundleStore.seal();
 
+    expect(first.hash).toBe(expectedSealedHash);
+    expect(first.hash).not.toBe(await hashTrustedCheckBundle(source));
     expect(first.payloadPath).toBe(path.join(store, "payloads", first.hash));
     expect((await stat(first.payloadPath)).mode & 0o222).toBe(0);
     expect((await stat(path.join(first.payloadPath, "check.mjs"))).mode & 0o222).toBe(0);

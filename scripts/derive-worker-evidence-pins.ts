@@ -2,11 +2,11 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { loadConfig } from "../apps/server/src/config.js";
 import {
-  hashTrustedCheckBundle,
   verifierConfigHash,
   verifierResourcePolicyHash,
   type DockerVerifierConfig,
 } from "../apps/server/src/commitgate/verifier-runner.js";
+import { hashSealedTrustedCheckBundleSource } from "../apps/server/src/commitgate/trusted-check-bundle.js";
 
 const repositoryRoot = path.resolve(import.meta.dirname, "..");
 const sourceRevision = process.env.COMMITGATE_SOURCE_REVISION ?? "";
@@ -84,7 +84,7 @@ const imageDigest = repositoryDigest && /^sha256:[a-f0-9]{64}$/.test(repositoryD
   : image.Id;
 
 const pins = {
-  COMMITGATE_EXPECTED_CHECK_BUNDLE_HASH: await hashTrustedCheckBundle(
+  COMMITGATE_EXPECTED_CHECK_BUNDLE_HASH: await hashSealedTrustedCheckBundleSource(
     config.commitGateTrustedChecksDirectory,
   ),
   COMMITGATE_EXPECTED_VERIFIER_IMAGE_DIGEST: imageDigest,
