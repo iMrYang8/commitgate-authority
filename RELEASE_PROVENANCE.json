@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "sourceRevision": "9ac11f9225617c643e0908cf2845f1601d2222ca",
-  "sourceTreeHash": "f9b10b66fd2c0107cf897b89e03dd4c2ad7fc7dbad60fe2d15503dddd4e66b6a",
+  "sourceRevision": "f1a52b842a074f0e239a9ce4f822fd1b22ff45e4",
+  "sourceTreeHash": "4a5257df925c2789c229fe12b018306b7e8b1e3e5a386d48d4f98918944bfce4",
   "sourceFileCount": 227,
   "files": [
     {
@@ -67,7 +67,7 @@
     {
       "path": "README.md",
       "executable": false,
-      "sha256": "53e59303fb6fd7999e0d5e180452c670e8610d09131936177c4df9838f605ab7"
+      "sha256": "412a2bccdc09c53676aa1e36b21f5752e89742e9d11da223f247ad1da80ac88c"
     },
     {
       "path": "apps/server/package.json",
@@ -822,12 +822,12 @@
     {
       "path": "package-lock.json",
       "executable": false,
-      "sha256": "be3bc5fad5baa43fd27e4a645ee0cd4fe61b2df07add160bd00f60757d83e9d3"
+      "sha256": "baae7102f7b219a122235f03068bf35f6a2bbaa96be1ebfd7d5d2a4a962bf8c2"
     },
     {
       "path": "package.json",
       "executable": false,
-      "sha256": "e8ea051f1d3e2704220bba9acec9638d2b7712a6ba5406ccb2ca641d286447df"
+      "sha256": "e556004972c39143c604b1ad5c71a0bc6183e4fc5a2f3aab6ce727aff9032874"
     },
     {
       "path": "scripts/audit-architecture.mjs",
