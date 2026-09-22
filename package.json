@@ -1,8 +1,8 @@
 {
-  "name": "volc-agent-launchpad",
+  "name": "commitgate-authority",
   "version": "1.0.0",
   "private": true,
-  "description": "Verified workspace transaction middleware for coding agents.",
+  "description": "Verified workspace transactions for AI agents. No evidence, no effect.",
   "type": "module",
   "bin": {
     "commitgate": "apps/server/dist/transition-worker/cli.js"

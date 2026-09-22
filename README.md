@@ -1,92 +1,216 @@
 # CommitGate — Verified Workspace Transactions for AI Agents
 
-> **No evidence, no effect.** Agent execution is speculative; persistence is
-> privileged.
+**Let agents propose changes. Let trusted evidence decide what persists.**
 
-As a platform user, create an Agent exactly as before. Every
-filesystem-changing turn is automatically executed as an isolated proposal and
-must pass CommitGate before it becomes persistent state. No per-Agent policy
-setup or Agent prompt integration is required.
+CommitGate is middleware that separates an agent’s attempted filesystem changes
+from the workspace your platform trusts. Every agent in the configured platform
+gets the gate automatically—no special prompt, extra tool call, or per-agent
+policy setup.
 
-CommitGate is middleware for coding Agents that separates speculative execution
-from authoritative persistence. A coding Agent can produce a proposal, but it
-cannot directly decide what the next turn will treat as the real workspace:
+**No evidence, no effect.**
 
-> **CommitGate uses a one-shot, evidence-bound capability to move one immutable
-> Agent proposal into the next authoritative workspace view.**
+[Watch the 3-minute demo](https://youtu.be/NwC-zOvrBEM) ·
+[Quick start](#quick-start) ·
+[Architecture](docs/ARCHITECTURE.md) ·
+[Evidence snapshot](evidence/current/EVIDENCE_INDEX.md) ·
+[Limitations](docs/LIMITATIONS.md)
+
+## Why CommitGate?
+
+A coding agent can edit files and run tests. Neither action, by itself, should
+authorize those edits to become the next persistent workspace. A sandbox limits
+where execution happens; CommitGate controls which resulting changes survive.
+
+Instead of checking an already-modified workspace, CommitGate verifies an
+isolated proposal **before promotion**. If the proposal violates policy, fails a
+trusted check, loses its base state, or lacks evidence, its changes stay out of
+the authoritative workspace.
+
+## How it works
 
 ```text
-Authoritative HEAD (View V0 / generation g0)
-  -> isolated Agent candidate
-  -> gate-owned SealedProposal P1
-  -> verifier input materialized from P1
-  -> EvaluationContextHash + trusted EvidenceBundle
-  -> one-shot PromotionPermit K1
-  -> compare-and-swap on V0
-  -> authoritative HEAD (View V1 / generation g1)
+Current HEAD → isolated agent attempt → sealed proposal
+             → trusted verification → one-shot permit + View CAS → next HEAD
+
+Non-commit   → proposal not promoted → workspace HEAD unchanged
+                                    → session fenced for the next turn
 ```
 
-![CommitGate No Evidence, No Effect architecture](docs/commitgate-architecture.svg)
+1. **Isolate.** Run the agent in a candidate workspace, without write access to
+   the authoritative workspace.
+2. **Seal.** After runtime teardown, import the candidate as an immutable,
+   gate-owned proposal.
+3. **Verify.** Execute platform-owned checks against that proposal—not a test
+   runner supplied by the candidate.
+4. **Authorize.** Bind the evidence and current state to a one-shot promotion
+   permit. Reject stale state and repeated permit use.
+5. **Promote.** The Transition Worker applies the exact verified proposal and
+   records the next version. Non-committed output is excluded from continuation.
 
-Editable source: [`docs/commitgate-architecture.drawio`](docs/commitgate-architecture.drawio).
+The committed-state invariant is:
 
-This is intentionally described as a **pre-effect admission transaction for
-filesystem state**, not as a distributed ACID transaction, a complete egress
-sandbox, or proof that the Agent is semantically correct.
+```text
+sealedProposalHash = verifierInputHash = promotionSourceHash = finalAuthoritativeHash
+```
 
-## Reviewer quick start
+For a non-commit, rejecting the attempt makes no additional persistent change.
+A stale proposal may encounter a HEAD already advanced by another authorized
+transition; rejection does not undo that transition.
 
-1. Configure the Provider and install dependencies:
+![CommitGate architecture: isolated proposal, trusted verification, one-shot permit, and authoritative workspace](docs/commitgate-architecture.svg)
+
+Editable source: [commitgate-architecture.drawio](docs/commitgate-architecture.drawio).
+
+## See the boundary in action
+
+| Attempt | Gate outcome | Persistent result |
+| --- | --- | --- |
+| Create a small checkout configuration | `COMMITTED` after trusted checks pass | New workspace version; generation advances |
+| Modify a deployment-protected path and create an ordinary marker file | `QUARANTINED` | Neither change is promoted—the whole proposal is rejected |
+| Replay an already-consumed permit | `409 PERMIT_REPLAY` | HEAD unchanged; no new agent run |
+| Submit a proposal based on a stale View | `CONFLICTED` | Stale proposal is not promoted |
+| Cancel before promotion becomes irreversible, or encounter missing evidence | `ABORTED` | Attempt does not become persistent state |
+
+Receipts expose the decision, generation, session disposition, and evidence
+bindings. Version history supports manual rollback as a **new version**, not a
+rewrite of earlier history.
+
+## Quick start
+
+**Requirements:** Node.js 22+, npm 10+, Docker with the engine running, and a
+supported model-provider credential. Real agent runs incur provider usage.
+The strongest filesystem guarantees target Linux Docker; see the limitations
+before treating another environment as equivalent.
+
+### 1. Configure and install
 
 ```bash
+git clone https://github.com/iMrYang8/commitgate-authority.git
+cd commitgate-authority
 cp .env.local.example .env.local
 chmod 600 .env.local
-# Fill MODEL_ID and MODEL_API_KEY. The demo uses deployment-protected@2.
+# Edit MODEL_* in .env.local for your provider and model.
 npm ci
 ```
 
-2. Start the complete product. Keep that terminal open; in a second terminal,
-   copy the local access token without printing it:
+The demo uses `deployment-protected@2`. Keep credentials in ignored local files;
+never put them in prompts, screenshots, or commits. Ark and OpenRouter adapters
+are supplied behind the Responses-compatible Provider boundary.
+
+### 2. Start the product
 
 ```bash
 npm run demo
-# Run this in a second terminal while the demo remains active:
+```
+
+Keep that terminal open. In a second terminal, copy the temporary access token
+without printing it:
+
+```bash
 npm run demo:auth
 ```
 
-3. Open <http://127.0.0.1:3000>, create a new Agent with the normal Create
-   Agent form, and send these two tasks through the Playground:
+Open <http://127.0.0.1:3000>, paste the access token when prompted, and create a
+new agent. The gate is already applied.
+
+### 3. Try a commit and a rejection
+
+Send the normal task and wait for its terminal receipt:
 
 ```text
-Create services/checkout/config.json with a small checkout configuration and
-create result.txt containing COMMITGATE_OK.
+Create services/checkout/config.json with a small checkout configuration and create result.txt containing COMMITGATE_OK.
+```
 
+Expected after a successful run: **COMMITTED**, with generation `gN → gN+1`.
+Then send:
+
+```text
 Change infra/production.yaml to replicas: 0 and create rejected-marker.txt.
 ```
 
-The first run must be `COMMITTED` with `gN -> gN+1`. The second must be
-`QUARANTINED` with the workspace HEAD unchanged. Expand **Full sanitized
-receipt** and choose **Attempt replay** to observe `409 PERMIT_REPLAY`.
+Expected when both changes are attempted: **QUARANTINED**, with neither change
+promoted. A provider failure or a model declining to make the edits is not a
+successful demonstration of whole-proposal rejection.
 
-Every newly created Agent receives this gate automatically. The Worker owns the
-selected policy pack; API and Agent requests cannot submit arbitrary policy
-rules or protected paths.
+Open the earlier successful receipt and choose **Attempt replay** to inspect
+`409 PERMIT_REPLAY`. Inspect the receipt and version history rather than relying
+on the agent’s prose as proof of persistence.
 
-A GitHub checkout derives its source identity from Git. A release archive has
-no `.git` directory and instead carries `RELEASE_PROVENANCE.json`, an exhaustive
-path/mode/SHA-256 inventory generated by `npm run release:provenance`. `npm run
-demo` validates that inventory automatically and fails closed on a missing,
-extra or modified source file; no archive-specific environment flag is needed.
+```bash
+npm run demo:status
+npm run demo:down
+```
 
-The repository's immutable review snapshot is under `evidence/current/`.
-Commands write fresh working reports under `eval/` and never overwrite that
-snapshot. Large trace/video artifacts are distributed as SHA-256-bound release
-assets rather than hidden inside the source history.
+For deployment options and separate provider profiles, see
+[Deployment](docs/DEPLOYMENT.md).
 
-To keep two Provider credentials separate, create an ignored owner-only file
-such as `.env.openrouter.local` and launch with
-`COMMITGATE_ENV_FILE=.env.openrouter.local npm run demo`. The default remains
-`.env.local`; neither filename nor credential value is recorded in receipts.
+## A small, explicit trust boundary
+
+| Component | Responsibility and access |
+| --- | --- |
+| **Transition Worker** | Sole writer of authoritative/control volumes; owns proposals, evidence, permits, promotion, rollback, and recovery |
+| **Runtime Broker** | Sole holder of the Docker socket; launches constrained agent and verifier containers |
+| **Model Relay** | Holds the upstream provider credential; agents use scoped relay capabilities |
+| **Agent** | Writes an isolated candidate, not the authoritative workspace |
+| **Trusted Verifier** | Reads a proposal export with isolated scratch and no routable network |
+| **API / UI** | Coordinates requests and displays Worker projections; authoritative/control mounts are read-only |
+
+Policy belongs to the Worker. Operators extend versioned profiles and rerun
+policy-bound checks; an agent or API caller does not choose its own protection
+rules. This repository supplies `workspace-default@1` and
+`deployment-protected@2`.
+
+## Verification, without inflated claims
+
+The [frozen evidence snapshot](evidence/current/EVIDENCE_INDEX.md) records the
+source identity it tested. It is project-generated evidence, not an external
+audit or a claim that every later documentation or code revision was retested.
+The video demonstrates the workflow; it is separate from machine-verifiable
+release evidence. This presentation update does not overwrite historical reports.
+
+```bash
+npm run check
+npm run check:secrets
+```
+
+The technical reference below describes the ordered protocol, container,
+recovery, provider, browser, and receipt checks. Full validation requires more
+than these two commands; real-provider evaluations require credentials and
+incur usage. The evidence checklist reports `verified`, `failed`, or
+`unverified` and assigns no numeric score.
+
+## Scope and limitations
+
+CommitGate is a **pre-effect admission transaction for filesystem state**, not
+a general-purpose agent safety platform or a distributed transaction system.
+Its claim covers Linux Docker, serial transitions per agent, workspace
+filesystem effects, and tested process kill/restart recovery.
+
+It does not guarantee semantic correctness, rollback of external APIs or
+payments, power-loss durability, complete information-flow isolation, or
+protection from a hostile host/root or compromised Docker engine. A signed
+receipt proves integrity relative to the recorded Worker key, not that the
+Worker itself was trustworthy. See [the full limitations](docs/LIMITATIONS.md).
+
+## Documentation
+
+- [Architecture and protocol contracts](docs/ARCHITECTURE.md)
+- [Deployment and configuration](docs/DEPLOYMENT.md)
+- [Three-minute demonstration](docs/DEMO_3_MINUTES.md)
+- [Live demonstration guide](docs/LIVE_DEMO.md)
+- [Clean-checkout reproduction](docs/JUDGE_REPRODUCTION.md)
+- [Frozen evidence index](evidence/current/EVIDENCE_INDEX.md)
+
+CommitGate extends an existing agent launchpad: the surrounding UI, CRUD,
+Playground, and Codex execution loop remain the foundation. The middleware adds
+controlled workspace promotion rather than replacing the agent loop. Internal
+`@launchpad/*` workspace identifiers are retained to preserve integration.
+
+<details>
+<summary><strong>Technical reference: protocol, evidence, APIs, and recovery</strong></summary>
+
+The detailed implementation and evaluation contracts below are retained for
+technical review. Historical reports remain bound to their recorded revisions.
 
 ## Focused integration
 
@@ -103,8 +227,10 @@ coherent middleware layer at the existing seams:
 | Workspace transition | delegate authority to the Transition Worker |
 | Receipt UI | explain `HEAD -> PROPOSAL -> PERMIT -> HEAD` and non-effect |
 
-Review the exact baseline diff without counting generated evidence as product
-implementation:
+In a development checkout that contains the original Starter Kit history,
+review the baseline diff without counting generated evidence as product
+implementation. The public mirror has its own history; the command below
+requires that upstream commit to be available locally:
 
 ```bash
 git diff --stat 8d0bd4f14ad1e453d984149aebcdd0bcb4f74178..HEAD -- \
@@ -184,8 +310,9 @@ The old repository `100/100` was an internal rubric projection, not an organizer
 score. It is historical and is not carried into the active evidence set. The
 current `npm run evidence:checklist` reports only `verified`, `failed`, and
 `unverified`; it assigns no numeric score. Worker authority is the default
-product implementation. The narrated three-minute submission video remains
-`unverified` until the user records and validates it.
+product implementation. A narrated demonstration is available through the video
+link above. Video availability does not retroactively validate the frozen
+pre-video evidence snapshot: formal video verification remains report-bound.
 
 When regenerated, the exact test count, command identity, and result are read
 from `eval/evidence/check-report.json`; prose, source files, or an old report do
@@ -763,7 +890,7 @@ The Worker-default authority, Linux filesystem, recovery, live topology and
 clean-clone Provider/browser machine gates are revision-bound. The broad
 `P1 hardened` release label remains withheld until every gate is regenerated
 for the frozen source identity and the required narrated three-minute
-submission video is recorded and validated.
+demonstration video is validated against that same evidence set.
 
 ## Project provenance
 
@@ -779,6 +906,9 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for protocol structure and
 [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for local deployment details. The
 two-delivery, two-Provider reviewer simulation is documented in
 [`docs/JUDGE_REPRODUCTION.md`](docs/JUDGE_REPRODUCTION.md).
+
+
+</details>
 
 ## License
 
